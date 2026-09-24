@@ -114,7 +114,7 @@ const { warnings } = validate(savedTemplate); // 読込時に直した箇所の�
 - SNS ブロックのアイコンを出すには、PNG を置いた場所を `socialIconBaseUrl` で指定します（`{base}/{service}-{color|mono}.png` を参照します）。指定が無ければテキストリンクになります
 - Outlook（Windows）は最初のフォントが無いと明朝体になるため、`outlookFontFamily`（既定 `Arial, sans-serif`）を別に指定できます
 
-出力 HTML の互換性は自動テストで検査していますが、公開前には実際のメールソフトでも確認してください。手順と確認項目は [docs/client-checklist.md](docs/client-checklist.md) にあります（`npm run samples` で確認用の `.eml` などを書き出せます）。
+出力 HTML の互換性は自動テストで検査していますが、公開前には実際のメールソフトでも確認してください。手順と確認項目は [docs/client-checklist.md](docs/client-checklist.md) にあります（`npm run samples` で確認用の `.eml` などを書き出し、`npm run samples:send` で実際のメールソフトにテストメールを送れます）。
 
 ## 開発
 
@@ -138,13 +138,14 @@ npm run dev             # デモ（demo/）を開発サーバーで開く
 | `npm run test:editor:all` | エディタのテストを Chromium・Firefox・WebKit（Safari）で実行         |
 | `npm run check`           | lint・整形・型検査・テストをまとめて実行                             |
 | `npm run samples`         | 実機確認用のサンプル（HTML・テキスト・.eml）を `samples/` に書き出す |
+| `npm run samples:send`    | テストメールを SMTP で送る（設定は `.env.samples`）                  |
 
 ### ディレクトリ
 
 - `src/core/` — DOM と Lit に依存しない部分（データモデル、出力）。Node でも動く
 - `src/editor/` — Lit 製のエディタ UI
 - `demo/` — 開発用デモ
-- `scripts/` — 開発用のスクリプト（サンプルの書き出し）
+- `scripts/` — 開発用のスクリプト（サンプルの書き出し・送信、リファレンスの生成）
 - `docs/` — メールクライアントでの確認手順
 - `test/core/`, `test/editor/` — テスト
 
