@@ -118,11 +118,15 @@ describe('migrate', () => {
 
   it('未知のブロック type は内容を保持したまま残す', () => {
     const input = loadFixture('basic');
-    const video = { id: 'b_video001', type: 'video', values: { url: 'https://example.com/v' } };
-    input.body.rows[1].columns[0].blocks.push(video);
+    const countdown = {
+      id: 'b_countdown1',
+      type: 'countdown',
+      values: { url: 'https://example.com/v' },
+    };
+    input.body.rows[1].columns[0].blocks.push(countdown);
     const { template, warnings } = migrate(input);
     const kept = template.body.rows[1].columns[0].blocks[2];
-    expect(kept.type).toBe('video');
+    expect(kept.type).toBe('countdown');
     expect(kept.values).toEqual({ url: 'https://example.com/v' });
     expect(codes(warnings)).toEqual(['unknown-block-type']);
   });

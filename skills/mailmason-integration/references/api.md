@@ -210,4 +210,4 @@ renderHtml(template, { blocks: [couponBlock] }); // サーバー
 - 入力値のエスケープは定義側で行う。出力はテーブル＋インライン CSS で書き、縦積みしたいセルには `class="mm-col"` を付ける
 - 定義が不正なら `MailmasonError`（`invalid-block-definition`）
 
-型（`Template`・`Block`・`RenderHtmlOptions` など）も同じパスから import できます。
+型（`Template`・`Block`・`RenderHtmlOptions` など）も同じパスから import できます。TypeScript の型定義を同梱しており、`Block` は `block.type` で絞り込むと `values` の型（`TableValues` など。`BlockValuesMap` / `BlockOf<'table'>`）が決まり、`<mailmason-editor>` のイベントの `detail` にも型が付きます（`MailmasonEditorEventMap`）。

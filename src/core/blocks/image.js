@@ -18,6 +18,7 @@ export const imageWidthSchema = s.object({
  * @property {number | null} naturalWidth
  * @property {number | null} naturalHeight
  * @property {'left' | 'center' | 'right'} [align]
+ * @property {string} [className] img の class（スマホ用のスタイルを当てるとき）
  */
 
 /**
@@ -26,13 +27,13 @@ export const imageWidthSchema = s.object({
  * @returns {string}
  */
 export function imageHtml(image) {
-  const { src, alt, href, width, naturalWidth, naturalHeight, align = 'left' } = image;
+  const { src, alt, href, width, naturalWidth, naturalHeight, align = 'left', className } = image;
   const height =
     naturalWidth && naturalHeight ? Math.round((width * naturalHeight) / naturalWidth) : null;
   const margin =
     align === 'center' ? 'margin:0 auto' : align === 'right' ? 'margin:0 0 0 auto' : null;
   const img =
-    `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" width="${width}"` +
+    `<img${className ? ` class="${className}"` : ''} src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" width="${width}"` +
     (height ? ` height="${height}"` : '') +
     styleAttr(
       'display:block',
@@ -63,7 +64,7 @@ export function imageText(image) {
  * @param {{ unit: string, value: number }} width
  * @param {HtmlContext} ctx
  */
-function pixelWidth(width, ctx) {
+export function pixelWidth(width, ctx) {
   const px = width.unit === '%' ? Math.round((ctx.width * width.value) / 100) : width.value;
   return Math.max(1, Math.min(px, ctx.width));
 }

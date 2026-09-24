@@ -7,7 +7,7 @@ Lit ベースのノーコード HTML メールエディタです。行×カラ�
 
 **ドキュメントとデモ: https://hidemikimura.github.io/mailmason/**
 
-> v0.3（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
+> v0.4（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
 
 ## インストール
 
@@ -21,10 +21,10 @@ Lit（3.3 以上）は peer dependency です。バンドラーを使わない�
 <!-- ES モジュール版 -->
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.3/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.4/dist/mailmason.bundle.js"
 ></script>
 <!-- 従来の script タグ版（グローバル変数 Mailmason） -->
-<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.3/dist/mailmason.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.4/dist/mailmason.iife.js"></script>
 ```
 
 動作環境: Chrome・Edge・Firefox・Safari の最新版。画面幅は 1024px 以上を想定しています（それより狭いと、パレットと設定パネルはツールバーのボタンで開閉する重ね表示になります）。
@@ -100,6 +100,8 @@ const { html, text } = editor.export({ html: { minify: true } }); // 配信用�
 
 カスタムブロック: `defineBlock()` で設定項目（テキスト・画像・リスト・外部データを入れるボタン・独自の入力欄など）と出力の関数を定義し、`editor.blocks` とサーバーの `renderHtml(template, { blocks })` に渡すと、アプリ独自のブロックを使えます。詳しくは[ドキュメント](https://hidemikimura.github.io/mailmason/guide/custom-blocks)を参照してください。
 
+表・メニュー・ボタンの並び・画像ギャラリー・動画: 表はセルをキャンバス上で直接編集でき（太字・リンク・文字色・改行・差し込み変数、Tab で次のセル）、行と列は表の下のボタンで増減します。動画はサムネイルに再生ボタンを重ねて動画のページにリンクします（メールの中では再生できません。YouTube の URL ならサムネイルを自動で入れます）。
+
 QR コード: `onImageUpload` を設定すると QR コードのブロックが使えます。内容（URL など）を入れて「QR コードを作成」を押すと、エディタが PNG を作ってフックでアップロードし、返った URL を画像にします。作成後に内容や色を変えると作り直しを促します（書き出し時は `mm-warning` の `qr-stale`）。
 
 操作: パレットの項目はキャンバスへドラッグして置けます（クリックでも追加できます）。選択中の行・ブロックは、上に出るラベル（つまみ）をドラッグして移動できます。ブロックを行の上下端に落とすと、新しい行になります。
@@ -132,19 +134,19 @@ npm run setup:browser   # エディタのテストに使う Chromium を取得�
 npm run dev             # デモ（demo/）を開発サーバーで開く
 ```
 
-| コマンド                  | 内容                                                                 |
-| ------------------------- | -------------------------------------------------------------------- |
-| `npm run dev`             | デモを開発サーバーで起動                                             |
-| `npm run build`           | 単一バンドル（`dist/`）を生成                                        |
-| `npm run build:types`     | JSDoc から型定義（`types/`）を生成                                   |
-| `npm run lint`            | ESLint                                                               |
-| `npm run format`          | Prettier で整形                                                      |
-| `npm run typecheck`       | JSDoc の型検査                                                       |
-| `npm test`                | 全テスト（core は Node、editor は Chromium）                         |
-| `npm run test:editor:all` | エディタのテストを Chromium・Firefox・WebKit（Safari）で実行         |
-| `npm run check`           | lint・整形・型検査・テストをまとめて実行                             |
-| `npm run samples`         | 実機確認用のサンプル（HTML・テキスト・.eml）を `samples/` に書き出す |
-| `npm run samples:send`    | テストメールを SMTP で送る（設定は `.env.samples`）                  |
+| コマンド                  | 内容                                                                       |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`             | デモを開発サーバーで起動                                                   |
+| `npm run build`           | 単一バンドル（`dist/`）を生成                                              |
+| `npm run types:schema`    | 型定義の検査用ファイル（`test/types/schema.gen.ts`）をスキーマから作り直す |
+| `npm run lint`            | ESLint                                                                     |
+| `npm run format`          | Prettier で整形                                                            |
+| `npm run typecheck`       | JSDoc の型検査と、型定義（`types/`）の検査（`test/types`）                 |
+| `npm test`                | 全テスト（core は Node、editor は Chromium）                               |
+| `npm run test:editor:all` | エディタのテストを Chromium・Firefox・WebKit（Safari）で実行               |
+| `npm run check`           | lint・整形・型検査・テストをまとめて実行                                   |
+| `npm run samples`         | 実機確認用のサンプル（HTML・テキスト・.eml）を `samples/` に書き出す       |
+| `npm run samples:send`    | テストメールを SMTP で送る（設定は `.env.samples`）                        |
 
 ### ディレクトリ
 
@@ -153,7 +155,8 @@ npm run dev             # デモ（demo/）を開発サーバーで開く
 - `demo/` — 開発用デモ
 - `scripts/` — 開発用のスクリプト（サンプルの書き出し・送信、リファレンスの生成）
 - `docs/` — メールクライアントでの確認手順
-- `test/core/`, `test/editor/` — テスト
+- `types/` — TypeScript の型定義（手書き。公開 API を変えたら合わせて直す）
+- `test/core/`, `test/editor/`, `test/types/` — テスト（`test/types` は型定義の検査）
 
 `src/core` から `lit` や `document` などの DOM を使うと ESLint がエラーにします。
 
@@ -169,6 +172,13 @@ npm run docs:reference  # テンプレート JSON のリファレンスをスキ
 
 `docs/reference/template.md` と `skills/mailmason-templates/references/schema.md` は自動生成です。スキーマを変えたら `npm run docs:reference` を実行してください（古いままだとテストが失敗します）。
 
+### 型定義
+
+`types/index.d.ts`（エディタ）と `types/core/index.d.ts`（core）は手書きです。公開 API やブロックの値を変えたら、型定義も直してください。ずれは次の検査で見つかります。
+
+- `npm test` の `test/core/types.test.js`: export の一覧、エディタのプロパティとイベントが型定義と合っているか
+- `npm run typecheck` の `test/types`: スキーマから作った型（`npm run types:schema` で `test/types/schema.gen.ts` を作り直す）と型定義が同じか、使用例（`test/types/usage.ts`）が通るか
+
 ### AI 用スキル
 
 `skills/` に AI コーディングエージェント向けの Agent Skills（組み込み用・テンプレート作成用）があり、npm パッケージにも同梱しています。使い方は [skills/README.md](skills/README.md) を参照してください。
@@ -177,7 +187,7 @@ npm run docs:reference  # テンプレート JSON のリファレンスをスキ
 
 ```sh
 npm login
-npm publish   # prepublishOnly で check・build・build:types を実行してから公開する
+npm publish   # prepublishOnly で check・build を実行してから公開する
 ```
 
 手順の詳細（バージョンを上げる箇所、確認、タグ）は [RELEASING.md](RELEASING.md) にあります。`npm pack --dry-run` で同梱されるファイルを確認できます。

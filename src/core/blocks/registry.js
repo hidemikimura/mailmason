@@ -10,6 +10,11 @@ import { imageTextBlock } from './image-text.js';
 import { socialBlock } from './social.js';
 import { htmlBlock } from './html.js';
 import { qrBlock } from './qr.js';
+import { tableBlock } from './table.js';
+import { menuBlock } from './menu.js';
+import { buttonsBlock } from './buttons.js';
+import { galleryBlock } from './gallery.js';
+import { videoBlock } from './video.js';
 
 /** @import { CoreBlockDef } from './types.js' */
 
@@ -22,6 +27,11 @@ const builtins = new Map(
     dividerBlock,
     spacerBlock,
     imageTextBlock,
+    galleryBlock,
+    videoBlock,
+    buttonsBlock,
+    menuBlock,
+    tableBlock,
     socialBlock,
     qrBlock,
     htmlBlock,

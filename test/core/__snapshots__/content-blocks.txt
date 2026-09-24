@@ -1,0 +1,23 @@
+新着: https://example.com/new
+レディース: https://example.com/women
+メンズ: https://example.com/men
+セール: https://example.com/sale?u={{uid}}
+
+▶ 冬のコレクション紹介動画
+  https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+[新作 1] ( https://example.com/products/1 )
+[新作 2]
+[新作 3]
+[新作 4]
+
+サイズ | 着丈 | 身幅
+--------------------------------
+S | 64 cm | 52 cm
+M | 67 cm | 55 cm
+L （残りわずか） | 70 cm | 58 cm
+
+▶ オンラインストア
+  https://example.com/store
+▶ 店舗を探す
+  https://example.com/shops

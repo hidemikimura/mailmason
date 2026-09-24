@@ -261,10 +261,14 @@ describe('ブロックのコマンド', () => {
 
   it('updateBlockValues は未知のブロックを編集できない', () => {
     const input = loadFixture('basic');
-    input.body.rows[0].columns[0].blocks.push({ id: 'b_video001', type: 'video', values: {} });
+    input.body.rows[0].columns[0].blocks.push({
+      id: 'b_countdown1',
+      type: 'countdown',
+      values: {},
+    });
     const template = migrate(input).template;
     expect(() =>
-      applyCommand(template, { type: 'updateBlockValues', blockId: 'b_video001', patch: {} }),
+      applyCommand(template, { type: 'updateBlockValues', blockId: 'b_countdown1', patch: {} }),
     ).toThrow(expect.objectContaining({ code: 'unknown-block-type' }));
   });
 

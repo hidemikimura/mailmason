@@ -2,6 +2,40 @@
 
 このプロジェクトは [Semantic Versioning](https://semver.org/lang/ja/) に従います。1.0.0 までは、マイナーバージョンで互換性の無い変更を含むことがあります。
 
+## 0.4.0 - 2026-09-24
+
+表・メニュー・ボタンの並び・画像ギャラリー・動画のブロックを追加し、TypeScript の型定義を手書きのものにしました。実行時の動作に互換性の無い変更はありません。
+
+### 互換性
+
+- 型定義: `Block` をブロックの種類ごとの型のユニオンにしたため、`block.values.xxx` を `block.type` で絞り込まずに使っていると型エラーになります（実行時の動作は変わりません）
+- 新しいブロックを使ったテンプレートを 0.3.x 以前で読み込むと、未知のブロック（`unknown-block-type`、データは残して出力しない）の警告になります
+- 出力 HTML の `<style>`（メディアクエリ）に `.mm-stack-gap` / `.mm-fluid` / `.mm-video-*` のクラスが加わりました
+
+### 追加
+
+- 表のブロック（`table`）。セルは段落を持たないリッチテキスト（太字・斜体・下線・取り消し線・リンク・文字色・改行・差し込み変数）で、キャンバス上で直接編集する（クリックしたセルを編集、Tab / Shift+Tab でセルを移動、最後のセルで Tab を押すと行を追加、表の下のボタンで行・列の挿入と削除）。見出し行（`th`）・しま模様・罫線・セルの余白・文字サイズ・文字色、列ごとの幅（%）と揃えを設定できる。列は 8、行は 50 まで。テキストパートは `|` 区切り。出力はデータの表として `role="presentation"` を付けない（目印は `class="mm-table"`）
+- メニューのブロック（`menu`）。リンクを区切り文字でつないで 1 行に並べる（ヘッダー・フッターのナビゲーション）
+- ボタンの並びのブロック（`buttons`）。複数のボタンを横に並べ、スマホでは縦に並べられる。見た目は共通で色はボタンごと。幅をそろえることもできる
+- 画像ギャラリーのブロック（`gallery`）。画像を 2〜4 列の格子に並べ、画像ごとにリンクを付けられる。スマホで 1 列に並べることもできる
+- 動画のブロック（`video`）。サムネイルに再生ボタン（黒・白・なし）を重ねて動画のページにリンクする。サムネイルはセルの背景に敷き（Outlook は VML）、縦横比（16:9 / 4:3 / 1:1）でトリミングする。スマホでは画面幅に合わせて高さを変える。YouTube の URL を入れるとサムネイルを自動で入れる。core に `youtubeVideoId` / `youtubeThumbnail`
+- エディタの設定パネルで、標準ブロックにも繰り返しの項目（`list`）を使う（メニュー・ボタンの並び・画像ギャラリー）
+- ドキュメントサイトに「ブロック」のページを追加し、デモに「表・動画・ギャラリー」のサンプルを追加
+
+### 変更
+
+- TypeScript の型定義（`types/`）を、JSDoc からの自動生成から手書きに変えた。公開 API だけを定義し、内部の状態（`_store` など）は出さない
+  - 標準ブロックの `values` の型（`TextValues`・`TableValues` など 14 種類、`BlockValuesMap`・`BlockOf<'table'>`）。`Block` は `block.type` で絞り込める（カスタムブロックは type にハイフンを含む `CustomBlockData`）
+  - `createBlock('table', { … })` は標準ブロックの値を検査する（`DeepPartial`）
+  - `<mailmason-editor>` のイベント（`MailmasonEditorEventMap`。`mm-change` などの `detail`）と `HTMLElementTagNameMap`。`colorMode` などを文字列のユニオンに
+  - 警告コード（`WarningCode`）・エラーコード（`MailmasonErrorCode`）、`EditorWarning`、コマンドとストアの型
+- `npm run build:types` を廃止（`prepublishOnly` は check と build だけ）
+
+### 開発
+
+- 型定義の検査: `test/core/types.test.js`（export・エディタのプロパティとイベント）、`npm run types:schema`（スキーマから作った型 `test/types/schema.gen.ts` と型定義を突き合わせる）、`test/types/usage.ts`。`npm run typecheck` が `tsc -p test/types` も実行する
+- テスト用フィクスチャ `content-blocks`（新しいブロック）を追加し、スナップショット・メール互換の静的チェック・`npm run samples` / `samples:send` の既定に加えた
+
 ## 0.3.0 - 2026-09-24
 
 カスタムブロック、コンポーネント（保存した行・ブロック）、QR コードのブロックを追加しました。互換性の無い変更はありません。

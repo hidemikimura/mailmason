@@ -4,11 +4,13 @@ import basic from '../../../test/fixtures/templates/basic.json';
 import kitchenSink from '../../../test/fixtures/templates/kitchen-sink.json';
 import newsletter from '../../../skills/mailmason-templates/examples/newsletter.json';
 import announcement from '../../../skills/mailmason-templates/examples/announcement.json';
+import contentBlocks from '../../../test/fixtures/templates/content-blocks.json';
 
 export const DEMO_TEMPLATES = [
   { id: 'newsletter', label: 'メールマガジン', template: newsletter },
   { id: 'basic', label: '新作のお知らせ', template: basic },
   { id: 'announcement', label: 'メンテナンスのお知らせ', template: announcement },
+  { id: 'content-blocks', label: '表・動画・ギャラリー', template: contentBlocks },
   { id: 'kitchen-sink', label: '全ブロック', template: kitchenSink },
   { id: 'empty', label: '白紙', template: null },
 ];

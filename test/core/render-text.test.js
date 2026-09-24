@@ -13,6 +13,12 @@ describe('renderText', () => {
     );
   });
 
+  it('content-blocks フィクスチャ（表・メニュー・ボタンの並び・ギャラリー・動画）', async () => {
+    await expect(renderText(loadFixture('content-blocks'))).toMatchFileSnapshot(
+      './__snapshots__/content-blocks.txt',
+    );
+  });
+
   it('画像・ボタン・SNS・区切り線を決まった形にする', () => {
     const text = renderText(loadFixture('basic'));
     expect(text).toContain('[秋の新作] ( https://example.com/?utm_source=mail )');

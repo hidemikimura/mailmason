@@ -3,9 +3,10 @@ import { createDemoBlocks } from './custom-blocks.js';
 import { useDemoComponentStore } from './component-store.js';
 import basic from '../test/fixtures/templates/basic.json';
 import kitchenSink from '../test/fixtures/templates/kitchen-sink.json';
+import contentBlocks from '../test/fixtures/templates/content-blocks.json';
 
 /** @type {Record<string, unknown>} */
-const fixtures = { basic, 'kitchen-sink': kitchenSink };
+const fixtures = { basic, 'kitchen-sink': kitchenSink, 'content-blocks': contentBlocks };
 
 const editor = /** @type {import('../src/index.js').MailmasonEditor} */ (
   document.querySelector('mailmason-editor')

@@ -22,6 +22,7 @@ import { mergeTagValues } from './util.js';
 import { insertBlock, placeBlock, placeRow } from './components/mm-palette.js';
 import { DEFAULT_MAX_IMAGE_SIZE, ImageUploader, imageFiles, uploadTargetOf } from './upload.js';
 import { getEditorBlockDef } from './blocks/index.js';
+import { EDITABLE_TYPES } from './components/mm-block.js';
 import { extractComponent, instantiateComponent } from '../core/components.js';
 import { qrSignature, qrStatus } from '../core/blocks/qr.js';
 import { QrTooLongError, createQrFile } from './qr.js';
@@ -972,7 +973,7 @@ export class MailmasonEditor extends LitElement {
     if (event.key === 'Enter' && block && !this._editing) {
       const { type } =
         template.body.rows[block.rowIndex].columns[block.columnIndex].blocks[block.blockIndex];
-      if (type === 'text' || type === 'imageText') {
+      if (EDITABLE_TYPES.has(type)) {
         event.preventDefault();
         this._edit(selection);
       }

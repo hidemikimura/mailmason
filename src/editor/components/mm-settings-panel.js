@@ -409,6 +409,23 @@ export class MmSettingsPanel extends LitElement {
         display: grid;
         gap: 6px;
       }
+      .table-columns {
+        display: grid;
+        gap: 6px;
+      }
+      .table-column {
+        display: grid;
+        grid-template-columns: 44px auto 1fr;
+        align-items: center;
+        gap: 6px;
+      }
+      .table-column .number input {
+        width: 64px;
+      }
+      .table-column-name {
+        font-size: 11px;
+        color: var(--mm-color-muted);
+      }
       .social-item {
         display: grid;
         grid-template-columns: 96px 1fr auto;

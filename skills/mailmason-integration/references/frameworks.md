@@ -13,7 +13,7 @@ Lit を同梱した単一バンドルを CDN から読み込みます。
 ```html
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.3/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.4/dist/mailmason.bundle.js"
 ></script>
 <mailmason-editor id="editor" style="height: 100vh"></mailmason-editor>
 <script type="module">
@@ -50,7 +50,7 @@ export function MailEditor({ initial, onSave, uploadImage }) {
 }
 ```
 
-- TypeScript で `<mailmason-editor>` の JSX 型が無いと言われたら、`declare global { namespace JSX { interface IntrinsicElements { 'mailmason-editor': any } } }`（React 19 は `React.JSX`）を追加する。
+- TypeScript で `<mailmason-editor>` の JSX 型が無いと言われたら、`declare global { namespace JSX { interface IntrinsicElements { 'mailmason-editor': any } } }`（React 19 は `React.JSX`）を追加する（`ref` の型は `useRef<MailmasonEditor>(null)`）。
 - Next.js の App Router では `'use client'` のコンポーネントにし、`import '@hidemikimura/mailmason'` を `useEffect` 内の `await import(...)` にするか、`next/dynamic` の `ssr: false` で読み込む。
 
 ## Vue 3
@@ -113,6 +113,42 @@ Nuxt では `<ClientOnly>` で囲み、import はクライアント用のプラ�
 
 <mailmason-editor bind:this={editor} on:mm-change={(e) => save(e.detail.template)} style="height: 100vh" />
 ```
+
+## TypeScript
+
+型定義を同梱しています（`@hidemikimura/mailmason` と `@hidemikimura/mailmason/core` のどちらからも import できます）。
+
+- `document.querySelector('mailmason-editor')` は `MailmasonEditor` 型になり、`addEventListener('mm-change', (e) => e.detail.template)` の `detail` にも型が付きます。
+- ブロックは `block.type` で絞り込むと `values` の型が決まります。`createBlock('table', { … })` の値も検査します。
+
+```ts
+import { createBlock, type Block, type Template } from '@hidemikimura/mailmason';
+
+const editor = document.querySelector('mailmason-editor')!;
+editor.addEventListener('mm-change', (e) => save(e.detail.template));
+
+function titleOf(block: Block): string {
+  switch (block.type) {
+    case 'text':
+      return block.values.html;
+    case 'table':
+      return `${block.values.cells.length} 行の表`;
+    case 'video':
+      return block.values.url;
+    default:
+      return block.type; // カスタムブロック（type にハイフンを含む）や、新しいバージョンのブロック
+  }
+}
+
+const table = createBlock('table', {
+  cells: [
+    ['サイズ', '着丈'],
+    ['S', '64 cm'],
+  ],
+});
+```
+
+カスタムブロック（`defineBlock()`）の `values` は `Record<string, any>` です。
 
 ## 保存の間隔
 

@@ -57,7 +57,7 @@ function ownOutputOnly(name) {
   return template;
 }
 
-const OUTPUTS = ['basic', 'kitchen-sink'].flatMap((name) => [
+const OUTPUTS = ['basic', 'kitchen-sink', 'content-blocks'].flatMap((name) => [
   { name, variant: 'pretty', html: renderHtml(ownOutputOnly(name)) },
   { name, variant: 'minify', html: renderHtml(ownOutputOnly(name), { minify: true }) },
   {
@@ -83,7 +83,8 @@ describe.each(OUTPUTS)('メールクライアント互換: $name ($variant)', ({
     const tables = html.match(/<table\b[^>]*>/g) ?? [];
     expect(tables.length).toBeGreaterThan(0);
     for (const table of tables) {
-      expect(table).toContain('role="presentation"');
+      // 表ブロック（データの表）は読み上げで表として扱わせるため role を付けない
+      if (!table.includes('class="mm-table"')) expect(table).toContain('role="presentation"');
       expect(table).toContain('cellpadding="0"');
       expect(table).toContain('cellspacing="0"');
       expect(table).toContain('border="0"');
@@ -101,7 +102,10 @@ describe.each(OUTPUTS)('メールクライアント互換: $name ($variant)', ({
   });
 
   it('多くのメーラーが対応していない CSS・要素を使わない', () => {
-    const body = html.slice(html.indexOf('<body'));
+    // 動画ブロックのセルだけは背景画像を使う（背景を出さないメーラーでは黒地に再生ボタン）
+    const body = html
+      .slice(html.indexOf('<body'))
+      .replace(/<td class="mm-video[^"]*" background="[^"]*" bgcolor="#000000"[^>]*>/g, '<td>');
     expect(body).not.toMatch(/display:\s*(flex|grid)/);
     expect(body).not.toMatch(/position:\s*(absolute|fixed|relative)/);
     expect(body).not.toMatch(/float:/);
@@ -149,7 +153,7 @@ describe('メールクライアント互換: 検査関数', () => {
 
 describe('メールクライアント互換: 出力サイズ', () => {
   it('サンプルの minify 出力は Gmail の省略（約 102KB）よりずっと小さい', () => {
-    for (const name of ['basic', 'kitchen-sink']) {
+    for (const name of ['basic', 'kitchen-sink', 'content-blocks']) {
       const bytes = new TextEncoder().encode(
         renderHtml(loadFixture(name), { minify: true }),
       ).length;

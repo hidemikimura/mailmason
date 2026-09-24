@@ -15,7 +15,9 @@ function assertEmailRules(html) {
     expect(img).toMatch(/\swidth="\d+"/);
   }
   // テーブルはすべてレイアウト用
+  // （表ブロックのデータの表 class="mm-table" は除く）
   for (const table of html.match(/<table\b[^>]*>/g) ?? []) {
+    if (table.includes('class="mm-table"')) continue;
     expect(table).toContain('role="presentation"');
   }
   // <style> の中の .mm- クラスはメディアクエリの中だけ
@@ -40,6 +42,13 @@ describe('renderHtml', () => {
     // 生 HTML ブロックの中身は利用者の責任なので、規約の検査からは外す
     input.body.rows[3].columns[0].blocks[2].values.html = '';
     assertEmailRules(renderHtml(input, options));
+  });
+
+  it('content-blocks フィクスチャ（表・メニュー・ボタンの並び・ギャラリー・動画）', async () => {
+    const html = renderHtml(loadFixture('content-blocks'));
+    await expect(html).toMatchFileSnapshot('./__snapshots__/content-blocks.html');
+    // 動画ブロックの背景画像とデータの表は規約の例外（compat.test.js）
+    assertEmailRules(html);
   });
 
   it('同じ入力からは常に同じ出力になる', () => {
@@ -152,11 +161,11 @@ describe('renderHtml', () => {
 
   it('画像の無い画像ブロック・ラベルの無いボタン・未知のブロックは出力しない', () => {
     const input = loadFixture('kitchen-sink');
-    input.body.rows[0].columns[0].blocks.push({ id: 'b_unknown01', type: 'video', values: {} });
+    input.body.rows[0].columns[0].blocks.push({ id: 'b_unknown01', type: 'countdown', values: {} });
     const html = renderHtml(input);
     expect(html).not.toContain('空の画像');
     expect(html).not.toContain('https://example.com/empty');
-    expect(html).not.toContain('video');
+    expect(html).not.toContain('countdown');
   });
 
   it('Outlook 用のフォントを指定できる', () => {

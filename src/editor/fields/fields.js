@@ -7,6 +7,8 @@ import { getIn, measureImage, setIn } from '../util.js';
 import { UPLOAD_TYPES, hasFiles, pickImage } from '../upload.js';
 import { qrSignature } from '../../core/blocks/qr.js';
 import { labelText } from '../../core/blocks/custom.js';
+import { youtubeThumbnail } from '../../core/blocks/video.js';
+import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
 
 /** @import { TemplateResult } from 'lit' */
 /** @import { Translate } from '../i18n.js' */
@@ -20,7 +22,7 @@ import { labelText } from '../../core/blocks/custom.js';
 /**
  * @typedef {Object} FieldSpec
  * @property {string} key values 内のパス（ドット区切り可）
- * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout' | 'qrcode' | 'list' | 'action' | 'element'} kind
+ * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout' | 'qrcode' | 'list' | 'action' | 'element' | 'videoUrl' | 'tableColumns' | 'tableInfo'} kind
  * @property {string} labelKey 辞書のキー（label があればそちらを使う）
  * @property {import('../../core/blocks/custom.js').Label} [label] そのまま表示する名前（カスタムブロック）
  * @property {string} [helpKey]
@@ -28,7 +30,7 @@ import { labelText } from '../../core/blocks/custom.js';
  * @property {{ min?: number, max?: number, step?: number, unit?: string, nullable?: boolean, choices?: Choice[], mergeTags?: boolean, on?: unknown, off?: unknown, placeholderKey?: string, placeholder?: import('../../core/blocks/custom.js').Label }} [options]
  * @property {FieldSpec[]} [fields] list: 1 件分の項目
  * @property {() => Record<string, unknown>} [itemDefault] list: 追加する項目の初期値
- * @property {import('../../core/blocks/custom.js').Label | ((item: Record<string, unknown>, index: number) => string)} [itemLabel] list: 各項目の見出し
+ * @property {import('../../core/blocks/custom.js').Label | ((item: Record<string, unknown>, index: number, t?: Translate) => string)} [itemLabel] list: 各項目の見出し（標準ブロックには t も渡す）
  * @property {(context: { values: Record<string, unknown>, blockId: string, locale: string }) => unknown} [run] action: 押したときの処理
  * @property {string} [tagName] element: カスタム要素のタグ名
  * @property {(values: any) => boolean} [visible] 条件付きで表示する
@@ -146,6 +148,105 @@ function control(spec, value, ctx, id) {
         />
         ${mergeTagMenu(id, spec, ctx)}
       </div>`;
+
+    case 'videoUrl': {
+      // 動画の URL。YouTube の URL なら、サムネイルが空（または前に自動で入れた YouTube の画像）のときに入れる
+      /** @param {string} url */
+      const fillThumbnail = (url) => {
+        const found = youtubeThumbnail(url);
+        const thumb = /** @type {any} */ (ctx.values).thumbnail ?? {};
+        if (!found || thumb.src === found.src) return;
+        if (thumb.src && !/^https:\/\/i\.ytimg\.com\//.test(thumb.src)) return;
+        change(sibling(spec.key, 'thumbnail'), { ...thumb, ...found, uploadData: null });
+      };
+      return html`<div class="with-menu">
+        <input
+          id=${id}
+          type="text"
+          inputmode="url"
+          placeholder="https://www.youtube.com/watch?v=…"
+          .value=${String(value ?? '')}
+          @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
+          @change=${(/** @type {Event} */ e) => fillThumbnail(inputValue(e))}
+        />
+        ${mergeTagMenu(id, spec, ctx)}
+      </div>`;
+    }
+
+    case 'tableInfo':
+      // セルはキャンバス上で直接編集する。ここでは行と列の数と操作の案内だけ出す
+      return html`<p class="help" id=${id}>
+        ${t('table.size', {
+          rows: Array.isArray(value) ? value.length : 0,
+          columns: Array.isArray(/** @type {any} */ (ctx.values).columns)
+            ? /** @type {any} */ (ctx.values).columns.length
+            : 0,
+        })}
+        ${t('table.editHint')}
+      </p>`;
+
+    case 'tableColumns': {
+      // 列ごとの幅（%。空なら自動）と揃え。列の数は表の操作（キャンバスのツールバー）で変える
+      const columns = /** @type {{ width: number | null, align: string }[]} */ (
+        Array.isArray(value) ? value : []
+      );
+      /** @param {number} i @param {Record<string, unknown>} patch @param {boolean} [merge] */
+      const set = (i, patch, merge = false) =>
+        change(
+          spec.key,
+          columns.map((c, j) => (j === i ? { ...c, ...patch } : c)),
+          { merge },
+        );
+      return html`<div class="table-columns" id=${id}>
+        ${columns.map(
+          (column, i) =>
+            html`<div class="table-column" data-column=${i}>
+              <span class="table-column-name">${t('table.column', { n: i + 1 })}</span>
+              <div class="number">
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  aria-label=${`${t('table.column', { n: i + 1 })} ${t('field.width')}`}
+                  placeholder=${t('table.auto')}
+                  .value=${column.width == null ? '' : String(column.width)}
+                  @input=${(/** @type {Event} */ e) => {
+                    const raw = inputValue(e).trim();
+                    const n = Number(raw);
+                    if (raw === '') set(i, { width: null }, true);
+                    else if (Number.isFinite(n) && n >= 1 && n <= 100)
+                      set(i, { width: Math.round(n) }, true);
+                  }}
+                />
+                <span class="unit">%</span>
+              </div>
+              <div
+                class="segmented"
+                role="group"
+                aria-label=${`${t('table.column', { n: i + 1 })} ${t('field.align')}`}
+              >
+                ${[
+                  ['left', '⇤'],
+                  ['center', '↔'],
+                  ['right', '⇥'],
+                ].map(
+                  ([align, icon]) =>
+                    html`<button
+                      type="button"
+                      title=${t(`align.${align}`)}
+                      aria-label=${t(`align.${align}`)}
+                      aria-pressed=${column.align === align ? 'true' : 'false'}
+                      @click=${() => set(i, { align })}
+                    >
+                      ${icon}
+                    </button>`,
+                )}
+              </div>
+            </div>`,
+        )}
+        <p class="help">${t('table.columnsHelp', { max: TABLE_MAX_COLUMNS })}</p>
+      </div>`;
+    }
 
     case 'textarea':
     case 'rawhtml':
@@ -580,7 +681,7 @@ function control(spec, value, ctx, id) {
       const set = (next) => change(spec.key, next);
       const title = (/** @type {Record<string, unknown>} */ item, /** @type {number} */ i) =>
         typeof spec.itemLabel === 'function'
-          ? spec.itemLabel(item, i)
+          ? spec.itemLabel(item, i, t)
           : `${spec.itemLabel ? text(ctx, undefined, spec.itemLabel) : t('list.item')} ${i + 1}`;
       return html`<div class="list" id=${id}>
         ${items.map((item, i) => {

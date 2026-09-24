@@ -1,6 +1,5 @@
 node_modules/
 dist/
-types/
 coverage/
 test/**/__screenshots__/
 .vitest/

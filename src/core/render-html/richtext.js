@@ -127,3 +127,16 @@ export function renderRichText(html, ctx) {
     }
   });
 }
+
+/**
+ * 段落を持たないリッチテキスト（表のセルなど。sanitizeInlineHtml の出力）をメール用 HTML にする
+ * @param {string} html
+ * @param {{ linkColor: string }} ctx
+ * @returns {string}
+ */
+export function renderInlineRichText(html, ctx) {
+  return inline(
+    parseHtml(html),
+    /** @type {RichTextContext} */ ({ ...ctx, style: /** @type {any} */ (null) }),
+  );
+}

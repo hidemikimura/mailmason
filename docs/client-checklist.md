@@ -5,7 +5,7 @@ Mailmason の出力 HTML は、既知の落とし穴を `test/core/compat.test.j
 ## サンプルを用意する
 
 ```sh
-npm run samples                                   # テスト用フィクスチャ（basic / kitchen-sink）
+npm run samples                                   # テスト用フィクスチャ（basic / kitchen-sink / content-blocks）
 npm run samples -- path/to/template.json          # 自分のテンプレート（複数指定可）
 npm run samples -- --icons https://cdn.example.com/icons   # SNS アイコン PNG の置き場所を指定
 ```
@@ -51,7 +51,7 @@ Gmail から送る場合は、Google アカウントで 2 段階認証を有効�
 ### 2. 送る
 
 ```sh
-npm run samples:send                                  # 既定の 4 通（basic / newsletter / announcement / kitchen-sink）
+npm run samples:send                                  # 既定の 5 通（basic / newsletter / announcement / kitchen-sink / content-blocks）
 npm run samples:send -- path/to/template.json          # 自分のテンプレート（複数指定可）
 npm run samples:send -- --to someone@example.com       # 宛先を一時的に変える
 npm run samples:send -- --dry-run                      # 送らずに samples/sent/*.eml を書き出す
@@ -93,6 +93,10 @@ npm run samples:send -- --embed                        # 画像を公開 URL で
 - [ ] ダークモードで文字が読める（背景色・文字色の組み合わせ）
 - [ ] Gmail で「メッセージの一部が表示されていません」と省略されない（minify 後 102KB 未満）
 - [ ] テキストパート（`.txt`）が読みやすく、URL が途中で切れていない
+- [ ] 表の罫線・見出し行・しま模様が崩れず、スマホでも表のまま読める
+- [ ] 動画のサムネイルに再生ボタンが重なり、クリックで動画のページが開く（Outlook（Windows）でも背景のサムネイルが出る。背景画像を出さないメールソフトでは黒地に再生ボタン）。スマホで高さが縮む
+- [ ] 画像ギャラリーが格子に並び、「スマホでは 1 列」の設定では画面幅いっぱいに縦に並ぶ
+- [ ] ボタンの並び・メニューが 1 行に並び、ボタンの並びはスマホで縦に並ぶ（間隔が空く）
 
 ## 確認結果の記録
 

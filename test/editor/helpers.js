@@ -1,6 +1,7 @@
 import '../../src/index.js';
 import basicJson from '../fixtures/templates/basic.json';
 import kitchenSinkJson from '../fixtures/templates/kitchen-sink.json';
+import contentBlocksJson from '../fixtures/templates/content-blocks.json';
 
 /** @typedef {import('../../src/index.js').MailmasonEditor} MailmasonEditor */
 
@@ -29,6 +30,7 @@ function withLocalImages(template) {
       node.forEach(walk);
     } else if (node && typeof node === 'object') {
       if (typeof node.src === 'string' && node.src && 'naturalWidth' in node) {
+        // （画像ギャラリーの項目・動画のサムネイルも同じ形）
         node.src = imageUrl(node.naturalWidth ?? 600, node.naturalHeight ?? 300);
       } else if (typeof node.src === 'string' && node.src && 'generated' in node) {
         node.src = imageUrl(node.size ?? 160, node.size ?? 160); // QR コード
@@ -44,6 +46,7 @@ function withLocalImages(template) {
 export const fixtures = {
   basic: withLocalImages(basicJson),
   kitchenSink: withLocalImages(kitchenSinkJson),
+  contentBlocks: withLocalImages(contentBlocksJson),
 };
 
 /** 次のフレームまで待つ（子コンポーネントの更新と mm-change の通知を待つため） */

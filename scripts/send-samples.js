@@ -25,6 +25,7 @@ const DEFAULT_TEMPLATES = [
   'skills/mailmason-templates/examples/newsletter.json',
   'skills/mailmason-templates/examples/announcement.json',
   'test/fixtures/templates/kitchen-sink.json',
+  'test/fixtures/templates/content-blocks.json',
 ];
 
 const DEFAULT_IMAGE_BASE = 'https://hidemikimura.github.io/mailmason/demo/';

@@ -1,5 +1,4 @@
 dist/
-types/
 coverage/
 package-lock.json
 test/**/__snapshots__/

@@ -11,9 +11,27 @@ import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
 import { chromeStyles, renderChrome } from './chrome.js';
 import { define } from '../context.js';
 import './mm-text-editor.js';
+import './mm-table-editor.js';
 
 /** キャンバス上で直接編集できるブロック */
-export const EDITABLE_TYPES = new Set(['text', 'imageText']);
+export const EDITABLE_TYPES = new Set(['text', 'imageText', 'table']);
+
+/**
+ * クリックした位置が表ブロックのどのセルか（出力 HTML の table.mm-table の中）
+ * @param {Event} event
+ * @returns {{ row: number, column: number } | null}
+ */
+function tableCellOf(event) {
+  for (const node of event.composedPath()) {
+    if (!(node instanceof HTMLTableCellElement)) continue;
+    const table = node.closest('table');
+    const row = /** @type {HTMLTableRowElement | null} */ (node.parentElement);
+    if (table?.classList.contains('mm-table') && row) {
+      return { row: row.rowIndex, column: node.cellIndex };
+    }
+  }
+  return null;
+}
 
 /** @import { Block, BodySettings } from '../../core/model/types.js' */
 /** @import { EditorContext } from '../context.js' */
@@ -30,6 +48,7 @@ export class MmBlock extends LitElement {
     selected: { type: Boolean, reflect: true },
     editing: { type: Boolean, reflect: true },
     upload: { attribute: false },
+    _editCell: { state: true },
   };
 
   static styles = [
@@ -164,6 +183,8 @@ export class MmBlock extends LitElement {
     this.editing = false;
     /** @type {import('../upload.js').UploadState | null} このブロックのアップロードの状態 */
     this.upload = null;
+    /** @type {{ row: number, column: number } | null} 表の直接編集を始めるセル */
+    this._editCell = null;
     this.addEventListener('click', (event) => {
       event.stopPropagation();
       // キャンバス内のリンクで画面遷移しないようにする
@@ -172,12 +193,15 @@ export class MmBlock extends LitElement {
       }
       if (this.editing) return;
       // 選択中のテキストをもう一度クリックすると直接編集に入る
-      if (this.selected && EDITABLE_TYPES.has(this.block.type)) this.ctx.edit(this.block.id);
-      else this.ctx.store.select(this.block.id);
+      if (this.selected && EDITABLE_TYPES.has(this.block.type)) {
+        this._editCell = tableCellOf(event);
+        this.ctx.edit(this.block.id);
+      } else this.ctx.store.select(this.block.id);
     });
     this.addEventListener('dblclick', (event) => {
       event.stopPropagation();
       if (!this.editing && EDITABLE_TYPES.has(this.block.type)) {
+        this._editCell = tableCellOf(event);
         this.ctx.store.select(this.block.id);
         this.ctx.edit(this.block.id);
       }
@@ -196,10 +220,22 @@ export class MmBlock extends LitElement {
     else highlightMergeTags(this, content, this.ctx.delimiters);
   }
 
-  /** 直接編集の表示（テキスト・画像＋テキスト） */
-  _renderEditor() {
+  /**
+   * 直接編集の表示（テキスト・画像＋テキスト・表）
+   * @param {number} contentWidth
+   */
+  _renderEditor(contentWidth) {
     const { block, body, ctx } = this;
     const values = /** @type {any} */ (block.values);
+    if (block.type === 'table') {
+      return html`<mm-table-editor
+        .block=${block}
+        .body=${body}
+        .ctx=${ctx}
+        .width=${contentWidth}
+        .initialCell=${this._editCell}
+      ></mm-table-editor>`;
+    }
     if (block.type === 'text') {
       return html`<mm-text-editor
         .value=${values.html}
@@ -294,7 +330,7 @@ export class MmBlock extends LitElement {
         style=${styleMap({ width: size })}
       />`;
     } else if (this.editing && def && EDITABLE_TYPES.has(block.type)) {
-      inner = this._renderEditor();
+      inner = this._renderEditor(contentWidth);
     } else if (!def) {
       inner = html`<div class="placeholder">${label}<br />${ctx.t('placeholder.unknown')}</div>`;
     } else if (failed) {

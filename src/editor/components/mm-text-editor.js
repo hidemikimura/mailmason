@@ -2,9 +2,10 @@
 // - 入力のたびに許可タグへ整えてストアに反映する（mergeKey で 1 つの履歴にまとめる）
 // - 書式は document.execCommand で付け、結果の揺れは正規化器（sanitizeHtml）で吸収する
 // - 自分が出した値以外（Undo など）が来たときだけ中身を置き換え、入力中のキャレットを動かさない
+// - inline モード（表のセル）: 段落・見出し・リスト・揃えを使わず、Enter は改行、Tab はセルの移動
 import { LitElement, css, html, nothing } from 'lit';
 import { styleMap } from 'lit/directives/style-map.js';
-import { sanitizeHtml } from '../../core/richtext/sanitize.js';
+import { sanitizeHtml, sanitizeInlineHtml } from '../../core/richtext/sanitize.js';
 import { escapeText } from '../../core/richtext/entities.js';
 import { patchAt } from '../util.js';
 import { findLink, getRangeIn, placeCaretAtEnd, restoreRange } from '../richtext/selection.js';
@@ -47,6 +48,9 @@ export class MmTextEditor extends LitElement {
     textStyle: { attribute: false },
     linkColor: { attribute: false },
     ctx: { attribute: false },
+    inline: { type: Boolean, reflect: true },
+    makePatch: { attribute: false },
+    placeholder: { attribute: false },
     _linkOpen: { state: true },
     _linkValue: { state: true },
     _colorOpen: { state: true },
@@ -189,6 +193,12 @@ export class MmTextEditor extends LitElement {
     this.linkColor = '#0066cc';
     /** @type {EditorContext} */
     this.ctx = /** @type {any} */ (null);
+    /** 段落を持たないテキスト（表のセル）として編集する */
+    this.inline = false;
+    /** @type {((html: string) => Record<string, unknown>) | null} 値からパッチを作る（省略時は field のパス） */
+    this.makePatch = null;
+    /** @type {string | null} 空のときの表示（省略時は「テキストが空です」） */
+    this.placeholder = null;
     this._linkOpen = false;
     /** リンク入力欄の初期値（選択範囲に既存のリンクがあればその URL） */
     this._linkValue = '';
@@ -263,16 +273,22 @@ export class MmTextEditor extends LitElement {
     }
   }
 
+  /** @param {string} html */
+  _sanitize(html) {
+    const options = { delimiters: this.ctx.delimiters };
+    return this.inline ? sanitizeInlineHtml(html, options) : sanitizeHtml(html, options);
+  }
+
   /** 入力内容を整えてストアに送る */
   _commit() {
-    const clean = sanitizeHtml(this.editable.innerHTML, { delimiters: this.ctx.delimiters });
+    const clean = this._sanitize(this.editable.innerHTML);
     highlightMergeTags(this, this.editable, this.ctx.delimiters);
     if (clean === this._lastHtml) return;
     this._lastHtml = clean;
     this.ctx.store.dispatch({
       type: 'updateBlockValues',
       blockId: this.blockId,
-      patch: patchAt(this.field, clean),
+      patch: this.makePatch ? this.makePatch(clean) : patchAt(this.field, clean),
       mergeKey: `${this.blockId}:${this.field}`,
     });
   }
@@ -315,6 +331,28 @@ export class MmTextEditor extends LitElement {
       else this.ctx.store.undo();
       return;
     }
+    if (this.inline && event.key === 'Tab' && !mod && !event.altKey) {
+      // 表のセルの移動は親（mm-table-editor）に任せる
+      event.preventDefault();
+      event.stopPropagation();
+      this._commit();
+      this.dispatchEvent(
+        new CustomEvent('mm-cell-nav', {
+          detail: { direction: event.shiftKey ? -1 : 1 },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return;
+    }
+    if (this.inline && event.key === 'Enter' && !mod) {
+      // 段落を作らず改行にする
+      event.preventDefault();
+      event.stopPropagation();
+      document.execCommand('insertLineBreak');
+      this._commit();
+      return;
+    }
     if (mod && key === 'b') {
       event.preventDefault();
       this.exec('bold');
@@ -347,7 +385,13 @@ export class MmTextEditor extends LitElement {
     event.preventDefault();
     const html = data.getData('text/html');
     const text = data.getData('text/plain');
-    const clean = html ? sanitizeHtml(html, { delimiters: this.ctx.delimiters }) : textToHtml(text);
+    const clean = this.inline
+      ? html
+        ? this._sanitize(html)
+        : escapeText(text.replace(/\r\n?/g, '\n')).replace(/\n/g, '<br>')
+      : html
+        ? sanitizeHtml(html, { delimiters: this.ctx.delimiters })
+        : textToHtml(text);
     if (clean) document.execCommand('insertHTML', false, clean);
     this._commit();
   }
@@ -439,22 +483,35 @@ export class MmTextEditor extends LitElement {
       '--mm-link-color': this.linkColor,
     };
 
+    const blockTools = this.inline
+      ? nothing
+      : html`<select
+            aria-label=${t('text.block')}
+            @change=${(/** @type {Event} */ e) => {
+              const select = /** @type {HTMLSelectElement} */ (e.target);
+              this.exec('formatBlock', `<${select.value}>`);
+              select.value = '';
+            }}
+          >
+            <option value="">${t('text.block')}</option>
+            <option value="p">${t('text.paragraph')}</option>
+            <option value="h1">${t('text.h1')}</option>
+            <option value="h2">${t('text.h2')}</option>
+            <option value="h3">${t('text.h3')}</option>
+          </select>
+          <span class="sep"></span>`;
+    const paragraphTools = this.inline
+      ? nothing
+      : html`${this._button('•', t('text.bulletList'), () => this.exec('insertUnorderedList'), 'ul')}
+          ${this._button('1.', t('text.numberedList'), () => this.exec('insertOrderedList'), 'ol')}
+          <span class="sep"></span>
+          ${this._button('⇤', t('align.left'), () => this.exec('justifyLeft'), 'left')}
+          ${this._button('↔', t('align.center'), () => this.exec('justifyCenter'), 'center')}
+          ${this._button('⇥', t('align.right'), () => this.exec('justifyRight'), 'right')}
+          <span class="sep"></span>`;
+
     return html`<div class="toolbar" role="toolbar" aria-label=${t('text.toolbar')}>
-        <select
-          aria-label=${t('text.block')}
-          @change=${(/** @type {Event} */ e) => {
-            const select = /** @type {HTMLSelectElement} */ (e.target);
-            this.exec('formatBlock', `<${select.value}>`);
-            select.value = '';
-          }}
-        >
-          <option value="">${t('text.block')}</option>
-          <option value="p">${t('text.paragraph')}</option>
-          <option value="h1">${t('text.h1')}</option>
-          <option value="h2">${t('text.h2')}</option>
-          <option value="h3">${t('text.h3')}</option>
-        </select>
-        <span class="sep"></span>
+        ${blockTools}
         ${this._button(html`<b>B</b>`, t('text.bold'), () => this.exec('bold'), 'bold')}
         ${this._button(html`<i>I</i>`, t('text.italic'), () => this.exec('italic'), 'italic')}
         ${this._button(html`<u>U</u>`, t('text.underline'), () => this.exec('underline'), 'underline')}
@@ -471,13 +528,7 @@ export class MmTextEditor extends LitElement {
           'color',
         )}
         <span class="sep"></span>
-        ${this._button('•', t('text.bulletList'), () => this.exec('insertUnorderedList'), 'ul')}
-        ${this._button('1.', t('text.numberedList'), () => this.exec('insertOrderedList'), 'ol')}
-        <span class="sep"></span>
-        ${this._button('⇤', t('align.left'), () => this.exec('justifyLeft'), 'left')}
-        ${this._button('↔', t('align.center'), () => this.exec('justifyCenter'), 'center')}
-        ${this._button('⇥', t('align.right'), () => this.exec('justifyRight'), 'right')}
-        <span class="sep"></span>
+        ${paragraphTools}
         ${this._button('⌫', t('text.clear'), () => this.exec('removeFormat'), 'clear')}
         ${
           ctx.mergeTags.length > 0
@@ -531,7 +582,7 @@ export class MmTextEditor extends LitElement {
         contenteditable="true"
         role="textbox"
         aria-multiline="true"
-        data-placeholder=${t('placeholder.text')}
+        data-placeholder=${this.placeholder ?? t('placeholder.text')}
         style=${styleMap(style)}
         @input=${() => this._commit()}
         @keydown=${this._onKeydown}

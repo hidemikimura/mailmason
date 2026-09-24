@@ -20,6 +20,21 @@ export const icons = {
     svg`<circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="m8 11 8-4M8 13l8 4"/>`,
   ),
   html: frame(svg`<path d="m9 8-4 4 4 4M15 8l4 4-4 4"/>`),
+  table: frame(
+    svg`<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M3.5 10h17M3.5 14.5h17M10 5v14"/>`,
+  ),
+  menu: frame(
+    svg`<path d="M3.5 12h4M10 12h4M16.5 12h4"/><path d="M8.7 9.5v5M15.2 9.5v5" opacity=".4"/>`,
+  ),
+  buttons: frame(
+    svg`<rect x="2.5" y="8.5" width="8.5" height="7" rx="2.5"/><rect x="13" y="8.5" width="8.5" height="7" rx="2.5"/>`,
+  ),
+  gallery: frame(
+    svg`<rect x="3.5" y="4" width="7.5" height="7" rx="1"/><rect x="13" y="4" width="7.5" height="7" rx="1"/><rect x="3.5" y="13" width="7.5" height="7" rx="1"/><rect x="13" y="13" width="7.5" height="7" rx="1"/>`,
+  ),
+  video: frame(
+    svg`<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z" fill="currentColor"/>`,
+  ),
   custom: frame(
     svg`<path d="M9 4h4v3a2 2 0 1 0 4 0V4h3v6h-3a2 2 0 1 0 0 4h3v6h-6v-3a2 2 0 1 0-4 0v3H4v-6h3a2 2 0 1 0 0-4H4V4z"/>`,
   ),

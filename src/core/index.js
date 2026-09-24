@@ -14,6 +14,7 @@ export { ROW_LAYOUTS, ROW_LAYOUT_NAMES, getLayoutSpans } from './model/layout.js
 export { BLOCK_TYPES } from './blocks/registry.js';
 export { SOCIAL_SERVICES } from './blocks/social.js';
 export { qrSignature, qrStatus } from './blocks/qr.js';
+export { youtubeVideoId, youtubeThumbnail } from './blocks/video.js';
 export { defineBlock } from './blocks/custom.js';
 export { componentKindOf, extractComponent, instantiateComponent } from './components.js';
 export { locateBlock, locateColumn, findRowIndex } from './model/tree.js';

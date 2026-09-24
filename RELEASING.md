@@ -24,7 +24,7 @@ npm version X.Y.Z --no-git-tag-version   # package.json と package-lock.json
 ```sh
 npm run check              # lint・整形・型・テスト（エディタは Chromium）
 npm run test:editor:all    # エディタを Chromium・Firefox・WebKit で
-npm run build && npm run build:types
+npm run build
 npm run docs:build
 npm pack --dry-run         # 同梱されるファイル（src・types・dist・skills など）
 ```
@@ -38,7 +38,7 @@ git add -A
 git commit -m "vX.Y.Z"
 git tag vX.Y.Z
 git push && git push --tags
-npm publish            # prepublishOnly で check・build・build:types を実行してから公開する
+npm publish            # prepublishOnly で check・build を実行してから公開する
 ```
 
 - `main` に push すると、ドキュメントサイトは GitHub Actions で自動的に更新される

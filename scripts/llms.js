@@ -35,7 +35,14 @@ const PAGES = [
     title: 'エディタの操作',
     path: '/guide/editing',
     source: 'docs/guide/editing.md',
-    summary: '画面の構成、追加・移動・テキスト編集、キーボード',
+    summary: '画面の構成、追加・移動・テキストと表の編集、キーボード',
+  },
+  {
+    section: 'ガイド',
+    title: 'ブロック',
+    path: '/guide/blocks',
+    source: 'docs/guide/blocks.md',
+    summary: '14 種類のブロックの用途と、表・動画・ギャラリーなどのメールソフトでの表示',
   },
   {
     section: 'ガイド',

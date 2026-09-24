@@ -80,7 +80,7 @@ describe('createBlock', () => {
   });
 
   it('未知の type は MailmasonError', () => {
-    expect(() => createBlock('video')).toThrow(MailmasonError);
+    expect(() => createBlock('countdown')).toThrow(MailmasonError);
   });
 });
 

@@ -40,6 +40,9 @@ template
    - `text` の `html` は許可したタグだけ（`p` `h1`〜`h3` `ul` `ol` `li` `br` `strong` `em` `u` `s` `a` `span`）。揃えは段落の `style="text-align:center"`、文字色は `<span style="color:#...">`。文字サイズやフォントはブロックの `fontSize` / `fontFamily` で指定する。
    - `image` は受信者が読める公開 URL を `src` に、内容を表す `alt` を必ず書く。実寸が分かれば `naturalWidth` / `naturalHeight` も書く（Outlook の崩れを防ぐ）。
    - 行動してほしいリンクは `button` にする（`label` と `href`）。
+   - 表は `table`。`cells` は行ごとのセルの配列で、各セルは段落を持たないリッチテキスト（`strong` `em` `u` `s` `a` `span` `br`。`p` 見出し リストは使わない）。`columns` は列ごとの `width`（%、`null` なら残りを等分）と `align`。1 行目は `headerRow` で見出しになる。レイアウトには使わず、スペック・料金・日程などのデータに使う。
+   - 複数のリンクを横に並べるときは `menu`（文字のリンク）か `buttons`（ボタン）、画像を格子に並べるときは `gallery` を使う（`items` の配列）。
+   - `video` はサムネイル画像（`thumbnail`）に再生ボタンを重ね、`url` の動画ページにリンクする。メールの中では再生できない。YouTube なら `https://i.ytimg.com/vi/<動画ID>/hqdefault.jpg`（480×360）をサムネイルに使える。
    - `type` にハイフンを含むブロック（例: `acme-coupon`）はアプリのカスタムブロック。値の形はアプリの定義で決まるので、既存のテンプレートにあるものを真似て書き、検査には `--blocks` で定義を渡す。
    - `qr` の画像はエディタが作ってアップロードするもの。JSON だけで作るときは `content` を書き、`src` は空のままにして、エディタで「QR コードを作成」してもらう（`src` が空の QR は出力されない）。
    - 配信停止リンクなど、人によって変わる値はマージタグ `{{key}}` で書く（使える項目は schema.md の「マージタグを使える項目」）。

@@ -105,3 +105,12 @@ export function richTextToPlain(html, options = {}) {
   }
   return paragraphs.filter((p) => p !== '').join('\n\n');
 }
+
+/**
+ * 段落を持たないリッチテキスト（表のセルなど。sanitizeInlineHtml の出力）をプレーンテキストにする
+ * @param {string} html
+ * @returns {string} <br> は改行
+ */
+export function inlineRichTextToPlain(html) {
+  return html ? richTextToPlain(`<p>${html}</p>`) : '';
+}

@@ -1,0 +1,416 @@
+{
+  "version": 1,
+  "body": {
+    "settings": {
+      "width": 600,
+      "backgroundColor": "#f4f4f4",
+      "contentBackgroundColor": "#ffffff",
+      "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "fontSize": 16,
+      "lineHeight": 1.6,
+      "textColor": "#333333",
+      "linkColor": "#0066cc",
+      "preheader": "動画と新作ギャラリーをお届けします",
+      "title": "冬のコレクション"
+    },
+    "rows": [
+      {
+        "id": "r_cb000001",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_cb000002",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_cb000003",
+                "type": "menu",
+                "values": {
+                  "items": [
+                    {
+                      "label": "新着",
+                      "href": "https://example.com/new"
+                    },
+                    {
+                      "label": "レディース",
+                      "href": "https://example.com/women"
+                    },
+                    {
+                      "label": "メンズ",
+                      "href": "https://example.com/men"
+                    },
+                    {
+                      "label": "セール",
+                      "href": "https://example.com/sale?u={{uid}}"
+                    }
+                  ],
+                  "separator": "|",
+                  "spacing": 12,
+                  "fontSize": 14,
+                  "fontWeight": "normal",
+                  "color": null,
+                  "separatorColor": "#c5cad1",
+                  "underline": false,
+                  "align": "center"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_cb000004",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_cb000005",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_cb000006",
+                "type": "video",
+                "values": {
+                  "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                  "thumbnail": {
+                    "src": "https://example.com/images/autumn-hero.jpg",
+                    "alt": "冬のコレクション紹介動画",
+                    "naturalWidth": 1200,
+                    "naturalHeight": 640,
+                    "uploadData": null
+                  },
+                  "playButton": "dark",
+                  "ratio": "16:9",
+                  "width": {
+                    "unit": "%",
+                    "value": 100
+                  },
+                  "align": "center"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_cb000007",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_cb000008",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_cb000009",
+                "type": "gallery",
+                "values": {
+                  "items": [
+                    {
+                      "image": {
+                        "src": "https://example.com/images/knit.jpg",
+                        "alt": "新作 1",
+                        "naturalWidth": 600,
+                        "naturalHeight": 600,
+                        "uploadData": null
+                      },
+                      "href": "https://example.com/products/1"
+                    },
+                    {
+                      "image": {
+                        "src": "https://example.com/images/coat.jpg",
+                        "alt": "新作 2",
+                        "naturalWidth": 600,
+                        "naturalHeight": 600,
+                        "uploadData": null
+                      },
+                      "href": ""
+                    },
+                    {
+                      "image": {
+                        "src": "https://example.com/images/item1.jpg",
+                        "alt": "新作 3",
+                        "naturalWidth": 400,
+                        "naturalHeight": 400,
+                        "uploadData": null
+                      },
+                      "href": ""
+                    },
+                    {
+                      "image": {
+                        "src": "https://example.com/images/item2.jpg",
+                        "alt": "新作 4",
+                        "naturalWidth": 400,
+                        "naturalHeight": 400,
+                        "uploadData": null
+                      },
+                      "href": ""
+                    }
+                  ],
+                  "columns": "3",
+                  "gap": 8,
+                  "stackOnMobile": true
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_cb000010",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_cb000011",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_cb000012",
+                "type": "table",
+                "values": {
+                  "cells": [
+                    ["サイズ", "着丈", "身幅"],
+                    ["S", "64 cm", "52 cm"],
+                    ["M", "67 cm", "55 cm"],
+                    [
+                      "L <span style=\"color:#b91c1c\">（残りわずか）</span>",
+                      "70 cm",
+                      "<strong>58 cm</strong>"
+                    ]
+                  ],
+                  "columns": [
+                    {
+                      "width": 40,
+                      "align": "left"
+                    },
+                    {
+                      "width": null,
+                      "align": "right"
+                    },
+                    {
+                      "width": null,
+                      "align": "right"
+                    }
+                  ],
+                  "headerRow": true,
+                  "headerBackgroundColor": "#f3f4f6",
+                  "headerColor": null,
+                  "borderColor": "#d0d7de",
+                  "borderWidth": 1,
+                  "cellPadding": 8,
+                  "striped": true,
+                  "stripeColor": "#f9fafb",
+                  "fontSize": 14,
+                  "color": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_cb000013",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_cb000014",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_cb000015",
+                "type": "buttons",
+                "values": {
+                  "items": [
+                    {
+                      "label": "オンラインストア",
+                      "href": "https://example.com/store",
+                      "backgroundColor": "#0066cc",
+                      "color": "#ffffff"
+                    },
+                    {
+                      "label": "店舗を探す",
+                      "href": "https://example.com/shops",
+                      "backgroundColor": "#e5e7eb",
+                      "color": "#111827"
+                    }
+                  ],
+                  "fontSize": 16,
+                  "fontWeight": "bold",
+                  "borderRadius": 4,
+                  "innerPadding": {
+                    "top": 12,
+                    "right": 24,
+                    "bottom": 12,
+                    "left": 24
+                  },
+                  "gap": 12,
+                  "equalWidth": false,
+                  "stackOnMobile": true,
+                  "align": "center"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "text": {
+    "mode": "auto",
+    "content": null,
+    "sourceHash": null
+  }
+}

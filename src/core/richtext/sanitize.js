@@ -383,3 +383,39 @@ export function sanitizeHtml(html, options = {}) {
   if (html === '') return '';
   return serializeNodes(sanitizeNodes(parseHtml(html), options));
 }
+
+/**
+ * 段落・リストを持たない 1 まとまりのリッチテキスト（表のセルなど）に整える。
+ * 段落・見出し・リスト項目は改行（<br>）で区切ったインラインの並びにする。整形済みの入力はそのまま返る（冪等）
+ * @param {string} html
+ * @param {SanitizeOptions} [options]
+ * @returns {string}
+ */
+export function sanitizeInlineHtml(html, options = {}) {
+  if (html === '') return '';
+  /** @type {RichNode[]} */
+  const out = [];
+  /** @param {RichNode[]} nodes */
+  const push = (nodes) => {
+    if (nodes.length === 0) return;
+    if (out.length > 0) out.push(BR());
+    out.push(...nodes);
+  };
+  /** @param {ElementNode} list */
+  const flattenList = (list) => {
+    for (const item of list.children) {
+      if (item.type !== 'element') continue;
+      const own = item.children.filter((c) => c.type === 'text' || !LIST_TAGS.has(c.tag));
+      push(own);
+      for (const c of item.children) {
+        if (c.type === 'element' && LIST_TAGS.has(c.tag)) flattenList(c);
+      }
+    }
+  };
+  for (const block of sanitizeNodes(parseHtml(html), options)) {
+    if (LIST_TAGS.has(block.tag)) flattenList(block);
+    else push(block.children);
+  }
+  // 見出しなどの揃えは持たない（セル単位の揃えは列の設定で決める）
+  return serializeNodes(out);
+}
