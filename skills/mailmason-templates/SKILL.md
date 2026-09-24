@@ -22,7 +22,7 @@ template
 │     └─ columns[]    数はレイアウトと同じ
 │        ├─ id, settings（背景色・余白・縦位置）
 │        └─ blocks[]  上から順に並ぶブロック
-│           ├─ id, type  text | image | button | divider | spacer | imageText | social | html
+│           ├─ id, type  text | image | button | divider | spacer | imageText | social | qr | html
 │           ├─ values    種類ごとの値
 │           ├─ style     { backgroundColor, padding }（既定の余白は 10px、spacer は 0）
 │           └─ hideOn    'mobile' | null
@@ -40,6 +40,8 @@ template
    - `text` の `html` は許可したタグだけ（`p` `h1`〜`h3` `ul` `ol` `li` `br` `strong` `em` `u` `s` `a` `span`）。揃えは段落の `style="text-align:center"`、文字色は `<span style="color:#...">`。文字サイズやフォントはブロックの `fontSize` / `fontFamily` で指定する。
    - `image` は受信者が読める公開 URL を `src` に、内容を表す `alt` を必ず書く。実寸が分かれば `naturalWidth` / `naturalHeight` も書く（Outlook の崩れを防ぐ）。
    - 行動してほしいリンクは `button` にする（`label` と `href`）。
+   - `type` にハイフンを含むブロック（例: `acme-coupon`）はアプリのカスタムブロック。値の形はアプリの定義で決まるので、既存のテンプレートにあるものを真似て書き、検査には `--blocks` で定義を渡す。
+   - `qr` の画像はエディタが作ってアップロードするもの。JSON だけで作るときは `content` を書き、`src` は空のままにして、エディタで「QR コードを作成」してもらう（`src` が空の QR は出力されない）。
    - 配信停止リンクなど、人によって変わる値はマージタグ `{{key}}` で書く（使える項目は schema.md の「マージタグを使える項目」）。
 5. 検査する（下記）。警告が 0 件になるまで直す。
 6. 必要なら HTML とテキストを書き出して内容を確かめる。
@@ -56,6 +58,7 @@ node <このスキルのフォルダ>/scripts/validate.mjs template.json --html 
 - 中身が空で出力されないブロックや、代替テキストの無い画像を「注意」として出す
 - スキーマに合わない値・未知のキー・重複 ID などの警告を出す（警告があると終了コード 1）
 - `--values values.json` を付けると、マージタグに値を入れて書き出す
+- `--blocks blocks.mjs` でカスタムブロックの定義（配列を default か `blocks` で export するモジュール）を渡す
 
 スクリプトを使えないときは、同じことをコードで確かめます。
 

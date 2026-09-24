@@ -63,18 +63,21 @@ function collectStrings(value, out) {
 }
 
 /**
- * @param {Record<string, unknown>} values
+ * パスの値を取り出す。`items[].name` のように `[]` を付けると配列の各要素をたどる
+ * @param {unknown} values
  * @param {string} path ドット区切り
  * @returns {unknown}
  */
 function getByPath(values, path) {
-  /** @type {unknown} */
-  let current = values;
-  for (const key of path.split('.')) {
-    if (!isPlainObject(current)) return undefined;
-    current = current[key];
+  const [head, ...rest] = path.split('.');
+  if (!isPlainObject(values)) return undefined;
+  if (head.endsWith('[]')) {
+    const list = values[head.slice(0, -2)];
+    if (!Array.isArray(list)) return undefined;
+    return rest.length ? list.map((item) => getByPath(item, rest.join('.'))) : list;
   }
-  return current;
+  const value = values[head];
+  return rest.length ? getByPath(value, rest.join('.')) : value;
 }
 
 /**
@@ -87,11 +90,12 @@ function getByPath(values, path) {
 /**
  * テンプレート全体で使われているマージタグを列挙する
  * @param {Template} template
- * @param {{ delimiters?: MergeTagDelimiters }} [options]
+ * @param {{ delimiters?: MergeTagDelimiters, blocks?: readonly import('./blocks/types.js').CoreBlockDef[] | null }} [options]
+ *   blocks: カスタムブロックの定義
  * @returns {MergeTagUsage[]}
  */
 export function findMergeTags(template, options = {}) {
-  const { delimiters = DEFAULT_DELIMITERS } = options;
+  const { delimiters = DEFAULT_DELIMITERS, blocks = null } = options;
   /** @type {MergeTagUsage[]} */
   const usages = [];
   for (const field of /** @type {const} */ (['preheader', 'title'])) {
@@ -102,7 +106,7 @@ export function findMergeTags(template, options = {}) {
   for (const row of template.body.rows) {
     for (const column of row.columns) {
       for (const block of column.blocks) {
-        const def = getBlockDef(block.type);
+        const def = getBlockDef(block.type, blocks);
         if (!def) continue;
         for (const field of def.mergeTagFields) {
           /** @type {string[]} */

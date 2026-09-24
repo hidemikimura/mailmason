@@ -19,7 +19,12 @@
         "layout": "1",
         "settings": {
           "backgroundColor": null,
-          "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
           "columnGap": 16,
           "stackOnMobile": true,
           "hideOn": null
@@ -29,7 +34,12 @@
             "id": "c_header01",
             "settings": {
               "backgroundColor": null,
-              "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
               "verticalAlign": "top"
             },
             "blocks": [
@@ -40,14 +50,23 @@
                   "src": "https://example.com/images/banner.png",
                   "alt": "秋の新作",
                   "href": "https://example.com/?utm_source=mail",
-                  "width": { "unit": "%", "value": 100 },
+                  "width": {
+                    "unit": "%",
+                    "value": 100
+                  },
                   "align": "center",
                   "naturalWidth": 1200,
-                  "naturalHeight": 600
+                  "naturalHeight": 600,
+                  "uploadData": null
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+                  "padding": {
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0,
+                    "left": 0
+                  }
                 },
                 "hideOn": null
               }
@@ -60,7 +79,12 @@
         "layout": "1",
         "settings": {
           "backgroundColor": null,
-          "padding": { "top": 24, "right": 24, "bottom": 8, "left": 24 },
+          "padding": {
+            "top": 24,
+            "right": 24,
+            "bottom": 8,
+            "left": 24
+          },
           "columnGap": 16,
           "stackOnMobile": true,
           "hideOn": null
@@ -70,7 +94,12 @@
             "id": "c_body0001",
             "settings": {
               "backgroundColor": null,
-              "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
               "verticalAlign": "top"
             },
             "blocks": [
@@ -86,7 +115,12 @@
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 }
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
                 },
                 "hideOn": null
               },
@@ -101,13 +135,23 @@
                   "fontSize": 16,
                   "fontWeight": "bold",
                   "borderRadius": 6,
-                  "innerPadding": { "top": 14, "right": 32, "bottom": 14, "left": 32 },
+                  "innerPadding": {
+                    "top": 14,
+                    "right": 32,
+                    "bottom": 14,
+                    "left": 32
+                  },
                   "width": "auto",
                   "align": "center"
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 }
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
                 },
                 "hideOn": null
               }
@@ -120,7 +164,12 @@
         "layout": "1:1",
         "settings": {
           "backgroundColor": "#fafafa",
-          "padding": { "top": 16, "right": 24, "bottom": 16, "left": 24 },
+          "padding": {
+            "top": 16,
+            "right": 24,
+            "bottom": 16,
+            "left": 24
+          },
           "columnGap": 16,
           "stackOnMobile": true,
           "hideOn": null
@@ -130,7 +179,12 @@
             "id": "c_items001",
             "settings": {
               "backgroundColor": null,
-              "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
               "verticalAlign": "top"
             },
             "blocks": [
@@ -143,7 +197,8 @@
                     "alt": "ニットカーディガン",
                     "href": "https://example.com/items/1",
                     "naturalWidth": 400,
-                    "naturalHeight": 400
+                    "naturalHeight": 400,
+                    "uploadData": null
                   },
                   "imagePosition": "left",
                   "imageWidthPercent": 40,
@@ -151,7 +206,12 @@
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 }
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
                 },
                 "hideOn": null
               }
@@ -161,7 +221,12 @@
             "id": "c_items002",
             "settings": {
               "backgroundColor": null,
-              "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
               "verticalAlign": "top"
             },
             "blocks": [
@@ -174,7 +239,8 @@
                     "alt": "ウールコート",
                     "href": "https://example.com/items/2",
                     "naturalWidth": 400,
-                    "naturalHeight": 400
+                    "naturalHeight": 400,
+                    "uploadData": null
                   },
                   "imagePosition": "left",
                   "imageWidthPercent": 40,
@@ -182,7 +248,12 @@
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 }
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
                 },
                 "hideOn": null
               }
@@ -195,7 +266,12 @@
         "layout": "1",
         "settings": {
           "backgroundColor": null,
-          "padding": { "top": 8, "right": 24, "bottom": 24, "left": 24 },
+          "padding": {
+            "top": 8,
+            "right": 24,
+            "bottom": 24,
+            "left": 24
+          },
           "columnGap": 16,
           "stackOnMobile": true,
           "hideOn": null
@@ -205,7 +281,12 @@
             "id": "c_footer01",
             "settings": {
               "backgroundColor": null,
-              "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
               "verticalAlign": "top"
             },
             "blocks": [
@@ -221,7 +302,12 @@
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 }
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
                 },
                 "hideOn": null
               },
@@ -230,8 +316,14 @@
                 "type": "social",
                 "values": {
                   "items": [
-                    { "service": "x", "url": "https://x.com/example" },
-                    { "service": "instagram", "url": "https://instagram.com/example" }
+                    {
+                      "service": "x",
+                      "url": "https://x.com/example"
+                    },
+                    {
+                      "service": "instagram",
+                      "url": "https://instagram.com/example"
+                    }
                   ],
                   "iconSize": 32,
                   "align": "center",
@@ -239,17 +331,29 @@
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 }
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
                 },
                 "hideOn": null
               },
               {
                 "id": "b_space001",
                 "type": "spacer",
-                "values": { "height": 16 },
+                "values": {
+                  "height": 16
+                },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 0, "right": 0, "bottom": 0, "left": 0 }
+                  "padding": {
+                    "top": 0,
+                    "right": 0,
+                    "bottom": 0,
+                    "left": 0
+                  }
                 },
                 "hideOn": null
               },
@@ -265,7 +369,12 @@
                 },
                 "style": {
                   "backgroundColor": null,
-                  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 }
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
                 },
                 "hideOn": null
               }
@@ -275,5 +384,9 @@
       }
     ]
   },
-  "text": { "mode": "auto", "content": null, "sourceHash": null }
+  "text": {
+    "mode": "auto",
+    "content": null,
+    "sourceHash": null
+  }
 }

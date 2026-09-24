@@ -5,6 +5,7 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { HTML_SIZE_WARNING_BYTES, renderHtml } from '../../core/render-html/index.js';
 import { renderText } from '../../core/render-text/index.js';
+import { escapeText } from '../../core/richtext/entities.js';
 import { textSourceHash } from '../../core/text-part.js';
 import { replaceMergeTags } from '../../core/merge-tags.js';
 import { mergeTagValues } from '../util.js';
@@ -242,7 +243,9 @@ export class MmPreview extends LitElement {
   /** 出力の作り方を決めるオプション（変わったらすぐ作り直す） */
   _key() {
     const { htmlOptions, locale, delimiters } = this.ctx;
-    return JSON.stringify([htmlOptions, locale, delimiters, this._values()]);
+    // カスタムブロックの定義は関数を含むので type だけを比べる
+    const options = { ...htmlOptions, blocks: htmlOptions.blocks?.map((def) => def.type) ?? null };
+    return JSON.stringify([options, locale, delimiters, this._values()]);
   }
 
   /** 出力を作る */
@@ -250,8 +253,19 @@ export class MmPreview extends LitElement {
     this._cancel();
     const { template, ctx } = this;
     const values = this._values();
-    const textOptions = { locale: ctx.locale, mergeTagDelimiters: ctx.delimiters };
-    const output = renderHtml(template, { ...ctx.htmlOptions, mergeValues: values });
+    const textOptions = {
+      locale: ctx.locale,
+      mergeTagDelimiters: ctx.delimiters,
+      blocks: ctx.blocks,
+    };
+    let output;
+    try {
+      output = renderHtml(template, { ...ctx.htmlOptions, mergeValues: values });
+    } catch (error) {
+      // カスタムブロックの renderHtml の例外などでプレビューを止めない
+      console.error('[mailmason] プレビューを作れませんでした', error);
+      output = `<p style="font-family:sans-serif;color:#b91c1c;padding:16px">${escapeText(String(error))}</p>`;
+    }
     this._output = {
       body: template.body,
       key: this._key(),
@@ -343,7 +357,7 @@ export class MmPreview extends LitElement {
   /** 自動生成のテキストを元に手編集を始める */
   _startEditing() {
     const { template, ctx } = this;
-    const options = { locale: ctx.locale, mergeTagDelimiters: ctx.delimiters };
+    const options = { locale: ctx.locale, mergeTagDelimiters: ctx.delimiters, blocks: ctx.blocks };
     ctx.store.dispatch({
       type: 'setTextPart',
       // 保存するのは差し込み前のテキスト（マージタグのまま）
@@ -371,6 +385,7 @@ export class MmPreview extends LitElement {
       sourceHash: textSourceHash(template, {
         locale: ctx.locale,
         mergeTagDelimiters: ctx.delimiters,
+        blocks: ctx.blocks,
       }),
     });
   }

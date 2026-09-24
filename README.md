@@ -7,7 +7,7 @@ Lit ベースのノーコード HTML メールエディタです。行×カラ�
 
 **ドキュメントとデモ: https://hidemikimura.github.io/mailmason/**
 
-> v0.2（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
+> v0.3（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
 
 ## インストール
 
@@ -21,10 +21,10 @@ Lit（3.3 以上）は peer dependency です。バンドラーを使わない�
 <!-- ES モジュール版 -->
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.2/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.3/dist/mailmason.bundle.js"
 ></script>
 <!-- 従来の script タグ版（グローバル変数 Mailmason） -->
-<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.2/dist/mailmason.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.3/dist/mailmason.iife.js"></script>
 ```
 
 動作環境: Chrome・Edge・Firefox・Safari の最新版。画面幅は 1024px 以上を想定しています（それより狭いと、パレットと設定パネルはツールバーのボタンで開閉する重ね表示になります）。
@@ -94,7 +94,13 @@ const { html, text } = editor.export({ html: { minify: true } }); // 配信用�
 
 プレビュー: ツールバーの「プレビュー」で、配信用 HTML を PC（900px）・スマホ（375px）の幅で確認できます。差し込み変数は `sample`（無ければ `fallback`）の値で表示します。「テキスト」タブではテキストパートを確認でき、「編集する」で手直しできます。手直しの後にメール本文を変えると、テキストを確認するよう警告を出します（`mm-warning` の `stale-text`）。
 
-画像のアップロード: `onImageUpload` を設定すると、画像の設定欄の「アップロード…」ボタン、設定欄やキャンバスへのファイルのドロップ（画像ブロックの上なら差し替え、行間やカラムなら新しい画像ブロック）、画像の貼り付け（`Ctrl/⌘+V`）でローカルの画像を使えます。エディタは画像を保存しないため、フックでサーバーなどに置いて公開 URL を返してください（data URL の画像は Gmail や Outlook で表示されません）。形式は PNG・JPEG・GIF で、実寸はアップロード前に手元で測ります。失敗したときは設定欄に理由を出し、`mm-warning`（`image-upload-failed` / `image-upload-type` / `image-upload-size`）を発火します。
+画像のアップロード: `onImageUpload` を設定すると、画像の設定欄の「アップロード…」ボタン、設定欄やキャンバスへのファイルのドロップ（画像ブロックの上なら差し替え、行間やカラムなら新しい画像ブロック）、画像の貼り付け（`Ctrl/⌘+V`）でローカルの画像を使えます。エディタは画像を保存しないため、フックでサーバーなどに置いて公開 URL（または `{ url, data }`。`data` は任意のオブジェクトで、ブロックの `uploadData` として JSON に保存されます）を返してください（data URL の画像は Gmail や Outlook で表示されません）。形式は PNG・JPEG・GIF で、実寸はアップロード前に手元で測ります。失敗したときは設定欄に理由を出し、`mm-warning`（`image-upload-failed` / `image-upload-type` / `image-upload-size`）を発火します。
+
+コンポーネント: 行やブロックに名前を付けて保存し（`onSaveComponent`、保存先はアプリ）、パレットの「保存済み」から別のメールに複製して入れられます（`components`）。入れた後は元と連動しません。
+
+カスタムブロック: `defineBlock()` で設定項目（テキスト・画像・リスト・外部データを入れるボタン・独自の入力欄など）と出力の関数を定義し、`editor.blocks` とサーバーの `renderHtml(template, { blocks })` に渡すと、アプリ独自のブロックを使えます。詳しくは[ドキュメント](https://hidemikimura.github.io/mailmason/guide/custom-blocks)を参照してください。
+
+QR コード: `onImageUpload` を設定すると QR コードのブロックが使えます。内容（URL など）を入れて「QR コードを作成」を押すと、エディタが PNG を作ってフックでアップロードし、返った URL を画像にします。作成後に内容や色を変えると作り直しを促します（書き出し時は `mm-warning` の `qr-stale`）。
 
 操作: パレットの項目はキャンバスへドラッグして置けます（クリックでも追加できます）。選択中の行・ブロックは、上に出るラベル（つまみ）をドラッグして移動できます。ブロックを行の上下端に落とすと、新しい行になります。
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { canvasBlocks, deep, fixtures, frame, mount } from './helpers.js';
+import { canvasBlocks, deep, fixtures, frame, mount, typeInto } from './helpers.js';
 
 /** @typedef {import('../../src/index.js').MailmasonEditor} MailmasonEditor */
 
@@ -197,6 +197,79 @@ describe('画像のアップロード', () => {
     await vi.waitFor(() => expect(calls).toHaveLength(1));
     calls[0].resolve({ src: 'https://cdn.example.com/a.png', alt: '新作の写真' });
     await vi.waitFor(() => expect(blockValues(el, 'b_banner01').alt).toBe('新作の写真'));
+  });
+
+  it('フックが { url, data } を返すと、data を uploadData に保存する（差し替えで置き換え、URL の手入力で消す）', async () => {
+    const { el, calls } = await setup();
+    el.select('b_banner01');
+    await frame();
+    const drop = async () =>
+      imageField(el)
+        .querySelector('.image')
+        ?.dispatchEvent(dragEvent('drop', transfer([await pngFile(10, 10)])));
+
+    await drop();
+    await vi.waitFor(() => expect(calls).toHaveLength(1));
+    const data = { id: 'img_1', key: 'uploads/2026/a.png', tags: ['autumn'] };
+    calls[0].resolve({ url: 'https://cdn.example.com/a.png', data });
+    await vi.waitFor(() =>
+      expect(blockValues(el, 'b_banner01').src).toBe('https://cdn.example.com/a.png'),
+    );
+    expect(blockValues(el, 'b_banner01').uploadData).toEqual(data);
+    expect(el.exportHtml()).not.toContain('img_1');
+
+    // 別の data で差し替え: 前のキーは残らない
+    await drop();
+    await vi.waitFor(() => expect(calls).toHaveLength(2));
+    calls[1].resolve({ url: 'https://cdn.example.com/b.png', data: { id: 'img_2' } });
+    await vi.waitFor(() =>
+      expect(blockValues(el, 'b_banner01').uploadData).toEqual({ id: 'img_2' }),
+    );
+
+    // URL の文字列だけを返すと、前のデータは消す
+    await drop();
+    await vi.waitFor(() => expect(calls).toHaveLength(3));
+    calls[2].resolve('https://cdn.example.com/c.png');
+    await vi.waitFor(() =>
+      expect(blockValues(el, 'b_banner01').src).toBe('https://cdn.example.com/c.png'),
+    );
+    expect(blockValues(el, 'b_banner01').uploadData).toBeNull();
+
+    // URL を手で変えるとデータを消す
+    await drop();
+    await vi.waitFor(() => expect(calls).toHaveLength(4));
+    calls[3].resolve({ url: 'https://cdn.example.com/d.png', data: { id: 'img_4' } });
+    await vi.waitFor(() =>
+      expect(blockValues(el, 'b_banner01').uploadData).toEqual({ id: 'img_4' }),
+    );
+    await settle(el);
+    typeInto(
+      /** @type {HTMLInputElement} */ (imageField(el).querySelector('input[type="text"]')),
+      'https://other.example.com/e.png',
+    );
+    await frame();
+    expect(blockValues(el, 'b_banner01').uploadData).toBeNull();
+  });
+
+  it('onImageSelect も { url, data } を返せる', async () => {
+    const el = await mount({
+      onImageSelect: async () => ({ url: 'https://cdn.example.com/lib.png', data: { assetId: 7 } }),
+    });
+    el.loadJson(fixtures.basic);
+    el.select('b_item0001');
+    await frame();
+    const button = /** @type {HTMLButtonElement} */ (
+      [...imageField(el, 'image.src').querySelectorAll('button')].find(
+        (b) => b.textContent?.trim() === '選択…',
+      )
+    );
+    button.click();
+    await vi.waitFor(() =>
+      expect(blockValues(el, 'b_item0001').image).toMatchObject({
+        src: 'https://cdn.example.com/lib.png',
+        uploadData: { assetId: 7 },
+      }),
+    );
   });
 
   it('画像＋テキストの画像にもアップロードできる', async () => {

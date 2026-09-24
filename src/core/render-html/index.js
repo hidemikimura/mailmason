@@ -23,6 +23,7 @@ import { skeleton } from './skeleton.js';
  * @property {string} [locale] 既定 'ja'
  * @property {string} [lang] html 要素の lang（既定は locale）
  * @property {string} [outlookFontFamily] Outlook（Windows）で使うフォント（既定 'Arial, sans-serif'）
+ * @property {readonly import('../blocks/types.js').CoreBlockDef[] | null} [blocks] カスタムブロックの定義（defineBlock() の戻り値の配列）
  */
 
 /** Gmail が本文を途中で切る目安（約 102KB）に対する警告のしきい値（バイト） */
@@ -42,6 +43,7 @@ export function resolveHtmlOptions(options) {
     locale,
     lang: options.lang ?? locale,
     outlookFontFamily: options.outlookFontFamily ?? 'Arial, sans-serif',
+    blocks: options.blocks ?? null,
   };
 }
 
@@ -54,7 +56,7 @@ export function resolveHtmlOptions(options) {
  * @returns {Lines}
  */
 function renderBlock(block, width, template, options) {
-  const def = getBlockDef(block.type);
+  const def = getBlockDef(block.type, options.blocks);
   if (!def) return []; // 未知のブロックは出力しない
   const { padding, backgroundColor } = block.style;
   const contentWidth = Math.max(1, width - padding.left - padding.right);
@@ -103,7 +105,7 @@ function renderBlocks(blocks, width, template, options) {
  * @returns {string} 出力が無いブロック（画像未設定など）は空文字
  */
 export function renderBlockContent(block, width, body, options) {
-  const def = getBlockDef(block.type);
+  const def = getBlockDef(block.type, options.blocks);
   if (!def) return '';
   return renderLines(def.renderHtml(block, { width, body, options }), false);
 }
@@ -232,7 +234,10 @@ function renderRow(row, box, template, options) {
  */
 export function renderHtml(input, options = {}) {
   const resolved = resolveHtmlOptions(options);
-  const { template } = migrate(input, { mergeTagDelimiters: resolved.mergeTagDelimiters });
+  const { template } = migrate(input, {
+    mergeTagDelimiters: resolved.mergeTagDelimiters,
+    blocks: resolved.blocks,
+  });
   const layout = computeLayout(template);
   const rows = template.body.rows.map((row) =>
     renderRow(row, /** @type {RowBox} */ (layout.get(row.id)), template, resolved),

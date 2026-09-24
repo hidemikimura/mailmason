@@ -20,6 +20,18 @@ export const icons = {
     svg`<circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="m8 11 8-4M8 13l8 4"/>`,
   ),
   html: frame(svg`<path d="m9 8-4 4 4 4M15 8l4 4-4 4"/>`),
+  custom: frame(
+    svg`<path d="M9 4h4v3a2 2 0 1 0 4 0V4h3v6h-3a2 2 0 1 0 0 4h3v6h-6v-3a2 2 0 1 0-4 0v3H4v-6h3a2 2 0 1 0 0-4H4V4z"/>`,
+  ),
+  savedRow: frame(
+    svg`<rect x="3.5" y="6" width="17" height="12" rx="1.5"/><path d="M12 6v12"/><path d="M6 10h3M15 10h3M6 13h2M15 13h2" opacity=".6"/>`,
+  ),
+  savedBlock: frame(
+    svg`<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 10h6M9 13h4" opacity=".6"/>`,
+  ),
+  qr: frame(
+    svg`<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>`,
+  ),
   edit: frame(svg`<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/>`),
   preview: frame(
     svg`<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>`,

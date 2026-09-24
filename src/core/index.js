@@ -13,6 +13,9 @@ export { defaultBodySettings } from './model/settings.js';
 export { ROW_LAYOUTS, ROW_LAYOUT_NAMES, getLayoutSpans } from './model/layout.js';
 export { BLOCK_TYPES } from './blocks/registry.js';
 export { SOCIAL_SERVICES } from './blocks/social.js';
+export { qrSignature, qrStatus } from './blocks/qr.js';
+export { defineBlock } from './blocks/custom.js';
+export { componentKindOf, extractComponent, instantiateComponent } from './components.js';
 export { locateBlock, locateColumn, findRowIndex } from './model/tree.js';
 export { migrate, validate } from './migrate/index.js';
 export { applyCommand } from './store/commands.js';
@@ -52,3 +55,8 @@ export { stringWidth } from './text/width.js';
 /** @typedef {import('./store/commands.js').Command} Command */
 /** @typedef {import('./store/store.js').Store} Store */
 /** @typedef {import('./store/store.js').StoreState} StoreState */
+/** @typedef {import('./components.js').Component} Component */
+/** @typedef {import('./blocks/custom.js').CustomBlock} CustomBlock */
+/** @typedef {import('./blocks/custom.js').CustomBlockInput} CustomBlockInput */
+/** @typedef {import('./blocks/custom.js').CustomField} CustomField */
+/** @typedef {import('./blocks/custom.js').CustomHtmlContext} CustomHtmlContext */

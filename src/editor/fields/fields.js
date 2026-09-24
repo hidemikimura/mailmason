@@ -3,8 +3,10 @@ import { html, nothing } from 'lit';
 import { ROW_LAYOUT_NAMES, getLayoutSpans } from '../../core/model/layout.js';
 import { SOCIAL_SERVICES, socialLabel } from '../../core/blocks/social.js';
 import { sanitizeHtml } from '../../core/richtext/sanitize.js';
-import { getIn, measureImage } from '../util.js';
-import { UPLOAD_TYPES, hasFiles } from '../upload.js';
+import { getIn, measureImage, setIn } from '../util.js';
+import { UPLOAD_TYPES, hasFiles, pickImage } from '../upload.js';
+import { qrSignature } from '../../core/blocks/qr.js';
+import { labelText } from '../../core/blocks/custom.js';
 
 /** @import { TemplateResult } from 'lit' */
 /** @import { Translate } from '../i18n.js' */
@@ -12,16 +14,23 @@ import { UPLOAD_TYPES, hasFiles } from '../upload.js';
 /** @import { UploadState } from '../upload.js' */
 
 /**
- * @typedef {{ value: string | null, labelKey: string }} Choice
+ * @typedef {{ value: string | null, labelKey: string, label?: import('../../core/blocks/custom.js').Label }} Choice
  */
 
 /**
  * @typedef {Object} FieldSpec
  * @property {string} key values 内のパス（ドット区切り可）
- * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout'} kind
- * @property {string} labelKey
+ * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout' | 'qrcode' | 'list' | 'action' | 'element'} kind
+ * @property {string} labelKey 辞書のキー（label があればそちらを使う）
+ * @property {import('../../core/blocks/custom.js').Label} [label] そのまま表示する名前（カスタムブロック）
  * @property {string} [helpKey]
- * @property {{ min?: number, max?: number, step?: number, unit?: string, nullable?: boolean, choices?: Choice[], mergeTags?: boolean, on?: unknown, off?: unknown, placeholderKey?: string }} [options]
+ * @property {import('../../core/blocks/custom.js').Label} [help] そのまま表示する説明（カスタムブロック）
+ * @property {{ min?: number, max?: number, step?: number, unit?: string, nullable?: boolean, choices?: Choice[], mergeTags?: boolean, on?: unknown, off?: unknown, placeholderKey?: string, placeholder?: import('../../core/blocks/custom.js').Label }} [options]
+ * @property {FieldSpec[]} [fields] list: 1 件分の項目
+ * @property {() => Record<string, unknown>} [itemDefault] list: 追加する項目の初期値
+ * @property {import('../../core/blocks/custom.js').Label | ((item: Record<string, unknown>, index: number) => string)} [itemLabel] list: 各項目の見出し
+ * @property {(context: { values: Record<string, unknown>, blockId: string, locale: string }) => unknown} [run] action: 押したときの処理
+ * @property {string} [tagName] element: カスタム要素のタグ名
  * @property {(values: any) => boolean} [visible] 条件付きで表示する
  */
 
@@ -30,7 +39,8 @@ import { UPLOAD_TYPES, hasFiles } from '../upload.js';
  */
 
 /**
- * @typedef {(context: { current: string }) => Promise<string | { src: string, alt?: string } | null | undefined>} ImageSelectHook
+ * 自前の画像選択画面。戻り値は onImageUpload と同じ形（URL / { url, data?, alt? } / { src, alt? }）
+ * @typedef {(context: { current: string }) => Promise<import('../upload.js').ImageResult>} ImageSelectHook
  */
 
 /**
@@ -45,7 +55,26 @@ import { UPLOAD_TYPES, hasFiles } from '../upload.js';
  * @property {ImageSelectHook | null} onImageSelect
  * @property {((key: string, file: File) => void) | null} [upload] 画像ファイルをアップロードする（フックが無ければ null）
  * @property {UploadState | null} [uploadState] 編集対象のアップロードの状態
+ * @property {(() => void) | null} [generateQr] QR コードの PNG を作ってアップロードする（フックが無ければ null）
+ * @property {string} [blockId] 編集対象のブロック ID
+ * @property {((spec: FieldSpec) => void) | null} [runAction] action の処理を実行する
+ * @property {ReadonlyMap<string, { busy: boolean, error: string | null }>} [actionState] action の状態（spec.key ごと）
  */
+
+/**
+ * 表示用の文字列（そのままの文字列 label があればそれ、無ければ辞書のキー）
+ * @param {FieldContext} ctx
+ * @param {string | undefined} key
+ * @param {import('../../core/blocks/custom.js').Label | undefined} literal
+ * @returns {string}
+ */
+function text(ctx, key, literal) {
+  if (literal !== undefined && literal !== null) return labelText(literal, ctx.locale);
+  return key ? ctx.t(key) : '';
+}
+
+/** @type {Map<string, HTMLElement & Record<string, any>>} element の部品（設定欄の描画をまたいで使い回す） */
+const elementCache = new Map();
 
 /**
  * @param {string} key
@@ -112,7 +141,7 @@ function control(spec, value, ctx, id) {
           type="text"
           inputmode=${spec.kind === 'url' ? 'url' : 'text'}
           .value=${String(value ?? '')}
-          placeholder=${o.placeholderKey ? t(o.placeholderKey) : ''}
+          placeholder=${text(ctx, o.placeholderKey, o.placeholder)}
           @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
         />
         ${mergeTagMenu(id, spec, ctx)}
@@ -126,6 +155,49 @@ function control(spec, value, ctx, id) {
         .value=${String(value ?? '')}
         @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
       ></textarea>`;
+
+    case 'qrcode': {
+      // QR の内容と「作成」ボタン。画像は onImageUpload でアップロードして src に入れる
+      const v = /** @type {any} */ (ctx.values);
+      const state = ctx.uploadState?.field === 'src' ? ctx.uploadState : null;
+      const uploading = state?.status === 'uploading';
+      const content = String(value ?? '');
+      const stale = Boolean(v.src) && v.generated !== qrSignature(v);
+      /** @type {unknown} */
+      let status = nothing;
+      if (!ctx.generateQr) status = html`<p class="help">${t('qr.needsUpload')}</p>`;
+      else if (uploading) status = html`<p class="status" role="status">${t('qr.uploading')}</p>`;
+      else if (state?.status === 'error')
+        status = html`<p class="error" role="alert">${state.message}</p>`;
+      else if (content && !v.src) status = html`<p class="help">${t('qr.missing')}</p>`;
+      else if (content && stale)
+        status = html`<p class="warning" role="status">${t('qr.stale')}</p>`;
+      return html`<div class="qr">
+        <textarea
+          id=${id}
+          rows="3"
+          placeholder="https://"
+          .value=${content}
+          ?disabled=${uploading}
+          @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
+        ></textarea>
+        ${
+          ctx.generateQr
+            ? html`<div class="image-actions">
+                <button
+                  type="button"
+                  data-action="generate-qr"
+                  ?disabled=${uploading || !content}
+                  @click=${() => ctx.generateQr?.()}
+                >
+                  ${v.src ? t('qr.regenerate') : t('qr.generate')}
+                </button>
+              </div>`
+            : nothing
+        }
+        ${status}
+      </div>`;
+    }
 
     case 'richtext':
       // 通常はキャンバス上で直接編集する。HTML を直接書きたい人向けに折り畳んで置く。
@@ -177,7 +249,7 @@ function control(spec, value, ctx, id) {
         <input
           type="color"
           class=${hex ? '' : 'unset'}
-          aria-label=${t(spec.labelKey)}
+          aria-label=${text(ctx, spec.labelKey, spec.label)}
           .value=${hex || '#ffffff'}
           @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
         />
@@ -214,7 +286,7 @@ function control(spec, value, ctx, id) {
         ${(o.choices ?? []).map(
           (choice) =>
             html`<option value=${choice.value ?? ''} ?selected=${choice.value === value}>
-              ${t(choice.labelKey)}
+              ${text(ctx, choice.labelKey, choice.label)}
             </option>`,
         )}
       </select>`;
@@ -234,7 +306,7 @@ function control(spec, value, ctx, id) {
               aria-pressed=${choice.value === value ? 'true' : 'false'}
               @click=${() => change(spec.key, choice.value)}
             >
-              ${t(choice.labelKey)}
+              ${text(ctx, choice.labelKey, choice.label)}
             </button>`,
         )}
       </div>`;
@@ -290,10 +362,11 @@ function control(spec, value, ctx, id) {
       };
       const choose = async () => {
         if (!ctx.onImageSelect) return;
-        const result = await ctx.onImageSelect({ current: src });
-        if (!result) return;
-        const picked = typeof result === 'string' ? { src: result } : result;
+        const picked = pickImage(await ctx.onImageSelect({ current: src }));
+        if (!picked) return;
         change(spec.key, picked.src);
+        const dataKey = sibling(spec.key, 'uploadData');
+        if (picked.data || getIn(ctx.values, dataKey)) change(dataKey, picked.data);
         const altKey = sibling(spec.key, 'alt');
         if (picked.alt && !getIn(ctx.values, altKey)) change(altKey, picked.alt);
         void measure(picked.src);
@@ -338,7 +411,12 @@ function control(spec, value, ctx, id) {
           placeholder="https://"
           .value=${src}
           ?disabled=${uploading}
-          @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
+          @input=${(/** @type {Event} */ e) => {
+            change(spec.key, inputValue(e), { merge: true });
+            // URL を手で変えたら、アップロード時に受け取ったデータは別の画像のものになるので消す
+            const dataKey = sibling(spec.key, 'uploadData');
+            if (getIn(ctx.values, dataKey)) change(dataKey, null, { merge: true });
+          }}
           @change=${(/** @type {Event} */ e) => void measure(inputValue(e))}
         />
         ${
@@ -493,6 +571,129 @@ function control(spec, value, ctx, id) {
         )}
       </div>`;
 
+    case 'list': {
+      // 項目の配列。1 件ずつ見出しと並べ替え・削除のボタン、中に項目の設定を並べる
+      const items = /** @type {Record<string, unknown>[]} */ (Array.isArray(value) ? value : []);
+      const min = o.min ?? 0;
+      const max = o.max ?? Infinity;
+      /** @param {Record<string, unknown>[]} next */
+      const set = (next) => change(spec.key, next);
+      const title = (/** @type {Record<string, unknown>} */ item, /** @type {number} */ i) =>
+        typeof spec.itemLabel === 'function'
+          ? spec.itemLabel(item, i)
+          : `${spec.itemLabel ? text(ctx, undefined, spec.itemLabel) : t('list.item')} ${i + 1}`;
+      return html`<div class="list" id=${id}>
+        ${items.map((item, i) => {
+          /** @type {FieldContext} */
+          const itemCtx = {
+            ...ctx,
+            values: item,
+            idPrefix: `${ctx.idPrefix}-${spec.key}-${i}`,
+            change: (key, v, options) => change(spec.key, setIn(items, `${i}.${key}`, v), options),
+            upload: ctx.upload
+              ? (key, file) => ctx.upload?.(`${spec.key}.${i}.${key}`, file)
+              : null,
+            uploadState: ctx.uploadState?.field.startsWith(`${spec.key}.${i}.`)
+              ? {
+                  ...ctx.uploadState,
+                  field: ctx.uploadState.field.slice(`${spec.key}.${i}.`.length),
+                }
+              : null,
+          };
+          return html`<div class="list-item">
+            <div class="list-head">
+              <span>${title(item, i)}</span>
+              <button
+                type="button"
+                title=${t('list.moveUp')}
+                aria-label=${t('list.moveUp')}
+                ?disabled=${i === 0}
+                @click=${() => {
+                  const next = items.slice();
+                  [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                  set(next);
+                }}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                title=${t('list.moveDown')}
+                aria-label=${t('list.moveDown')}
+                ?disabled=${i === items.length - 1}
+                @click=${() => {
+                  const next = items.slice();
+                  [next[i], next[i + 1]] = [next[i + 1], next[i]];
+                  set(next);
+                }}
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                data-action="remove-item"
+                title=${t('list.remove')}
+                aria-label=${t('list.remove')}
+                ?disabled=${items.length <= min}
+                @click=${() => set(items.filter((_, j) => j !== i))}
+              >
+                ✕
+              </button>
+            </div>
+            ${(spec.fields ?? []).map((field) => renderField(field, getIn(item, field.key), itemCtx))}
+          </div>`;
+        })}
+        <button
+          type="button"
+          data-action="add-item"
+          ?disabled=${items.length >= max}
+          @click=${() => set([...items, spec.itemDefault ? spec.itemDefault() : {}])}
+        >
+          ${t('list.add')}
+        </button>
+      </div>`;
+    }
+
+    case 'action': {
+      // 利用者の処理（外部データの選択など）を呼び、返った値をブロックに入れるボタン
+      const state = ctx.actionState?.get(spec.key);
+      return html`<div class="action">
+        <button
+          id=${id}
+          type="button"
+          data-action="custom-action"
+          ?disabled=${!ctx.runAction || state?.busy}
+          @click=${() => ctx.runAction?.(spec)}
+        >
+          ${text(ctx, spec.labelKey, spec.label)}
+        </button>
+        ${state?.error ? html`<p class="error" role="alert">${state.error}</p>` : nothing}
+      </div>`;
+    }
+
+    case 'element': {
+      // 利用者のカスタム要素。value・values・locale・blockId を渡し、mm-field-change（detail.value）で受け取る
+      const cacheKey = `${ctx.idPrefix}-${spec.key}`;
+      let el = elementCache.get(cacheKey);
+      if (!el || el.localName !== spec.tagName) {
+        el = /** @type {HTMLElement & Record<string, any>} */ (
+          document.createElement(/** @type {string} */ (spec.tagName))
+        );
+        el.id = id;
+        el.addEventListener('mm-field-change', (event) => {
+          event.stopPropagation();
+          /** @type {any} */ (el).__mmChange?.(/** @type {CustomEvent} */ (event).detail?.value);
+        });
+        elementCache.set(cacheKey, el);
+      }
+      el.__mmChange = (/** @type {unknown} */ v) => change(spec.key, v);
+      el.value = value;
+      el.values = ctx.values;
+      el.locale = ctx.locale;
+      el.blockId = ctx.blockId;
+      return html`${el}`;
+    }
+
     default:
       return html``;
   }
@@ -509,9 +710,9 @@ export function renderField(spec, value, ctx) {
   if (spec.visible && !spec.visible(ctx.values)) return nothing;
   const id = `${ctx.idPrefix}-${spec.key.replace(/\./g, '-')}`;
   const inline = spec.kind === 'toggle';
+  const help = text(ctx, spec.helpKey, spec.help);
   return html`<div class="field ${inline ? 'inline' : ''}" data-key=${spec.key}>
-    <label for=${id}>${ctx.t(spec.labelKey)}</label>
-    ${control(spec, value, ctx, id)}
-    ${spec.helpKey ? html`<p class="help">${ctx.t(spec.helpKey)}</p>` : nothing}
+    ${spec.kind === 'action' ? nothing : html`<label for=${id}>${text(ctx, spec.labelKey, spec.label)}</label>`}
+    ${control(spec, value, ctx, id)} ${help ? html`<p class="help">${help}</p>` : nothing}
   </div>`;
 }

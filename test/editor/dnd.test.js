@@ -107,6 +107,39 @@ describe('ドラッグ&ドロップ', () => {
     expect(rows[1].layout).toBe('1:2');
   });
 
+  it('保存したコンポーネント（行・ブロック）をドラッグして置ける', async () => {
+    const el = await mount();
+    await setup(el);
+    const template = json(el);
+    el.components = [
+      { id: 'c_row', name: '商品の行', kind: 'row', version: 1, content: template.body.rows[2] },
+      {
+        id: 'c_btn',
+        name: 'ボタン',
+        kind: 'block',
+        version: 1,
+        content: template.body.rows[1].columns[0].blocks[1],
+      },
+    ];
+    await frame();
+    /** @type {HTMLButtonElement} */ (deep(el, 'mm-palette', '[data-tab="saved"]')).click();
+    await frame();
+    const [rowItem, blockItem] = deepAll(el, ['mm-palette'], '.saved-item .insert');
+
+    const second = deepAll(el, ['mm-canvas'], 'mm-row')[1].getBoundingClientRect();
+    await drag(rowItem, second.left + 100, second.top + 5); // 2 行目の上の行間
+    let rows = json(el).body.rows;
+    expect(rows).toHaveLength(5);
+    expect(rows[1].layout).toBe(template.body.rows[2].layout);
+    expect(rows[1].id).not.toBe(template.body.rows[2].id);
+
+    // 行を入れたので、テキストブロックは 4 番目（バナー・商品 2 つの後）
+    const box = canvasBlocks(el)[3].getBoundingClientRect();
+    await drag(blockItem, box.left + 50, box.bottom - 12);
+    rows = json(el).body.rows;
+    expect(rows[2].columns[0].blocks.map((b) => b.type)).toEqual(['text', 'button', 'button']);
+  });
+
   it('選択中のブロックをつまみで別のカラムへ移せる（Undo 1 回で戻る）', async () => {
     const el = await mount();
     await setup(el);

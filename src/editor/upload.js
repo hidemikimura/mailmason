@@ -3,16 +3,43 @@
 // 返ってきた URL をブロックに設定する（メールの画像は受信者が読める URL に置く必要があるため）。
 // アップロード中はファイルの内容を object URL で仮表示する（テンプレートには入れない）
 import { locateBlock } from '../core/model/tree.js';
-import { measureImage, patchAt } from './util.js';
+import { getIn, measureImage, patchAt, setIn } from './util.js';
 
 /** @import { Template } from '../core/model/types.js' */
 /** @import { Store } from '../core/store/store.js' */
 /** @import { Translate } from './i18n.js' */
 
 /**
- * 画像のアップロード処理。URL（または { src, alt }）を返す
- * @typedef {(file: File, context: { blockId: string }) => Promise<string | { src: string, alt?: string } | null | undefined>} ImageUploadHook
+ * 画像のアップロード・選択のフックが返す値。
+ * - URL の文字列
+ * - `{ url, data?, alt? }`: data は画像ブロックの `uploadData` にそのまま保存する任意のオブジェクト（JSON で表せる値）
+ * - `{ src, alt? }`: 以前からの形（url と同じ扱い）
+ * null / undefined は取り消し
+ * @typedef {string | { url: string, data?: Record<string, unknown> | null, alt?: string } | { src: string, data?: Record<string, unknown> | null, alt?: string } | null | undefined} ImageResult
  */
+
+/**
+ * 画像のアップロード処理
+ * @typedef {(file: File, context: { blockId: string }) => Promise<ImageResult>} ImageUploadHook
+ */
+
+/**
+ * フックの戻り値を { src, alt, data } にそろえる（URL が無ければ null ＝取り消し）
+ * @param {ImageResult} result
+ * @returns {{ src: string, alt: string, data: Record<string, unknown> | null } | null}
+ */
+export function pickImage(result) {
+  if (typeof result === 'string') return result ? { src: result, alt: '', data: null } : null;
+  if (!result || typeof result !== 'object') return null;
+  const r = /** @type {Record<string, unknown>} */ (result);
+  const src = typeof r.url === 'string' && r.url ? r.url : typeof r.src === 'string' ? r.src : '';
+  if (!src) return null;
+  const data =
+    r.data && typeof r.data === 'object' && !Array.isArray(r.data)
+      ? /** @type {Record<string, unknown>} */ (r.data)
+      : null;
+  return { src, alt: typeof r.alt === 'string' ? r.alt : '', data };
+}
 
 /**
  * アップロード先。field は画像の URL を持つ values 内のパス（'src' や 'image.src'）
@@ -94,6 +121,16 @@ export class ImageUploader {
     this.host.onChange(next);
   }
 
+  /**
+   * アップロードの前に失敗したことを表示する（QR コードが作れなかったときなど）
+   * @param {string} blockId
+   * @param {string} field
+   * @param {string} message
+   */
+  fail(blockId, field, message) {
+    this._set(blockId, { status: 'error', field, message });
+  }
+
   /** 失敗の表示を消す（選択が変わったときなど） */
   clearErrors() {
     if (![...this.uploads.values()].some((s) => s.status === 'error')) return;
@@ -126,9 +163,11 @@ export class ImageUploader {
    * ファイルをアップロードして、ブロックの画像に設定する
    * @param {File} file
    * @param {UploadTarget} target
+   * @param {{ patch?: Record<string, unknown>, measure?: boolean }} [options]
+   *   patch: 設定できたときに一緒に values へ入れる値 / measure: 実寸（naturalWidth・naturalHeight）を設定するか（既定 true）
    * @returns {Promise<boolean>} 設定できたか
    */
-  async upload(file, target) {
+  async upload(file, target, options = {}) {
     const hook = this.host.hook();
     if (!hook) return false;
     const { blockId, field } = target;
@@ -148,7 +187,8 @@ export class ImageUploader {
     this._tokens.set(blockId, token);
     const preview = URL.createObjectURL(file);
     this._set(blockId, { status: 'uploading', field, preview });
-    const size = await measureImage(preview);
+    const measure = options.measure ?? true;
+    const size = measure ? await measureImage(preview) : null;
 
     /** @type {Awaited<ReturnType<ImageUploadHook>>} */
     let result;
@@ -171,7 +211,7 @@ export class ImageUploader {
     }
     if (this._tokens.get(blockId) !== token) return false; // 後から別の画像が選ばれた
     this._tokens.delete(blockId);
-    const done = this._apply(blockId, field, result, size);
+    const done = this._apply(blockId, field, result, size, options.patch);
     // 仮表示は設定した後に消す（先に消すと一瞬空になる）
     this._set(blockId, null);
     return done;
@@ -183,31 +223,37 @@ export class ImageUploader {
    * @param {string} field
    * @param {Awaited<ReturnType<ImageUploadHook>>} result
    * @param {{ width: number, height: number } | null} size
+   * @param {Record<string, unknown>} [extra] 一緒に設定する値
    */
-  _apply(blockId, field, result, size) {
-    const picked = typeof result === 'string' ? { src: result } : result;
-    if (!picked?.src) return false; // フックが取り消した
+  _apply(blockId, field, result, size, extra) {
+    const picked = pickImage(result);
+    if (!picked) return false; // フックが取り消した
     const store = this.host.store();
     const { template } = store.getState();
     const loc = locateBlock(template, blockId);
     if (!loc) return false; // アップロード中に削除された
     const block = template.body.rows[loc.rowIndex].columns[loc.columnIndex].blocks[loc.blockIndex];
     const base = field.includes('.') ? field.slice(0, field.lastIndexOf('.')) : '';
-    const current = /** @type {Record<string, unknown>} */ (
-      base ? /** @type {any} */ (block.values)[base] : block.values
+    const current = /** @type {Record<string, unknown> | undefined} */ (
+      base ? getIn(block.values, base) : block.values
     );
     /** @type {Record<string, unknown>} */
-    const image = { src: picked.src };
+    const image = { src: picked.src, uploadData: picked.data }; // data が無ければ前の画像のデータを消す
     if (size) {
       image.naturalWidth = size.width;
       image.naturalHeight = size.height;
     }
     if (picked.alt && !current?.alt) image.alt = picked.alt;
-    store.dispatch({
-      type: 'updateBlockValues',
-      blockId,
-      patch: base ? patchAt(base, image) : image,
-    });
+    Object.assign(image, extra);
+    /** @type {Record<string, unknown>} */
+    let patch = image;
+    if (base) {
+      // リストの中（'items.0.image' など）は配列ごと差し替える（パッチは配列をマージしないため）
+      const top = base.split('.')[0];
+      const updated = setIn(block.values, base, { ...current, ...image });
+      patch = /\.\d+(\.|$)/.test(base) ? { [top]: updated[top] } : patchAt(base, image);
+    }
+    store.dispatch({ type: 'updateBlockValues', blockId, patch });
     return true;
   }
 }

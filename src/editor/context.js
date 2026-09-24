@@ -12,12 +12,25 @@
  * @property {Translate} t
  * @property {string} locale
  * @property {ResolvedHtmlOptions} htmlOptions キャンバス表示に使う出力オプション
+ * @property {readonly import('../core/blocks/custom.js').CustomBlock[]} blocks カスタムブロックの定義
+ * @property {readonly import('../core/components.js').Component[]} components 保存したコンポーネント
+ * @property {boolean} canSaveComponents onSaveComponent があるか
+ * @property {boolean} canDeleteComponents onDeleteComponent があるか
+ * @property {(id: string, name: string) => Promise<import('../core/components.js').Component>} saveComponent
+ *   行・ブロックをコンポーネントとして保存する（失敗したら例外）
+ * @property {(component: import('../core/components.js').Component) => void} deleteComponent
+ * @property {(component: import('../core/components.js').Component) => string | null} insertComponent
+ *   選択中の要素に合わせた位置に複製して入れる
+ * @property {(component: import('../core/components.js').Component) => ReturnType<typeof import('../core/components.js').instantiateComponent> | null} instantiateComponent
+ *   行・ブロックにする（入れられなければ null）
  * @property {MergeTag[]} mergeTags
  * @property {MergeTagDelimiters} delimiters
  * @property {ImageSelectHook | null} onImageSelect
  * @property {import('./upload.js').ImageUploadHook | null} onImageUpload
  * @property {(file: File, target: import('./upload.js').UploadTarget) => void} upload
  *   画像ファイルをアップロードしてブロックに設定する（onImageUpload が無ければ何もしない）
+ * @property {(blockId: string) => void} generateQr
+ *   QR ブロックの PNG を作ってアップロードし、src に設定する（onImageUpload が無ければ何もしない）
  * @property {(target: import('./dnd/controller.js').FileDropTarget, files: File[]) => void} dropImageFiles
  *   キャンバスに落とした画像ファイルを、差し替え・新しい画像ブロックにしてアップロードする
  * @property {{ start(event: PointerEvent, payload: import('./dnd/target.js').DragPayload): void, fileOver(event: DragEvent): void, fileDrop(event: DragEvent): void }} dnd

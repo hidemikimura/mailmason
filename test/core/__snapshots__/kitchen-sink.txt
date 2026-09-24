@@ -35,3 +35,5 @@ Webサイト: https://example.com
 生 HTML の表
 
 セル 2
+
+[QR コード] ( https://hidemikimura.github.io/mailmason/ )

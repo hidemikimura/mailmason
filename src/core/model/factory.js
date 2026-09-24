@@ -75,10 +75,11 @@ export function createRow(layout = '1', columnBlocks = []) {
  * ブロックを作る。values は既定値に深くマージしたうえでスキーマで整える
  * @param {string} type
  * @param {Record<string, unknown>} [values]
+ * @param {{ blocks?: readonly import('../blocks/types.js').CoreBlockDef[] | null }} [options] blocks: カスタムブロックの定義
  * @returns {Block}
  */
-export function createBlock(type, values = {}) {
-  const def = getBlockDef(type);
+export function createBlock(type, values = {}, options = {}) {
+  const def = getBlockDef(type, options.blocks);
   if (!def) {
     throw new MailmasonError('unknown-block-type', `Unknown block type "${type}".`);
   }

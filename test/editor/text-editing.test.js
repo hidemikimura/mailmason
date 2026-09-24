@@ -41,6 +41,15 @@ function selectAll(editable) {
 }
 
 /**
+ * 見出し（最初の要素）の文字だけを選択する
+ * @param {HTMLElement} editable
+ */
+function selectHeading(editable) {
+  const text = /** @type {Text} */ (editable.querySelector('h1')?.firstChild);
+  /** @type {Selection} */ (document.getSelection()).setBaseAndExtent(text, 0, text, text.length);
+}
+
+/**
  * 貼り付けイベントを送る
  * @param {HTMLElement} target
  * @param {Record<string, string>} data
@@ -126,6 +135,91 @@ describe('テキストの直接編集', () => {
     editor.shadowRoot.querySelector('form.popover').requestSubmit();
     await frame();
     expect(textHtml(el)).toContain('<a href="https://example.com/sale">');
+  });
+
+  it('リンクの中で開き直すと、設定済みの URL が入力欄に入っている', async () => {
+    const { el, editor, editable } = await startEditing();
+    const openLink = async () => {
+      editor.shadowRoot.querySelector('[data-command="link"]').click();
+      await editor.updateComplete;
+      await frame();
+      return /** @type {HTMLInputElement} */ (editor.shadowRoot.querySelector('.link-input'));
+    };
+    const submit = async () => {
+      editor.shadowRoot.querySelector('form.popover').requestSubmit();
+      await frame();
+    };
+
+    // リンクの無いところでは空（見出しの文字だけを選ぶ）
+    selectHeading(editable);
+    let input = await openLink();
+    expect(input.value).toBe('');
+    input.value = 'https://example.com/old';
+    await submit();
+
+    // キャレットをリンクの文字の途中に置いて開き直す
+    const text = /** @type {Text} */ (editable.querySelector('a')?.firstChild);
+    document.getSelection()?.setBaseAndExtent(text, 1, text, 1);
+    await frame();
+    input = await openLink();
+    expect(input.value).toBe('https://example.com/old');
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(input.value.length);
+
+    // キャレットだけでも、リンク全体の URL を差し替える（URL の文字を挿入しない）
+    // （リンクの一部だけを選んだときも同じくリンク全体が対象）
+    input.value = 'https://example.com/new';
+    await submit();
+    expect(textHtml(el)).toContain('<h1><a href="https://example.com/new">{{name}} 様</a></h1>');
+    expect(textHtml(el)).not.toContain('example.com/old');
+    expect(editable.textContent).not.toContain('https://');
+  });
+
+  it('リンクの一部だけを選んで URL を変えても、リンクは分かれない', async () => {
+    const { el, editor, editable } = await startEditing();
+    selectHeading(editable);
+    editor.shadowRoot.querySelector('[data-command="link"]').click();
+    await editor.updateComplete;
+    editor.shadowRoot.querySelector('.link-input').value = 'https://example.com/a';
+    editor.shadowRoot.querySelector('form.popover').requestSubmit();
+    await frame();
+
+    const text = /** @type {Text} */ (editable.querySelector('a')?.firstChild);
+    document.getSelection()?.setBaseAndExtent(text, 2, text, 5);
+    await frame();
+    editor.shadowRoot.querySelector('[data-command="link"]').click();
+    await editor.updateComplete;
+    await frame();
+    const input = editor.shadowRoot.querySelector('.link-input');
+    expect(input.value).toBe('https://example.com/a');
+    input.value = 'https://example.com/b';
+    editor.shadowRoot.querySelector('form.popover').requestSubmit();
+    await frame();
+    expect(textHtml(el)).toContain('<h1><a href="https://example.com/b">{{name}} 様</a></h1>');
+  });
+
+  it('リンクの中で URL を空にして適用するとリンクを外す', async () => {
+    const { el, editor, editable } = await startEditing();
+    selectHeading(editable);
+    editor.shadowRoot.querySelector('[data-command="link"]').click();
+    await editor.updateComplete;
+    editor.shadowRoot.querySelector('.link-input').value = 'https://example.com/x';
+    editor.shadowRoot.querySelector('form.popover').requestSubmit();
+    await frame();
+    expect(textHtml(el)).toContain('<a ');
+
+    const text = /** @type {Text} */ (editable.querySelector('a')?.firstChild);
+    document.getSelection()?.setBaseAndExtent(text, 1, text, 1);
+    await frame();
+    editor.shadowRoot.querySelector('[data-command="link"]').click();
+    await editor.updateComplete;
+    await frame();
+    const input = editor.shadowRoot.querySelector('.link-input');
+    expect(input.value).toBe('https://example.com/x');
+    input.value = '';
+    editor.shadowRoot.querySelector('form.popover').requestSubmit();
+    await frame();
+    expect(textHtml(el)).not.toContain('<a ');
   });
 
   it('HTML を貼り付けると許可タグだけに整えて入れる', async () => {

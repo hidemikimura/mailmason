@@ -79,6 +79,7 @@ export const imageBlock = {
     align: 'center',
     naturalWidth: null,
     naturalHeight: null,
+    uploadData: null,
   }),
   schema: s.object({
     src: s.string(),
@@ -88,6 +89,7 @@ export const imageBlock = {
     align: s.oneOf(['left', 'center', 'right']),
     naturalWidth: s.number({ min: 1, integer: true, nullable: true }),
     naturalHeight: s.number({ min: 1, integer: true, nullable: true }),
+    uploadData: s.record({ nullable: true }),
   }),
   mergeTagFields: ['src', 'alt', 'href'],
   cellAlign: (block) => /** @type {any} */ (block.values.align),

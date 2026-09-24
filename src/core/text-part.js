@@ -43,7 +43,10 @@ export function textSourceHash(input, options = {}) {
  */
 export function resolveTextPart(input, options = {}) {
   const resolved = resolveTextOptions(options);
-  const { template } = migrate(input, { mergeTagDelimiters: resolved.mergeTagDelimiters });
+  const { template } = migrate(input, {
+    mergeTagDelimiters: resolved.mergeTagDelimiters,
+    blocks: resolved.blocks,
+  });
   if (template.text.mode === 'manual' && template.text.content !== null) {
     const stale = template.text.sourceHash !== textSourceHash(template, options);
     return { text: finishText(template.text.content, resolved, false), mode: 'manual', stale };

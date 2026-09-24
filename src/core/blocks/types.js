@@ -12,6 +12,7 @@
  * @property {string} locale
  * @property {string} lang
  * @property {string} outlookFontFamily
+ * @property {readonly CoreBlockDef[] | null} blocks カスタムブロックの定義
  */
 
 /**
@@ -30,6 +31,7 @@
  * @property {string} locale
  * @property {Record<string, string> | null} mergeValues
  * @property {MergeTagDelimiters} mergeTagDelimiters
+ * @property {readonly CoreBlockDef[] | null} blocks カスタムブロックの定義
  */
 
 /**

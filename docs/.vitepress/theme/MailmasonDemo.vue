@@ -3,6 +3,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useData, withBase } from 'vitepress';
 import { DEMO_MERGE_TAGS, DEMO_TEMPLATES, withDemoImages } from './templates.js';
+import { createDemoBlocks } from '../../../demo/custom-blocks.js';
+import { useDemoComponentStore } from '../../../demo/component-store.js';
 
 const props = defineProps({
   /** 最初に読み込むテンプレート（DEMO_TEMPLATES の id） */
@@ -100,6 +102,8 @@ onMounted(async () => {
   const el = editor.value;
   el.mergeTags = DEMO_MERGE_TAGS;
   el.onImageUpload = fakeUpload;
+  el.blocks = createDemoBlocks(imageBase());
+  useDemoComponentStore(el);
   el.colorMode = isDark.value ? 'dark' : 'light';
   el.addEventListener('mm-change', onChange);
   el.addEventListener('mm-warning', onWarning);

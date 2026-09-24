@@ -12,7 +12,9 @@
  * @typedef {{ kind: 'new-block', type: string }
  *   | { kind: 'new-row', layout: import('../../core/model/types.js').RowLayout }
  *   | { kind: 'move-block', blockId: string }
- *   | { kind: 'move-row', rowId: string }} DragPayload
+ *   | { kind: 'move-row', rowId: string }
+ *   | { kind: 'component', component: import('../../core/components.js').Component }} DragPayload
+ *   component: 保存したコンポーネント（行なら行と同じ、ブロックならブロックと同じ落とし先）
  */
 
 /**
@@ -65,7 +67,11 @@ function rowGap(geo, rows, index) {
  */
 export function findDropTarget(geo, payload, x, y) {
   // 行のドラッグ: 行間だけが落とし先
-  if (payload.kind === 'new-row' || payload.kind === 'move-row') {
+  if (
+    payload.kind === 'new-row' ||
+    payload.kind === 'move-row' ||
+    (payload.kind === 'component' && payload.component.kind === 'row')
+  ) {
     const rows =
       payload.kind === 'move-row' ? geo.rows.filter((row) => row.id !== payload.rowId) : geo.rows;
     const index = rows.filter((row) => midY(row.box) < y).length;

@@ -82,3 +82,26 @@ export function placeCaretAtEnd(element) {
   range.collapse(true);
   restoreRange(range);
 }
+
+/**
+ * 選択範囲にかかっているリンク（a 要素）を探す。
+ * キャレットや選択の始点がリンクの中にあればそのリンク、無ければ選択範囲と重なる最初のリンク
+ * @param {Range} range
+ * @param {HTMLElement} root 編集領域（これより外は探さない）
+ * @returns {HTMLAnchorElement | null}
+ */
+export function findLink(range, root) {
+  for (const start of [range.startContainer, range.endContainer]) {
+    /** @type {Node | null} */
+    let node = start;
+    while (node && node !== root) {
+      if (node.nodeName === 'A') return /** @type {HTMLAnchorElement} */ (node);
+      node = node.parentNode;
+    }
+  }
+  if (range.collapsed) return null;
+  for (const a of root.querySelectorAll('a')) {
+    if (range.intersectsNode(a)) return a;
+  }
+  return null;
+}

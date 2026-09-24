@@ -2,7 +2,7 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { findRowIndex, locateBlock, locateColumn } from '../../core/model/tree.js';
 import { getBlockDef } from '../../core/blocks/registry.js';
-import { getEditorBlockDef } from '../blocks/index.js';
+import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { renderField } from '../fields/fields.js';
 import { controls } from '../styles.js';
 import { getIn, patchAt } from '../util.js';
@@ -159,6 +159,8 @@ export class MmSettingsPanel extends LitElement {
     selection: { attribute: false },
     uploads: { attribute: false },
     ctx: { attribute: false },
+    _actions: { state: true },
+    _component: { state: true },
   };
 
   static styles = [
@@ -321,15 +323,78 @@ export class MmSettingsPanel extends LitElement {
         opacity: 0.5;
       }
       .image .status,
-      .image .error {
+      .image .error,
+      .qr .status,
+      .qr .error,
+      .qr .warning {
         margin: 0;
         font-size: 11px;
       }
-      .image .status {
+      .image .status,
+      .qr .status {
         color: var(--mm-color-muted);
       }
-      .image .error {
+      .image .error,
+      .qr .error {
         color: var(--mm-color-danger);
+      }
+      .qr {
+        display: grid;
+        gap: 6px;
+      }
+      .list {
+        display: grid;
+        gap: 8px;
+      }
+      .list-item {
+        display: grid;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid var(--mm-color-border);
+        border-radius: var(--mm-radius);
+        background: var(--mm-color-surface-2);
+      }
+      .list-head {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 500;
+      }
+      .list-head span {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .list-head button {
+        padding: 0 6px;
+        min-width: 24px;
+      }
+      .action {
+        display: grid;
+        gap: 4px;
+      }
+      .save-component .field {
+        grid-template-columns: 1fr auto;
+      }
+      .save-component .field > label,
+      .save-component .field > p {
+        grid-column: 1 / -1;
+      }
+      .save-component .error {
+        margin: 0;
+        font-size: 11px;
+        color: var(--mm-color-danger);
+      }
+      .action .error {
+        margin: 0;
+        font-size: 11px;
+        color: var(--mm-color-danger);
+      }
+      .qr .warning {
+        color: #b45309;
+        font-weight: 500;
       }
       .thumb {
         max-width: 100%;
@@ -384,6 +449,140 @@ export class MmSettingsPanel extends LitElement {
     this.uploads = new Map();
     /** @type {EditorContext} */
     this.ctx = /** @type {any} */ (null);
+    /** @type {ReadonlyMap<string, { busy: boolean, error: string | null }>} カスタムブロックの action の状態（`${blockId}:${key}`） */
+    this._actions = new Map();
+    /** @type {{ id: string, name: string, status: 'idle' | 'saving' | 'saved' | 'error', message: string }} 「コンポーネントとして保存」の入力と状態（選択中の行・ブロックごと） */
+    this._component = { id: '', name: '', status: 'idle', message: '' };
+  }
+
+  /**
+   * 「コンポーネントとして保存」（行・ブロックを選択中、onSaveComponent があるとき）
+   * @param {string} id 行またはブロックの ID
+   * @param {string} fallbackName 名前が空のときの名前
+   */
+  _renderSaveComponent(id, fallbackName) {
+    const { t } = this.ctx;
+    if (!this.ctx.canSaveComponents) return nothing;
+    const state =
+      this._component.id === id
+        ? this._component
+        : { id, name: '', status: /** @type {const} */ ('idle'), message: '' };
+    const save = async () => {
+      const name = state.name.trim() || fallbackName;
+      this._component = { ...state, status: 'saving', message: '' };
+      try {
+        const saved = await this.ctx.saveComponent(id, name);
+        this._component = {
+          id,
+          name: '',
+          status: 'saved',
+          message: t('component.saved', { name: saved.name || name }),
+        };
+      } catch (error) {
+        const detail = error instanceof Error && error.message ? `: ${error.message}` : '';
+        this._component = {
+          ...state,
+          status: 'error',
+          message: `${t('component.saveFailed')}${detail}`,
+        };
+      }
+    };
+    return html`<section class="save-component">
+      <h3>${t('section.component')}</h3>
+      <div class="field">
+        <label for="mm-component-name">${t('component.name')}</label>
+        <input
+          id="mm-component-name"
+          type="text"
+          .value=${state.name}
+          placeholder=${fallbackName}
+          ?disabled=${state.status === 'saving'}
+          @input=${(/** @type {Event} */ e) =>
+            (this._component = {
+              ...state,
+              name: /** @type {HTMLInputElement} */ (e.target).value,
+              status: 'idle',
+              message: '',
+            })}
+          @keydown=${(/** @type {KeyboardEvent} */ e) => {
+            if (e.key === 'Enter' && !e.isComposing) {
+              e.preventDefault();
+              void save();
+            }
+          }}
+        />
+        <button
+          type="button"
+          data-action="save-component"
+          ?disabled=${state.status === 'saving'}
+          @click=${() => void save()}
+        >
+          ${t('component.save')}
+        </button>
+        ${
+          state.status === 'saving'
+            ? html`<p class="help" role="status">${t('component.saving')}</p>`
+            : state.status === 'saved'
+              ? html`<p class="help" role="status">${state.message}</p>`
+              : state.status === 'error'
+                ? html`<p class="error" role="alert">${state.message}</p>`
+                : html`<p class="help">${t('component.help')}</p>`
+        }
+      </div>
+    </section>`;
+  }
+
+  /**
+   * カスタムブロックの action を実行し、返った値をブロックに入れる
+   * @param {import('../../core/model/types.js').Block} block
+   * @param {FieldSpec} spec
+   */
+  async _runAction(block, spec) {
+    const id = `${block.id}:${spec.key}`;
+    if (!spec.run || this._actions.get(id)?.busy) return;
+    /** @param {{ busy: boolean, error: string | null } | null} state */
+    const set = (state) => {
+      const next = new Map(this._actions);
+      if (state) next.set(id, state);
+      else next.delete(id);
+      this._actions = next;
+    };
+    set({ busy: true, error: null });
+    try {
+      const patch = await spec.run({
+        values: structuredClone(block.values),
+        blockId: block.id,
+        locale: this.ctx.locale,
+      });
+      set(null);
+      if (
+        patch &&
+        typeof patch === 'object' &&
+        locateBlock(this.ctx.store.getState().template, block.id)
+      ) {
+        this.ctx.store.dispatch({
+          type: 'updateBlockValues',
+          blockId: block.id,
+          patch: /** @type {Record<string, unknown>} */ (patch),
+        });
+      }
+    } catch (error) {
+      const detail = error instanceof Error && error.message ? `: ${error.message}` : '';
+      set({ busy: false, error: `${this.ctx.t('action.failed')}${detail}` });
+      this.dispatchEvent(
+        new CustomEvent('mm-warning', {
+          detail: {
+            code: 'block-action-failed',
+            path: `block(${block.id})`,
+            message: `Custom block action failed${detail}`,
+            blockId: block.id,
+            error,
+          },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
   }
 
   /**
@@ -425,10 +624,10 @@ export class MmSettingsPanel extends LitElement {
       items.push({ id: target.column.id, label: `${t('crumb.column')} ${index}` });
     }
     if (target.kind === 'block') {
-      const def = getEditorBlockDef(target.block.type);
+      const def = getEditorBlockDef(target.block.type, this.ctx.blocks);
       items.push({
         id: target.block.id,
-        label: def ? t(def.labelKey) : t('block.unknown', { type: target.block.type }),
+        label: def ? blockLabel(def, this.ctx) : t('block.unknown', { type: target.block.type }),
       });
     }
     return html`<nav aria-label="breadcrumb">
@@ -487,9 +686,10 @@ export class MmSettingsPanel extends LitElement {
         }
       });
       body = html`<section>
-        <h3>${t('section.layout')}</h3>
-        ${this._fields(ROW_FIELDS, fieldCtx)}
-      </section>`;
+          <h3>${t('section.layout')}</h3>
+          ${this._fields(ROW_FIELDS, fieldCtx)}
+        </section>
+        ${this._renderSaveComponent(row.id, t('crumb.row'))}`;
     } else if (target.kind === 'column') {
       const { column } = target;
       const fieldCtx = this._fieldContext(`mm-${column.id}`, column.settings, (key, value, merge) =>
@@ -506,8 +706,8 @@ export class MmSettingsPanel extends LitElement {
       </section>`;
     } else {
       const { block } = target;
-      const edef = getEditorBlockDef(block.type);
-      const known = Boolean(getBlockDef(block.type));
+      const edef = getEditorBlockDef(block.type, this.ctx.blocks);
+      const known = Boolean(getBlockDef(block.type, this.ctx.blocks));
       const valuesCtx = {
         ...this._fieldContext(`mm-${block.id}`, block.values, (key, value, merge) =>
           store.dispatch({
@@ -522,6 +722,14 @@ export class MmSettingsPanel extends LitElement {
               this.ctx.upload(file, { blockId: block.id, field: key })
           : null,
         uploadState: this.uploads.get(block.id) ?? null,
+        generateQr: this.ctx.onImageUpload ? () => this.ctx.generateQr(block.id) : null,
+        blockId: block.id,
+        runAction: (/** @type {FieldSpec} */ spec) => void this._runAction(block, spec),
+        actionState: new Map(
+          [...this._actions]
+            .filter(([id]) => id.startsWith(`${block.id}:`))
+            .map(([id, state]) => [id.slice(block.id.length + 1), state]),
+        ),
       };
       const styleCtx = this._fieldContext(
         `mm-${block.id}-style`,
@@ -557,7 +765,8 @@ export class MmSettingsPanel extends LitElement {
               <section>
                 <h3>${t('section.visibility')}</h3>
                 ${this._fields([HIDE_FIELD], hideCtx)}
-              </section>`
+              </section>
+              ${this._renderSaveComponent(block.id, blockLabel(edef, this.ctx))}`
           : html`<section>
               <p class="message">${t('placeholder.unknown')}</p>
               <button

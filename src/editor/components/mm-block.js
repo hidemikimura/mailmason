@@ -4,8 +4,9 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { getBlockDef } from '../../core/blocks/registry.js';
 import { renderBlockContent } from '../../core/render-html/index.js';
+import { qrStatus } from '../../core/blocks/qr.js';
 import { resolveTextStyle } from '../../core/render-html/styles.js';
-import { getEditorBlockDef } from '../blocks/index.js';
+import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
 import { chromeStyles, renderChrome } from './chrome.js';
 import { define } from '../context.js';
@@ -96,6 +97,10 @@ export class MmBlock extends LitElement {
           transparent 12px
         );
       }
+      .placeholder.error {
+        border-color: var(--mm-color-danger, #b91c1c);
+        color: var(--mm-color-danger, #b91c1c);
+      }
       iframe {
         display: block;
         width: 100%;
@@ -134,6 +139,11 @@ export class MmBlock extends LitElement {
         background: rgba(0, 0, 0, 0.55);
         color: #fff;
         pointer-events: none;
+      }
+      .badge.warn {
+        left: 4px;
+        right: auto;
+        background: #b45309;
       }
     `,
   ];
@@ -255,18 +265,27 @@ export class MmBlock extends LitElement {
   render() {
     const { block, ctx, body } = this;
     if (!block || !ctx) return nothing;
-    const def = getBlockDef(block.type);
-    const edef = getEditorBlockDef(block.type);
+    const def = getBlockDef(block.type, ctx.blocks);
+    const edef = getEditorBlockDef(block.type, ctx.blocks);
     const { padding, backgroundColor } = block.style;
     const contentWidth = Math.max(1, this.width - padding.left - padding.right);
-    const content = def ? renderBlockContent(block, contentWidth, body, ctx.htmlOptions) : '';
-    const label = edef ? ctx.t(edef.labelKey) : ctx.t('block.unknown', { type: block.type });
+    let content = '';
+    let failed = false;
+    try {
+      content = def ? renderBlockContent(block, contentWidth, body, ctx.htmlOptions) : '';
+    } catch (error) {
+      // カスタムブロックの renderHtml が例外を投げても、エディタは止めない
+      console.error(`[mailmason] ${block.type} (${block.id}) の描画に失敗しました`, error);
+      failed = true;
+    }
+    const label = edef ? blockLabel(edef, ctx) : ctx.t('block.unknown', { type: block.type });
 
     const uploading = this.upload?.status === 'uploading';
     let inner;
-    if (uploading && this.upload?.preview && block.type === 'image') {
-      // アップロード中は手元のファイルを仮表示する
-      const width = /** @type {any} */ (block.values).width;
+    if (uploading && this.upload?.preview && (block.type === 'image' || block.type === 'qr')) {
+      // アップロード中は手元のファイル（QR は作った PNG）を仮表示する
+      const values = /** @type {any} */ (block.values);
+      const width = block.type === 'qr' ? { unit: 'px', value: values.size } : values.width;
       const size = width?.unit === 'px' ? `${width.value}px` : `${width?.value ?? 100}%`;
       inner = html`<img
         class="upload-preview"
@@ -278,6 +297,10 @@ export class MmBlock extends LitElement {
       inner = this._renderEditor();
     } else if (!def) {
       inner = html`<div class="placeholder">${label}<br />${ctx.t('placeholder.unknown')}</div>`;
+    } else if (failed) {
+      inner = html`<div class="placeholder error">
+        ${label}<br />${ctx.t('placeholder.renderError')}
+      </div>`;
     } else if (!content) {
       inner = html`<div class="placeholder">
         ${ctx.t(edef?.placeholderKey ?? 'placeholder.text')}
@@ -302,6 +325,11 @@ export class MmBlock extends LitElement {
 
     return html`<div class="content" style=${styleMap(style)}>${inner}</div>
       ${block.hideOn === 'mobile' ? html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>` : nothing}
+      ${
+        block.type === 'qr' && !uploading && qrStatus(block) === 'stale'
+          ? html`<span class="badge warn">${ctx.t('badge.qrStale')}</span>`
+          : nothing
+      }
       ${
         uploading
           ? html`<div class="uploading" role="status">

@@ -16,6 +16,31 @@ export function getIn(source, path) {
 }
 
 /**
+ * パスに値を入れた複製を返す（数字の部分は配列の添字として扱う）
+ * @param {unknown} target
+ * @param {string} path ドット区切り（例: 'items.0.image.src'）
+ * @param {unknown} value
+ * @returns {any}
+ */
+export function setIn(target, path, value) {
+  /** @param {unknown} node @param {string[]} keys @returns {unknown} */
+  const walk = (node, keys) => {
+    if (keys.length === 0) return value;
+    const [head, ...rest] = keys;
+    if (Array.isArray(node)) {
+      const next = node.slice();
+      next[Number(head)] = walk(next[Number(head)], rest);
+      return next;
+    }
+    const obj = /** @type {Record<string, unknown>} */ (
+      node && typeof node === 'object' ? node : {}
+    );
+    return { ...obj, [head]: walk(obj[head], rest) };
+  };
+  return walk(target, path.split('.'));
+}
+
+/**
  * ドット区切りのパスから入れ子のパッチを作る: ('image.src', 'a') → { image: { src: 'a' } }
  * @param {string} path
  * @param {unknown} value

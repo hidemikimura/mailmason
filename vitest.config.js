@@ -27,6 +27,9 @@ export default defineConfig({
             'lit/directives/repeat.js',
             'lit/directives/style-map.js',
             'lit/directives/unsafe-html.js',
+            'lit/directives/unsafe-svg.js',
+            'qrcode-generator',
+            'jsqr',
           ],
         },
         test: {

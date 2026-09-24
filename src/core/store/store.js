@@ -39,6 +39,8 @@ import { collectIds } from '../model/tree.js';
  * @property {number} [historyLimit] 保持する履歴の上限（既定 100）
  * @property {number} [mergeWindow] mergeKey が同じコマンドをまとめる時間（ms、既定 500）
  * @property {() => number} [now] 現在時刻（テスト用）
+ * @property {readonly import('../blocks/types.js').CoreBlockDef[] | (() => readonly import('../blocks/types.js').CoreBlockDef[] | null) | null} [blocks]
+ *   カスタムブロックの定義（関数なら毎回呼んで最新の定義を使う）
  */
 
 /**
@@ -60,6 +62,8 @@ import { collectIds } from '../model/tree.js';
  */
 export function createStore(template, options = {}) {
   const { historyLimit = 100, mergeWindow = 500, now = () => Date.now() } = options;
+  const blocks = () =>
+    typeof options.blocks === 'function' ? options.blocks() : (options.blocks ?? null);
 
   /** @type {StoreState} */
   let state = { template, selection: null };
@@ -111,7 +115,7 @@ export function createStore(template, options = {}) {
 
       /** @type {Warning[]} */
       const warnings = [];
-      const nextTemplate = applyCommand(state.template, command, warnings);
+      const nextTemplate = applyCommand(state.template, command, warnings, { blocks: blocks() });
       if (nextTemplate === state.template) {
         if (warnings.length > 0) commit(state, command, warnings);
         return false;

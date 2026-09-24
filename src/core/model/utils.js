@@ -12,6 +12,23 @@ export function isPlainObject(value) {
 }
 
 /**
+ * JSON で表せる値か（null・真偽値・文字列・有限の数値・配列・プレーンオブジェクトだけでできている）
+ * @param {unknown} value
+ * @param {number} [depth] 入れ子の深さ（循環参照やごく深い値を弾く）
+ * @returns {boolean}
+ */
+export function isJsonValue(value, depth = 0) {
+  if (depth > 32) return false;
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (Array.isArray(value)) return value.every((item) => isJsonValue(item, depth + 1));
+  if (isPlainObject(value)) {
+    return Object.values(value).every((item) => isJsonValue(item, depth + 1));
+  }
+  return false;
+}
+
+/**
  * JSON 相当の値を深く比較する
  * @param {unknown} a
  * @param {unknown} b

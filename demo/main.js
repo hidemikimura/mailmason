@@ -1,4 +1,6 @@
 import { migrate } from '../src/index.js';
+import { createDemoBlocks } from './custom-blocks.js';
+import { useDemoComponentStore } from './component-store.js';
 import basic from '../test/fixtures/templates/basic.json';
 import kitchenSink from '../test/fixtures/templates/kitchen-sink.json';
 
@@ -13,7 +15,12 @@ const select = /** @type {HTMLSelectElement} */ (document.querySelector('#fixtur
 editor.mergeTags = [
   { key: 'name', label: '氏名', sample: '山田 太郎' },
   { key: 'unsubscribe_url', label: '配信停止 URL', sample: 'https://example.com/unsubscribe' },
+  { key: 'coupon', label: 'クーポンコード', sample: 'AUTUMN2026' },
 ];
+// カスタムブロック（クーポン・商品リスト）
+editor.blocks = createDemoBlocks(`${location.origin}/docs/public/demo/`);
+// コンポーネント（保存した行・ブロック）の保存先
+useDemoComponentStore(editor);
 // 画像の「選択…」ボタン。実際のアプリではアップロード画面などを開いて URL を返す
 editor.onImageSelect = async ({ current }) => window.prompt('画像の URL', current) ?? null;
 // ローカルの画像ファイルのアップロード。実際のアプリではサーバーに送り、公開 URL を返す。

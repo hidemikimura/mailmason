@@ -19,9 +19,12 @@ import './components/mm-canvas.js';
 import './components/mm-settings-panel.js';
 import './components/mm-preview.js';
 import { mergeTagValues } from './util.js';
-import { insertBlock } from './components/mm-palette.js';
+import { insertBlock, placeBlock, placeRow } from './components/mm-palette.js';
 import { DEFAULT_MAX_IMAGE_SIZE, ImageUploader, imageFiles, uploadTargetOf } from './upload.js';
 import { getEditorBlockDef } from './blocks/index.js';
+import { extractComponent, instantiateComponent } from '../core/components.js';
+import { qrSignature, qrStatus } from '../core/blocks/qr.js';
+import { QrTooLongError, createQrFile } from './qr.js';
 
 /** @import { Template, BodySettings } from '../core/model/types.js' */
 /** @import { Store, StoreState, StoreAction } from '../core/store/store.js' */
@@ -33,6 +36,19 @@ import { getEditorBlockDef } from './blocks/index.js';
 /** @import { ImageUploadHook, UploadState } from './upload.js' */
 /** @import { FileDropTarget } from './dnd/controller.js' */
 /** @import { EditorContext } from './context.js' */
+/** @import { QrValues } from '../core/blocks/qr.js' */
+/** @import { CustomBlock } from '../core/blocks/custom.js' */
+/** @import { Component } from '../core/components.js' */
+
+/**
+ * コンポーネントを保存するフック。保存したもの（id 付き）を返すと一覧に加える
+ * @typedef {(component: Component) => Promise<Component | null | undefined | void>} SaveComponentHook
+ */
+
+/**
+ * コンポーネントを削除するフック。false を返すと削除を取り消す
+ * @typedef {(component: Component) => Promise<boolean | void> | boolean | void} DeleteComponentHook
+ */
 
 /**
  * @typedef {Warning & Record<string, unknown>} EditorWarning
@@ -63,6 +79,10 @@ export class MailmasonEditor extends LitElement {
     mergeTagDelimiters: { attribute: false },
     onImageSelect: { attribute: false },
     onImageUpload: { attribute: false },
+    blocks: { attribute: false },
+    components: { attribute: false },
+    onSaveComponent: { attribute: false },
+    onDeleteComponent: { attribute: false },
     maxImageSize: { type: Number, attribute: 'max-image-size' },
     socialIconBaseUrl: { type: String, attribute: 'social-icon-base-url' },
     outlookFontFamily: { type: String, attribute: 'outlook-font-family' },
@@ -187,6 +207,14 @@ export class MailmasonEditor extends LitElement {
     this.onImageSelect = null;
     /** @type {ImageUploadHook | null} ローカルの画像ファイルを受け取ってアップロードし、URL を返すフック */
     this.onImageUpload = null;
+    /** @type {readonly CustomBlock[]} カスタムブロックの定義（defineBlock() の戻り値の配列） */
+    this.blocks = [];
+    /** @type {readonly Component[]} 保存したコンポーネント（行・ブロック）の一覧。パレットの「保存済み」に出す */
+    this.components = [];
+    /** @type {SaveComponentHook | null} 「コンポーネントとして保存」で呼ぶ。アプリが保存し、id を付けたコンポーネントを返す */
+    this.onSaveComponent = null;
+    /** @type {DeleteComponentHook | null} パレットの「保存済み」で削除するときに呼ぶ。false を返すと取り消し */
+    this.onDeleteComponent = null;
     /** アップロードできる画像の大きさの上限（バイト。0 で無制限） */
     this.maxImageSize = DEFAULT_MAX_IMAGE_SIZE;
     /** SNS アイコン PNG の置き場所（空ならテキストリンク） */
@@ -280,7 +308,10 @@ export class MailmasonEditor extends LitElement {
   /** 内部のストア（初回アクセス時に作る） */
   get store() {
     if (!this._store) {
-      this._store = createStore(createTemplate(this.theme), { historyLimit: this.historyLimit });
+      this._store = createStore(createTemplate(this.theme), {
+        historyLimit: this.historyLimit,
+        blocks: () => this.blocks,
+      });
       this._store.subscribe((state, prev, action, warnings) =>
         this._onStoreChange(state, prev, action, warnings),
       );
@@ -383,6 +414,8 @@ export class MailmasonEditor extends LitElement {
     if (changed.has('theme') && !this._loaded && !this.store.canUndo()) {
       this.store.dispatch({ type: 'loadTemplate', template: createTemplate(this.theme) });
     }
+    // 読み込んだ後にカスタムブロックの定義が渡されたら、そのブロックの値を定義に沿って整え直す
+    if (changed.has('blocks') && changed.get('blocks') !== undefined) this._renormalize();
   }
 
   firstUpdated() {
@@ -399,7 +432,10 @@ export class MailmasonEditor extends LitElement {
    * @throws {import('../core/errors.js').MailmasonError} テンプレートとして解釈できないとき
    */
   loadJson(json) {
-    const { template, warnings } = migrate(json, { mergeTagDelimiters: this.mergeTagDelimiters });
+    const { template, warnings } = migrate(json, {
+      mergeTagDelimiters: this.mergeTagDelimiters,
+      blocks: this.blocks,
+    });
     this.store.dispatch({ type: 'loadTemplate', template });
     this._loaded = true;
     for (const warning of warnings) this._warn(warning);
@@ -422,6 +458,7 @@ export class MailmasonEditor extends LitElement {
   exportHtml(options = {}) {
     const { template } = this.store.getState();
     this._checkMergeTags(template);
+    this._checkQrCodes(template);
     const html = renderHtml(template, {
       ...this._htmlDefaults(),
       ...options,
@@ -450,6 +487,7 @@ export class MailmasonEditor extends LitElement {
     const part = resolveTextPart(template, {
       locale: this.locale,
       mergeTagDelimiters: this.mergeTagDelimiters,
+      blocks: this.blocks,
       ...options,
       mergeValues: this._withFallbacks(options.mergeValues),
     });
@@ -470,6 +508,19 @@ export class MailmasonEditor extends LitElement {
    */
   export(options = {}) {
     return { html: this.exportHtml(options.html), text: this.exportText(options.text) };
+  }
+
+  /**
+   * コンポーネント（保存した行・ブロック）を複製して入れる。
+   * 選択中の要素の後ろ（行は選択中の要素を含む行の直後）に入れ、入れた要素を選択する
+   * @param {Component} component
+   * @returns {string | null} 入れた行・ブロックの ID（入れられなければ null。理由は mm-warning）
+   */
+  insertComponent(component) {
+    const result = this._instantiate(component);
+    if (!result) return null;
+    const ctx = this._context();
+    return result.kind === 'row' ? placeRow(ctx, result.row) : placeBlock(ctx, result.block);
   }
 
   /** @returns {boolean} */
@@ -519,6 +570,44 @@ export class MailmasonEditor extends LitElement {
   _newImageBlock() {
     const def = getEditorBlockDef('image');
     return createBlock('image', def?.initialValues?.(this._context().t) ?? {});
+  }
+
+  /**
+   * QR ブロックの PNG を作って onImageUpload でアップロードし、URL を src に設定する
+   * @param {string} blockId
+   * @returns {Promise<boolean>} 設定できたか
+   */
+  async _generateQr(blockId) {
+    if (!this.onImageUpload) return false;
+    const { template } = this.store.getState();
+    const loc = locateBlock(template, blockId);
+    if (!loc) return false;
+    const block = template.body.rows[loc.rowIndex].columns[loc.columnIndex].blocks[loc.blockIndex];
+    if (block.type !== 'qr') return false;
+    const values = /** @type {QrValues} */ (/** @type {unknown} */ (block.values));
+    if (!values.content) return false;
+    /** @type {File} */
+    let file;
+    try {
+      file = await createQrFile(values);
+    } catch (error) {
+      const tooLong = error instanceof QrTooLongError;
+      const t = this._context().t;
+      this._uploader.fail(blockId, 'src', t(tooLong ? 'qr.errorTooLong' : 'qr.errorFailed'));
+      this._warn({
+        code: tooLong ? 'qr-too-long' : 'qr-failed',
+        path: `block(${blockId}).values.content`,
+        message: tooLong ? 'The QR content is too long.' : 'Failed to create the QR code.',
+        blockId,
+        error,
+      });
+      return false;
+    }
+    return this._uploader.upload(
+      file,
+      { blockId, field: 'src' },
+      { measure: false, patch: { generated: qrSignature(values) } },
+    );
   }
 
   /**
@@ -631,7 +720,132 @@ export class MailmasonEditor extends LitElement {
       mergeTagDelimiters: this.mergeTagDelimiters,
       socialIconBaseUrl: this.socialIconBaseUrl,
       outlookFontFamily: this.outlookFontFamily,
+      blocks: this.blocks,
     };
+  }
+
+  /**
+   * コンポーネントを行・ブロックにする。直した箇所は mm-warning で知らせ、入れられなければ null
+   * @param {Component} component
+   * @returns {ReturnType<typeof instantiateComponent> | null}
+   */
+  _instantiate(component) {
+    try {
+      const result = instantiateComponent(component, {
+        blocks: this.blocks,
+        mergeTagDelimiters: this.mergeTagDelimiters,
+      });
+      for (const warning of result.warnings) this._warn({ ...warning, componentId: component?.id });
+      return result;
+    } catch (error) {
+      this._warn({
+        code: 'invalid-component',
+        path: '',
+        message: `Cannot insert the component: ${error instanceof Error ? error.message : String(error)}`,
+        componentId: component?.id,
+        error,
+      });
+      return null;
+    }
+  }
+
+  /**
+   * 行・ブロックをコンポーネントとして保存する（保存はアプリのフックに任せる）
+   * @param {string} id 行またはブロックの ID
+   * @param {string} name
+   * @returns {Promise<Component>} 保存したコンポーネント。失敗したら例外（mm-warning も発火）
+   */
+  async _saveComponent(id, name) {
+    if (!this.onSaveComponent) throw new Error('onSaveComponent is not set.');
+    const component = extractComponent(this.store.getState().template, id, { name });
+    if (!component) throw new Error(`Row or block "${id}" was not found.`);
+    try {
+      const saved = await this.onSaveComponent(structuredClone(component));
+      const result = saved && typeof saved === 'object' ? saved : component;
+      if (result.id && !this.components.some((c) => c.id === result.id)) {
+        this.components = [...this.components, result];
+      }
+      return result;
+    } catch (error) {
+      this._warn({
+        code: 'component-save-failed',
+        path: '',
+        message: `Saving the component failed: ${error instanceof Error ? error.message : String(error)}`,
+        error,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * コンポーネントを一覧から削除する（アプリのフックが false を返したら取り消し）
+   * @param {Component} component
+   */
+  async _deleteComponent(component) {
+    if (!this.onDeleteComponent) return;
+    try {
+      if ((await this.onDeleteComponent(component)) === false) return;
+    } catch (error) {
+      this._warn({
+        code: 'component-delete-failed',
+        path: '',
+        message: `Deleting the component failed: ${error instanceof Error ? error.message : String(error)}`,
+        componentId: component.id,
+        error,
+      });
+      return;
+    }
+    this.components = this.components.filter(
+      (c) => c !== component && (component.id === undefined || c.id !== component.id),
+    );
+  }
+
+  /**
+   * カスタムブロックの定義が変わったとき、テンプレートにあるそのブロックの値を整え直す
+   * （定義より先に loadJson したテンプレートでも、既定値の補完や不正値の修正が効くように）。
+   * 変化が無ければ何もしない。変化があれば履歴はクリアされる
+   */
+  _renormalize() {
+    if (!this._store) return;
+    const custom = new Set(this.blocks.map((def) => def.type));
+    const { template } = this.store.getState();
+    const uses = template.body.rows.some((row) =>
+      row.columns.some((column) => column.blocks.some((block) => custom.has(block.type))),
+    );
+    if (!uses) return;
+    const { template: next, warnings } = migrate(template, {
+      mergeTagDelimiters: this.mergeTagDelimiters,
+      blocks: this.blocks,
+    });
+    if (JSON.stringify(next) === JSON.stringify(template)) return;
+    this.store.dispatch({ type: 'loadTemplate', template: next });
+    for (const warning of warnings) this._warn(warning);
+  }
+
+  /**
+   * 未作成・作成後に設定が変わった QR コードを警告する（書き出しの HTML には今ある画像が入る）
+   * @param {Template} template
+   */
+  _checkQrCodes(template) {
+    for (const row of template.body.rows) {
+      for (const column of row.columns) {
+        for (const block of column.blocks) {
+          if (block.type !== 'qr') continue;
+          const status = qrStatus(block);
+          if (status === 'missing' || status === 'stale') {
+            this._warn({
+              code: status === 'missing' ? 'qr-missing' : 'qr-stale',
+              path: `block(${block.id}).values.src`,
+              message:
+                status === 'missing'
+                  ? 'The QR code image has not been created.'
+                  : 'The QR code settings changed after the image was created.',
+              blockId: block.id,
+            });
+          }
+        }
+      }
+    }
   }
 
   /** @param {Template} template */
@@ -639,7 +853,10 @@ export class MailmasonEditor extends LitElement {
     if (this.mergeTags.length === 0) return;
     const known = new Set(this.mergeTags.map((tag) => tag.key));
     const reported = new Set();
-    for (const usage of findMergeTags(template, { delimiters: this.mergeTagDelimiters })) {
+    for (const usage of findMergeTags(template, {
+      delimiters: this.mergeTagDelimiters,
+      blocks: this.blocks,
+    })) {
       if (known.has(usage.key) || reported.has(usage.key)) continue;
       reported.add(usage.key);
       this._warn({
@@ -665,7 +882,11 @@ export class MailmasonEditor extends LitElement {
     if (
       this._ctxCache?.key === key &&
       this._ctxCache.value.onImageSelect === this.onImageSelect &&
-      this._ctxCache.value.onImageUpload === this.onImageUpload
+      this._ctxCache.value.onImageUpload === this.onImageUpload &&
+      this._ctxCache.value.blocks === this.blocks &&
+      this._ctxCache.value.components === this.components &&
+      this._ctxCache.value.canSaveComponents === Boolean(this.onSaveComponent) &&
+      this._ctxCache.value.canDeleteComponents === Boolean(this.onDeleteComponent)
     ) {
       return this._ctxCache.value;
     }
@@ -675,11 +896,20 @@ export class MailmasonEditor extends LitElement {
       t: createTranslator(this.locale, this.messages),
       locale: this.locale,
       htmlOptions: resolveHtmlOptions(this._htmlDefaults()),
+      blocks: this.blocks,
+      components: this.components,
+      canSaveComponents: Boolean(this.onSaveComponent),
+      canDeleteComponents: Boolean(this.onDeleteComponent),
+      saveComponent: (id, name) => this._saveComponent(id, name),
+      deleteComponent: (component) => void this._deleteComponent(component),
+      insertComponent: (component) => this.insertComponent(component),
+      instantiateComponent: (component) => this._instantiate(component),
       mergeTags: this.mergeTags,
       delimiters: this.mergeTagDelimiters,
       onImageSelect: this.onImageSelect,
       onImageUpload: this.onImageUpload,
       upload: (file, target) => void this._uploader.upload(file, target),
+      generateQr: (blockId) => void this._generateQr(blockId),
       dropImageFiles: (target, files) => this._dropImageFiles(target, files),
       dnd: this._dnd,
       edit: (id) => this._edit(id),

@@ -30,6 +30,8 @@ function withLocalImages(template) {
     } else if (node && typeof node === 'object') {
       if (typeof node.src === 'string' && node.src && 'naturalWidth' in node) {
         node.src = imageUrl(node.naturalWidth ?? 600, node.naturalHeight ?? 300);
+      } else if (typeof node.src === 'string' && node.src && 'generated' in node) {
+        node.src = imageUrl(node.size ?? 160, node.size ?? 160); // QR コード
       }
       Object.values(node).forEach(walk);
     }

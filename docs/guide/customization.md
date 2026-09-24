@@ -46,9 +46,9 @@ mailmason-editor::part(toolbar) {
 }
 ```
 
-### ダークモード
+### エディタのダークモード
 
-`color-mode` 属性で `light`（既定）・`dark`・`auto`（OS の設定に合わせる）を選べます。メールの色は変わりません。
+`color-mode` 属性で `light`（既定）・`dark`・`auto`（OS の設定に合わせる）を選べます。エディタの画面の配色で、メールの色は変わりません（受信側のダークモードでの見え方は[書き出しと送信](./export#受信側のダークモード)を参照）。
 
 ```html
 <mailmason-editor color-mode="auto"></mailmason-editor>

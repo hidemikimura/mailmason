@@ -2,7 +2,30 @@
 
 このプロジェクトは [Semantic Versioning](https://semver.org/lang/ja/) に従います。1.0.0 までは、マイナーバージョンで互換性の無い変更を含むことがあります。
 
-## 未公開
+## 0.3.0 - 2026-09-24
+
+カスタムブロック、コンポーネント（保存した行・ブロック）、QR コードのブロックを追加しました。互換性の無い変更はありません。
+
+### 互換性
+
+- 0.3.0 で保存したテンプレートのうち、QR コード・カスタムブロック・画像の `uploadData` を使っているものを 0.2.x 以前で読み込むと、未知のブロック（`unknown-block-type`、データは残して出力しない）や未知の項目（`unknown-key`、取り除く）の警告になります。0.3.0 以降で読み込んでください
+- 依存パッケージに `qrcode-generator` が加わり、単一バンドル（`dist/`）が大きくなりました
+
+### 追加
+
+- QR コードのブロック（`qr`）。内容（URL・文字列）・サイズ・誤り訂正・余白・色を設定し、「QR コードを作成」でエディタが PNG を作って `onImageUpload` でアップロード、返った URL を画像にする（`onImageUpload` が無いとパレットに出ない）。作成後に設定が変わると設定パネルとキャンバスで作り直しを促し、書き出し時に `mm-warning`（`qr-missing` / `qr-stale`）を出す。内容に差し込み変数は使えない
+- `@hidemikimura/mailmason/core` に `qrSignature` / `qrStatus`
+- 依存パッケージに `qrcode-generator`（MIT）を追加
+- `onImageUpload` / `onImageSelect` が `{ url, data?, alt? }` を返せるようにし、`data`（任意のオブジェクト）を画像・画像＋テキスト・QR コードの `uploadData` としてテンプレート JSON に保存する。画像を差し替えると置き換わり、URL を手で書き換えると `null` になる。出力には使わない。型 `ImageResult` を export
+- テンプレートの値の更新（`updateBlockValues` など）で、任意のオブジェクトの項目はマージせずに置き換える
+- カスタムブロック: `defineBlock()`（`@hidemikimura/mailmason/core`）で設定項目と出力の関数を定義し、エディタの `blocks` プロパティと、`renderHtml` / `renderText` / `resolveTextPart` / `migrate` / `validate` / `findMergeTags` / `createBlock` / `createStore` の `blocks` オプションに渡す。設定項目は text / textarea / url / number / color / select / align / toggle / image / list（繰り返し）/ action（利用者の処理で値を入れるボタン）/ element（利用者のカスタム要素）。`renderHtml` には escape・image・button などの道具を渡す。`mm-warning` に `block-action-failed`。型 `CustomBlock` / `CustomBlockInput` / `CustomField` / `CustomHtmlContext` を export
+- コンポーネント（保存した行・ブロック）: 設定パネルの「コンポーネントとして保存」で行・ブロックに名前を付けて `onSaveComponent` に渡し（保存先はアプリ）、パレットの「保存済み」タブ（`components`）からクリック・ドラッグで別のメールに複製して入れる。入れた後は元と連動しない。`onDeleteComponent`、メソッド `insertComponent`、`mm-warning` に `component-save-failed` / `component-delete-failed` / `invalid-component`。core に `extractComponent` / `instantiateComponent` / `componentKindOf`、型 `Component` / `SaveComponentHook` / `DeleteComponentHook`
+- ドキュメントサイトに「コンポーネント」「カスタムブロック」のページを追加し、デモにクーポンと商品リストのカスタムブロックと、ブラウザに保存するコンポーネントの保存先を追加
+- AI 用スキルの `validate.mjs` に `--blocks`（カスタムブロックの定義を渡す）
+
+### 変更
+
+- テキストの書式ツールバーのリンク: リンクの中にキャレットを置いて（または一部を選んで）開くと、設定済みの URL を入力欄に表示する。適用するとリンク全体の URL を差し替える（キャレットだけのときに URL の文字が挿入されたり、一部だけ選んだときにリンクが分かれたりしない）。空にして適用するとリンク全体を外す
 
 ### 開発
 

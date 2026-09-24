@@ -64,8 +64,11 @@ function parseArgs(argv) {
 const SAMPLE_IMAGE = /https:\/\/example\.com\/images\/([\w-]+)\.(?:png|jpe?g)/g;
 const SAMPLE_IMAGE_DIR = join(root, 'docs/public/demo');
 
-/** サンプル画像のファイル名（写真は JPEG、ロゴは PNG） @param {string} name */
-const sampleFile = (name) => `${name}.${name === 'logo' ? 'png' : 'jpg'}`;
+/** PNG で用意しているサンプル画像（それ以外の写真は JPEG） */
+const PNG_SAMPLES = new Set(['logo', 'qr']);
+
+/** サンプル画像のファイル名 @param {string} name */
+const sampleFile = (name) => `${name}.${PNG_SAMPLES.has(name) ? 'png' : 'jpg'}`;
 
 /**
  * example.com の画像を、公開しているサンプル画像（embed なら cid:）に差し替える

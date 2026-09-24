@@ -3,8 +3,9 @@ import { LitElement, css, html, nothing } from 'lit';
 import { createBlock, createRow } from '../../core/model/factory.js';
 import { ROW_LAYOUT_NAMES, getLayoutSpans } from '../../core/model/layout.js';
 import { findRowIndex, locateBlock, locateColumn } from '../../core/model/tree.js';
-import { PALETTE_BLOCKS, getEditorBlockDef } from '../blocks/index.js';
+import { blockLabel, getEditorBlockDef, paletteBlocks } from '../blocks/index.js';
 import { controls } from '../styles.js';
+import { icons } from '../icons.js';
 import { define } from '../context.js';
 
 /** @import { RowLayout } from '../../core/model/types.js' */
@@ -19,9 +20,19 @@ import { define } from '../context.js';
  * @returns {string} 追加したブロックの ID
  */
 export function insertBlock(ctx, type) {
-  const { store, t } = ctx;
-  const def = getEditorBlockDef(type);
-  const block = createBlock(type, def?.initialValues?.(t) ?? {});
+  const def = getEditorBlockDef(type, ctx.blocks);
+  const block = createBlock(type, def?.initialValues?.(ctx.t) ?? {}, { blocks: ctx.blocks });
+  return placeBlock(ctx, block);
+}
+
+/**
+ * 作ったブロックを、選択中の要素に合わせた位置に入れる（insertBlock と同じ規則）
+ * @param {EditorContext} ctx
+ * @param {import('../../core/model/types.js').Block} block
+ * @returns {string} 追加したブロックの ID
+ */
+export function placeBlock(ctx, block) {
+  const { store } = ctx;
   const { template, selection } = store.getState();
 
   const inBlock = selection ? locateBlock(template, selection) : null;
@@ -53,6 +64,16 @@ export function insertBlock(ctx, type) {
  * @returns {string} 追加した行の ID
  */
 export function insertRow(ctx, layout) {
+  return placeRow(ctx, createRow(layout));
+}
+
+/**
+ * 作った行を、選択中の要素を含む行の直後（無ければ末尾）に入れる
+ * @param {EditorContext} ctx
+ * @param {import('../../core/model/types.js').Row} row
+ * @returns {string} 追加した行の ID
+ */
+export function placeRow(ctx, row) {
   const { store } = ctx;
   const { template, selection } = store.getState();
   let index = template.body.rows.length;
@@ -63,7 +84,6 @@ export function insertRow(ctx, layout) {
       findRowIndex(template, selection);
     if (hit !== -1) index = hit + 1;
   }
-  const row = createRow(layout);
   store.dispatch({ type: 'addRow', row, index });
   store.select(row.id);
   return row.id;
@@ -93,7 +113,8 @@ export class MmPalette extends LitElement {
         flex: 1;
         border: 0;
         border-radius: 0;
-        padding: 10px 8px;
+        padding: 10px 4px;
+        white-space: nowrap;
         background: transparent;
         border-bottom: 2px solid transparent;
       }
@@ -140,6 +161,54 @@ export class MmPalette extends LitElement {
         border: 1px solid var(--mm-color-accent);
         border-radius: 2px;
       }
+      .saved {
+        display: grid;
+        gap: 6px;
+        padding: 8px 12px 16px;
+      }
+      .saved-item {
+        display: flex;
+        align-items: stretch;
+        gap: 4px;
+      }
+      .saved-item .insert {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        text-align: left;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+      }
+      .saved-item .insert svg {
+        flex: none;
+        width: 20px;
+        height: 20px;
+      }
+      .saved-item .name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .saved-item .kind {
+        flex: none;
+        font-size: 10px;
+        color: var(--mm-color-muted);
+      }
+      .saved-item .delete {
+        flex: none;
+        padding: 0 8px;
+      }
+      .empty {
+        margin: 8px 12px;
+        color: var(--mm-color-muted);
+        font-size: 12px;
+      }
     `,
   ];
 
@@ -147,19 +216,66 @@ export class MmPalette extends LitElement {
     super();
     /** @type {EditorContext} */
     this.ctx = /** @type {any} */ (null);
-    /** @type {'blocks' | 'rows'} */
+    /** @type {'blocks' | 'rows' | 'saved'} */
     this._tab = 'blocks';
+  }
+
+  /** パレットの「保存済み」: 保存したコンポーネントの一覧 */
+  _renderSaved() {
+    const ctx = /** @type {EditorContext} */ (this.ctx);
+    const { t } = ctx;
+    if (ctx.components.length === 0) {
+      return html`<p class="empty" role="tabpanel">${t('palette.savedEmpty')}</p>`;
+    }
+    return html`<div class="saved" role="tabpanel">
+      ${ctx.components.map(
+        (component, i) =>
+          html`<div class="saved-item" data-component-id=${component.id ?? String(i)}>
+            <button
+              type="button"
+              class="insert"
+              title=${component.name}
+              @pointerdown=${(/** @type {PointerEvent} */ e) =>
+                ctx.dnd.start(e, { kind: 'component', component })}
+              @click=${() => ctx.insertComponent(component)}
+            >
+              ${component.kind === 'row' ? icons.savedRow : icons.savedBlock}
+              <span class="name">${component.name || t('component.untitled')}</span>
+              <span class="kind"
+                >${t(component.kind === 'row' ? 'crumb.row' : 'component.block')}</span
+              >
+            </button>
+            ${
+              ctx.canDeleteComponents
+                ? html`<button
+                    type="button"
+                    class="delete"
+                    data-action="delete-component"
+                    title=${t('component.delete')}
+                    aria-label=${t('component.delete')}
+                    @click=${() => ctx.deleteComponent(component)}
+                  >
+                    ✕
+                  </button>`
+                : nothing
+            }
+          </div>`,
+      )}
+    </div>`;
   }
 
   render() {
     const { ctx } = this;
     if (!ctx) return nothing;
     const { t } = ctx;
-    const tab = (/** @type {'blocks' | 'rows'} */ name, /** @type {string} */ key) =>
+    const showSaved = ctx.canSaveComponents || ctx.components.length > 0;
+    const current = this._tab === 'saved' && !showSaved ? 'blocks' : this._tab;
+    const tab = (/** @type {'blocks' | 'rows' | 'saved'} */ name, /** @type {string} */ key) =>
       html`<button
         type="button"
         role="tab"
-        aria-selected=${this._tab === name ? 'true' : 'false'}
+        aria-selected=${current === name ? 'true' : 'false'}
+        data-tab=${name}
         @click=${() => (this._tab = name)}
       >
         ${t(key)}
@@ -167,45 +283,49 @@ export class MmPalette extends LitElement {
 
     return html`<div class="tabs" role="tablist">
         ${tab('blocks', 'palette.blocks')} ${tab('rows', 'palette.rows')}
+        ${showSaved ? tab('saved', 'palette.saved') : nothing}
       </div>
       <p class="hint">${t('palette.hint')}</p>
       ${
-        this._tab === 'blocks'
-          ? html`<div class="grid" role="tabpanel">
-              ${PALETTE_BLOCKS.map((type) => {
-                const def = /** @type {import('../blocks/index.js').EditorBlockDef} */ (
-                  getEditorBlockDef(type)
-                );
-                return html`<button
-                  type="button"
-                  class="item"
-                  data-block-type=${type}
-                  @pointerdown=${(/** @type {PointerEvent} */ e) =>
-                    ctx.dnd.start(e, { kind: 'new-block', type })}
-                  @click=${() => insertBlock(ctx, type)}
-                >
-                  ${def.icon}<span>${t(def.labelKey)}</span>
-                </button>`;
-              })}
-            </div>`
-          : html`<div class="grid" role="tabpanel">
-              ${ROW_LAYOUT_NAMES.map(
-                (layout) =>
-                  html`<button
+        current === 'saved'
+          ? this._renderSaved()
+          : current === 'blocks'
+            ? html`<div class="grid" role="tabpanel">
+                ${paletteBlocks(ctx.blocks).map((type) => {
+                  const def = /** @type {import('../blocks/index.js').EditorBlockDef} */ (
+                    getEditorBlockDef(type, ctx.blocks)
+                  );
+                  if (def.requiresUpload && !ctx.onImageUpload) return nothing;
+                  return html`<button
                     type="button"
                     class="item"
-                    data-layout=${layout}
+                    data-block-type=${type}
                     @pointerdown=${(/** @type {PointerEvent} */ e) =>
-                      ctx.dnd.start(e, { kind: 'new-row', layout })}
-                    @click=${() => insertRow(ctx, layout)}
+                      ctx.dnd.start(e, { kind: 'new-block', type })}
+                    @click=${() => insertBlock(ctx, type)}
                   >
-                    <span class="preview">
-                      ${getLayoutSpans(layout).map((span) => html`<span style="flex:${span}"></span>`)}
-                    </span>
-                    <span>${t(`layout.${layout}`)}</span>
-                  </button>`,
-              )}
-            </div>`
+                    ${def.icon}<span>${blockLabel(def, ctx)}</span>
+                  </button>`;
+                })}
+              </div>`
+            : html`<div class="grid" role="tabpanel">
+                ${ROW_LAYOUT_NAMES.map(
+                  (layout) =>
+                    html`<button
+                      type="button"
+                      class="item"
+                      data-layout=${layout}
+                      @pointerdown=${(/** @type {PointerEvent} */ e) =>
+                        ctx.dnd.start(e, { kind: 'new-row', layout })}
+                      @click=${() => insertRow(ctx, layout)}
+                    >
+                      <span class="preview">
+                        ${getLayoutSpans(layout).map((span) => html`<span style="flex:${span}"></span>`)}
+                      </span>
+                      <span>${t(`layout.${layout}`)}</span>
+                    </button>`,
+                )}
+              </div>`
       }`;
   }
 }

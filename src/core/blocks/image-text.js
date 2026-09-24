@@ -13,7 +13,14 @@ const GAP = 12;
 export const imageTextBlock = {
   type: 'imageText',
   defaults: () => ({
-    image: { src: '', alt: '', href: '', naturalWidth: null, naturalHeight: null },
+    image: {
+      src: '',
+      alt: '',
+      href: '',
+      naturalWidth: null,
+      naturalHeight: null,
+      uploadData: null,
+    },
     imagePosition: 'left',
     imageWidthPercent: 40,
     html: '',
@@ -25,6 +32,7 @@ export const imageTextBlock = {
       href: s.string(),
       naturalWidth: s.number({ min: 1, integer: true, nullable: true }),
       naturalHeight: s.number({ min: 1, integer: true, nullable: true }),
+      uploadData: s.record({ nullable: true }),
     }),
     imagePosition: s.oneOf(['left', 'right']),
     imageWidthPercent: s.number({ min: 10, max: 90, integer: true }),

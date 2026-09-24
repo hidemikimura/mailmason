@@ -1,5 +1,5 @@
 // デモで読み込むテンプレート。画像はドキュメントサイトに置いたサンプル画像に差し替える
-// （書き出した HTML をそのままメールで送れるよう、写真は JPEG、ロゴは PNG。SVG は元データ）
+// （書き出した HTML をそのままメールで送れるよう、写真は JPEG、ロゴと QR コードは PNG。SVG は元データ）
 import basic from '../../../test/fixtures/templates/basic.json';
 import kitchenSink from '../../../test/fixtures/templates/kitchen-sink.json';
 import newsletter from '../../../skills/mailmason-templates/examples/newsletter.json';
@@ -21,7 +21,7 @@ export const DEMO_TEMPLATES = [
 export function withDemoImages(template, base) {
   const json = JSON.stringify(template).replace(
     /https:\/\/example\.com\/images\/([\w-]+)\.(?:png|jpe?g)/g,
-    (_, name) => `${base}${name}.${name === 'logo' ? 'png' : 'jpg'}`,
+    (_, name) => `${base}${name}.${name === 'logo' || name === 'qr' ? 'png' : 'jpg'}`,
   );
   return JSON.parse(json);
 }

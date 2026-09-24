@@ -25,6 +25,7 @@ import { DEFAULT_DELIMITERS } from '../merge-tags.js';
 /**
  * @typedef {Object} NormalizeOptions
  * @property {MergeTagDelimiters} delimiters
+ * @property {readonly import('../blocks/types.js').CoreBlockDef[] | null} [blocks] カスタムブロックの定義
  */
 
 /**
@@ -76,7 +77,7 @@ function normalizeBlock(input, ids, ctx, options) {
     warn(ctx, 'invalid-value', 'Not a valid block; it was removed.');
     return null;
   }
-  const def = getBlockDef(input.type);
+  const def = getBlockDef(input.type, options.blocks);
   const id = ensureId(input.id, 'b', ids, ctx);
   let values;
   if (def) {
@@ -225,7 +226,10 @@ function normalizeRow(input, ids, ctx, options) {
  * @returns {Template}
  */
 export function normalizeTemplate(input, ctx, options = {}) {
-  const resolved = { delimiters: options.delimiters ?? DEFAULT_DELIMITERS };
+  const resolved = {
+    delimiters: options.delimiters ?? DEFAULT_DELIMITERS,
+    blocks: options.blocks ?? null,
+  };
   /** @type {Set<string>} */
   const ids = new Set();
 

@@ -12,6 +12,7 @@ import { normalizeTemplate } from './normalize.js';
 /**
  * @typedef {Object} MigrateOptions
  * @property {MergeTagDelimiters} [mergeTagDelimiters] リンク先にマージタグだけを書いたリンクを残すため（既定 `{{` `}}`）
+ * @property {readonly import('../blocks/types.js').CoreBlockDef[] | null} [blocks] カスタムブロックの定義（渡さないと未知のブロックとして扱う）
  */
 
 /**
@@ -81,7 +82,10 @@ export function migrate(input, options = {}) {
   }
 
   return {
-    template: normalizeTemplate(current, ctx, { delimiters: options.mergeTagDelimiters }),
+    template: normalizeTemplate(current, ctx, {
+      delimiters: options.mergeTagDelimiters,
+      blocks: options.blocks ?? null,
+    }),
     warnings,
   };
 }

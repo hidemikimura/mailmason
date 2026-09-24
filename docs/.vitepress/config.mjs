@@ -46,7 +46,7 @@ export default defineConfig({
       { text: 'デモ', link: '/demo' },
       { text: 'AI 向け', link: '/ai' },
       {
-        text: 'v0.2',
+        text: 'v0.3',
         items: [
           { text: '変更履歴', link: '/changelog' },
           { text: 'npm', link: 'https://www.npmjs.com/package/@hidemikimura/mailmason' },
@@ -68,6 +68,8 @@ export default defineConfig({
           items: [
             { text: 'エディタの操作', link: '/guide/editing' },
             { text: '画像', link: '/guide/images' },
+            { text: 'コンポーネント', link: '/guide/components' },
+            { text: 'カスタムブロック', link: '/guide/custom-blocks' },
             { text: '差し込み変数', link: '/guide/merge-tags' },
             { text: 'プレビューとテキストパート', link: '/guide/preview-and-text' },
             { text: '書き出しと配信', link: '/guide/export' },

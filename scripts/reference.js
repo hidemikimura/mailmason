@@ -46,6 +46,7 @@ const BLOCK_NOTES = {
   divider: '区切り線。',
   spacer: '空白。既定のブロック余白は 0。',
   imageText: '画像とテキストの横並び（スマホでは縦に並ぶ）。',
+  qr: 'QR コード。画像（PNG）はエディタが作って `onImageUpload` でアップロードし、その URL を `src` に持つ（出力は画像と同じ）。JSON を直接作るときは、QR の PNG を自分で用意して `src` に URL を入れ、`generated` に `qrSignature(values)` の値を入れる（`null` のままだとエディタで「作り直し」が必要と表示される）。',
   social:
     'SNS へのリンク。`url` が空の項目は出力しない。アイコン PNG の置き場所（`socialIconBaseUrl`）を指定しなければテキストリンクになる。',
   html: '生の HTML。エディタのキャンバスでは sandbox の iframe で表示し、出力にはそのまま入れる（テキストパートは許可タグに整えてから変換）。',
@@ -90,6 +91,8 @@ const DESCRIPTIONS = {
   'image.align': '横位置',
   'image.naturalWidth': '画像の実際の幅（px）',
   'image.naturalHeight': '画像の実際の高さ（px）',
+  'image.uploadData':
+    'アップロード時に `onImageUpload`（または `onImageSelect`）が `{ url, data }` で返した `data`。中身は自由（JSON で表せる値）で、出力には使わない。画像を差し替えると置き換わり、URL を手で変えると `null` になる',
   'button.label': 'ボタンの文字',
   'button.href': 'リンク先',
   'button.backgroundColor': 'ボタンの色',
@@ -112,6 +115,8 @@ const DESCRIPTIONS = {
   'imageText.image.href': 'リンク先',
   'imageText.image.naturalWidth': '画像の実際の幅（px）',
   'imageText.image.naturalHeight': '画像の実際の高さ（px）',
+  'imageText.image.uploadData':
+    '画像ブロックの `uploadData` と同じ（アップロード時の任意のデータ）',
   'imageText.imagePosition': '画像を置く側',
   'imageText.imageWidthPercent': '画像の幅（ブロック幅に対する %）',
   'imageText.html': 'テキスト（許可タグだけの HTML）',
@@ -122,6 +127,21 @@ const DESCRIPTIONS = {
   'social.align': '横位置',
   'social.iconStyle': 'アイコンの色（`socialIconBaseUrl` を使うとき）',
   'html.html': '生の HTML',
+  'qr.content': 'QR にする文字列（URL など。差し込み変数は使えない）',
+  'qr.size': '表示サイズ（px、正方形）',
+  'qr.ecLevel': '誤り訂正レベル（L 約 7% / M 約 15% / Q 約 25% / H 約 30% の汚れ・欠けまで読める）',
+  'qr.margin': '周りの余白（升目の数。読み取りには 2 以上を推奨）',
+  'qr.color': '升目の色',
+  'qr.backgroundColor': '背景色',
+  'qr.src': 'アップロードした QR 画像（PNG）の URL。空なら出力しない',
+  'qr.alt': '代替テキスト',
+  'qr.href':
+    'リンク先（空ならリンクなし）。テキストパートでは、空なら `content` が URL のときその URL を出す',
+  'qr.align': '横位置',
+  'qr.uploadData':
+    'QR の画像をアップロードしたときに `onImageUpload` が返した `data`（画像ブロックの `uploadData` と同じ）',
+  'qr.generated':
+    '`src` の画像を作ったときの設定（`qrSignature()` の値）。今の設定と違うと作り直しが必要',
 };
 
 /**
@@ -167,6 +187,8 @@ function typeOf(schema) {
       return 'オブジェクト';
     case 'array':
       return '配列';
+    case 'record':
+      return `任意のオブジェクト${orNull}`;
     default:
       return '任意';
   }
@@ -368,6 +390,10 @@ ${table(columnSettingsSchema, /** @type {any} */ (defaultColumnSettings()), 'col
 ${table(blockStyleSchema, /** @type {any} */ (defaultBlockStyle()), 'style')}
 
 ${blocks}
+
+### カスタムブロック
+
+\`type\` にハイフンを含むブロック（例: \`acme-coupon\`）は、アプリが \`defineBlock()\` で定義したカスタムブロックです。\`values\` の形は定義の設定項目（\`fields\`）で決まります。定義を渡さずに読み込むと未知の種類として扱い（\`unknown-block-type\`）、データは残したまま出力しません。
 
 ## リッチテキスト（\`text.html\` / \`imageText.html\`）
 

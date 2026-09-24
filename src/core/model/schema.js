@@ -5,7 +5,7 @@
 // - 型や範囲が不正なら既定値に置き換えて `invalid-value` を警告
 // - object の未知キーは削除して `unknown-key` を警告
 
-import { isPlainObject } from './utils.js';
+import { isJsonValue, isPlainObject } from './utils.js';
 
 /**
  * @typedef {Object} Warning
@@ -23,7 +23,7 @@ import { isPlainObject } from './utils.js';
 /**
  * スキーマの中身（ドキュメントの自動生成用。正規化には使わない）
  * @typedef {Object} SchemaInfo
- * @property {'any' | 'string' | 'number' | 'boolean' | 'color' | 'oneOf' | 'spacing' | 'object' | 'array'} type
+ * @property {'any' | 'string' | 'number' | 'boolean' | 'color' | 'oneOf' | 'spacing' | 'object' | 'array' | 'record'} type
  * @property {boolean} [nullable]
  * @property {number} [min]
  * @property {number} [max]
@@ -73,7 +73,13 @@ function clone(value) {
  * @param {unknown} fallback
  */
 function invalid(ctx, input, fallback) {
-  warn(ctx, 'invalid-value', `Invalid value ${JSON.stringify(input)}; replaced with the default.`);
+  let shown;
+  try {
+    shown = JSON.stringify(input);
+  } catch {
+    shown = Object.prototype.toString.call(input); // 循環参照など
+  }
+  warn(ctx, 'invalid-value', `Invalid value ${shown}; replaced with the default.`);
   return clone(fallback);
 }
 
@@ -180,6 +186,24 @@ export const s = {
   },
 
   /**
+   * 利用者が自由に入れるオブジェクト（中身は JSON で表せる値なら何でもよい）。
+   * パッチではマージせず、まるごと置き換える
+   * @param {{ nullable?: boolean }} [options]
+   * @returns {Schema}
+   */
+  record({ nullable = false } = {}) {
+    return {
+      info: { type: 'record', nullable },
+      normalize(input, fallback, ctx) {
+        if (input === undefined) return clone(fallback);
+        if (input === null && nullable) return null;
+        if (!isPlainObject(input) || !isJsonValue(input)) return invalid(ctx, input, fallback);
+        return input;
+      },
+    };
+  },
+
+  /**
    * 上下左右の余白。数値 1 つなら 4 辺に同じ値を使う
    * @returns {Schema}
    */
@@ -254,6 +278,30 @@ export const s = {
     };
   },
 };
+
+/**
+ * スキーマに沿って patch を current に深くマージする。
+ * object の項目は再帰的にマージし、record・配列・その他の値は置き換える
+ * （record はマージすると前の値のキーが残ってしまうため）
+ * @param {Schema} schema
+ * @param {unknown} current
+ * @param {unknown} patch
+ * @returns {unknown}
+ */
+export function mergeBySchema(schema, current, patch) {
+  if (patch === undefined) return current;
+  const info = schema.info;
+  if (info?.type !== 'object' && info?.type !== 'spacing') return patch;
+  if (!isPlainObject(current) || !isPlainObject(patch)) return patch;
+  /** @type {Record<string, unknown>} */
+  const result = { ...current };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) continue;
+    const childSchema = info.type === 'object' ? info.shape?.[key] : undefined;
+    result[key] = childSchema ? mergeBySchema(childSchema, current[key], value) : value;
+  }
+  return result;
+}
 
 /**
  * スキーマで値を正規化し、警告も返す（ctx を持たない呼び出し用）

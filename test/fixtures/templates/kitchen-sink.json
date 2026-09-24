@@ -232,7 +232,8 @@
                     "alt": "右画像",
                     "href": "",
                     "naturalWidth": 400,
-                    "naturalHeight": 400
+                    "naturalHeight": 400,
+                    "uploadData": null
                   },
                   "imagePosition": "right",
                   "imageWidthPercent": 35,
@@ -416,7 +417,36 @@
                   },
                   "align": "left",
                   "naturalWidth": 240,
-                  "naturalHeight": 80
+                  "naturalHeight": 80,
+                  "uploadData": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_ks000022",
+                "type": "qr",
+                "values": {
+                  "content": "https://hidemikimura.github.io/mailmason/",
+                  "size": 120,
+                  "ecLevel": "M",
+                  "margin": 2,
+                  "color": "#000000",
+                  "backgroundColor": "#ffffff",
+                  "src": "https://example.com/images/qr.png",
+                  "alt": "QR コード",
+                  "href": "",
+                  "align": "left",
+                  "generated": "[\"https://hidemikimura.github.io/mailmason/\",120,\"M\",2,\"#000000\",\"#ffffff\"]",
+                  "uploadData": null
                 },
                 "style": {
                   "backgroundColor": null,
@@ -442,7 +472,8 @@
                   },
                   "align": "center",
                   "naturalWidth": null,
-                  "naturalHeight": null
+                  "naturalHeight": null,
+                  "uploadData": null
                 },
                 "style": {
                   "backgroundColor": null,

@@ -23,7 +23,7 @@ editor.onImageUpload = async (file, { blockId }) => {
   const res = await fetch('/api/images', { method: 'POST', body });
   if (!res.ok) throw new Error(`HTTP ${res.status}`); // 設定欄に理由が表示される
   const { url } = await res.json();
-  return url; // または { src: url, alt: '代替テキスト' }
+  return url; // または { url, alt: '代替テキスト', data: { ... } }
 };
 ```
 
@@ -34,7 +34,42 @@ editor.onImageUpload = async (file, { blockId }) => {
 - キャンバスへのドロップ（画像ブロックの上なら差し替え、行間やカラムならファイルの数だけ新しい画像ブロック）
 - 画像の貼り付け（`Ctrl/⌘+V`。画像ブロックを選択中なら差し替え、それ以外なら画像ブロックを追加）
 
-アップロード中は手元のファイルをキャンバスに仮表示します。画像の実寸（`naturalWidth` / `naturalHeight`）はアップロード前にブラウザで測るので、フックが返すのは URL だけで構いません。`{ src, alt }` を返すと、代替テキストが空のときだけ `alt` も設定します。`null` を返すと取り消しになります。
+アップロード中は手元のファイルをキャンバスに仮表示します。画像の実寸（`naturalWidth` / `naturalHeight`）はアップロード前にブラウザで測るので、フックが返すのは URL だけで構いません。`null` を返すと取り消しになります。
+
+### フックの戻り値
+
+| 戻り値                 | 内容                                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `'https://…'`          | 画像の URL                                                                                      |
+| `{ url, data?, alt? }` | `data` はテンプレート JSON に保存する任意のオブジェクト。`alt` は代替テキストが空のときだけ設定 |
+| `{ src, alt? }`        | 以前からの形（`url` と同じ扱い）                                                                |
+| `null` / `undefined`   | 取り消し                                                                                        |
+
+`data` には、画像の ID やストレージ上のキーなど、アプリが後で使いたい情報を入れられます（Editor.js の画像ツールが返す `file` のような使い方です）。
+
+```js
+editor.onImageUpload = async (file, { blockId }) => {
+  const res = await fetch('/api/images', { method: 'POST', body: file });
+  const image = await res.json(); // { id: 'img_123', url: 'https://…', key: 'uploads/…' }
+  return { url: image.url, data: { id: image.id, key: image.key } };
+};
+```
+
+受け取った `data` は、そのブロックの `uploadData`（画像＋テキストは `image.uploadData`、QR コードは `uploadData`）に保存されます。
+
+```json
+{
+  "type": "image",
+  "values": { "src": "https://…", "uploadData": { "id": "img_123", "key": "uploads/…" } }
+}
+```
+
+- 中身は JSON で表せる値（文字列・数値・真偽値・null・配列・オブジェクト）だけにしてください。それ以外（関数・Date など）を含むと、読み込み時に `null` に直して警告を出します。
+- `uploadData` は出力の HTML やテキストには使いません（受信者には届きません）。ただしテンプレート JSON を見られる人には見えるので、秘密の値は入れないでください。
+- 画像を差し替えると置き換わります（URL の文字列だけを返したときは `null`）。設定欄で URL を手で書き換えたときも、別の画像のデータになるため `null` にします。
+- `onImageSelect` も同じ形を返せます。
+- フックに渡す `blockId` はテンプレート内で一意ですが、同じブロックで画像を差し替えると同じ値が渡ります。保存するファイル名はサーバー側で一意に作ってください（`blockId` をファイル名にすると、送信済みのメールの画像まで上書きしてしまいます）。
+- テンプレート内の画像の `uploadData` を集めれば、使っている画像の一覧（使われていない画像の掃除など）に使えます。
 
 ### 受け付けるファイル
 
@@ -42,6 +77,19 @@ editor.onImageUpload = async (file, { blockId }) => {
 - 大きさの上限は既定で 5MB です。`max-image-size` 属性（バイト、0 で無制限）で変えられます。
 
 受け付けないファイルや失敗は、設定欄に理由を表示し、`mm-warning`（`image-upload-type` / `image-upload-size` / `image-upload-failed`）で知らせます。
+
+### QR コード
+
+`onImageUpload` を設定すると、パレットに **QR コード** のブロックが出ます（設定していないと出ません）。
+
+1. QR コードのブロックを置き、設定パネルの「内容」に読み取ったときに開く URL や文字列を書く
+2. サイズ・誤り訂正・周りの余白・色・背景色を決める
+3. 「QR コードを作成」を押すと、エディタが PNG（ファイル名 `qr.png`）を作って `onImageUpload` に渡し、返ってきた URL を画像として設定する
+
+- PNG は表示サイズの 2 倍以上の解像度で作ります。出力は通常の画像と同じ（公開 URL の `<img>`）なので、どのメールソフトでも表示されます（data URL は Gmail で表示されないため使いません）。
+- 作成後に内容や色などを変えると、設定パネルとキャンバスに「作り直し」が必要と表示し、書き出し時に `mm-warning`（`qr-stale`）を出します。まだ作成していない QR は出力されず、`qr-missing` を出します。
+- 内容に差し込み変数は使えません（全員に同じ QR が届きます）。代替テキストとリンク先には使えます。
+- 内容が長すぎて QR コードにできないときは、設定欄に理由を出し、`mm-warning`（`qr-too-long`）を出します。
 
 ### 署名付き URL でストレージに直接送る例
 

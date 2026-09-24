@@ -23,7 +23,8 @@ import {
   replaceRow,
   withRows,
 } from '../model/tree.js';
-import { deepMerge, isEqual } from '../model/utils.js';
+import { isEqual } from '../model/utils.js';
+import { mergeBySchema } from '../model/schema.js';
 
 /** @import { Schema, Warning } from '../model/schema.js' */
 /** @import { Block, BodySettings, Column, Row, RowLayout, RowSettings, Template } from '../model/types.js' */
@@ -130,7 +131,7 @@ function assertNewIds(template, ids) {
  * @returns {T}
  */
 function patchWith(schema, current, patch, path, warnings) {
-  const merged = deepMerge(/** @type {Record<string, unknown>} */ (current), patch);
+  const merged = mergeBySchema(schema, current, patch);
   const next = schema.normalize(merged, current, { path, warnings });
   return isEqual(next, current) ? current : next;
 }
@@ -140,10 +141,12 @@ function patchWith(schema, current, patch, path, warnings) {
  * @param {Template} template
  * @param {Command} command
  * @param {Warning[]} [warnings] パッチの不正値などの警告の出力先
+ * @param {{ blocks?: readonly import('../blocks/types.js').CoreBlockDef[] | null }} [options] blocks: カスタムブロックの定義
  * @returns {Template}
  * @throws {MailmasonError} not-found / duplicate-id / invalid-layout / unknown-block-type / unknown-command
  */
-export function applyCommand(template, command, warnings = []) {
+export function applyCommand(template, command, warnings = [], options = {}) {
+  const customBlocks = options.blocks ?? null;
   const { rows } = template.body;
 
   switch (command.type) {
@@ -247,7 +250,7 @@ export function applyCommand(template, command, warnings = []) {
         block = command.block;
         assertNewIds(template, [block.id]);
       } else if (command.blockType) {
-        block = createBlock(command.blockType, command.values);
+        block = createBlock(command.blockType, command.values, { blocks: customBlocks });
       } else {
         throw new MailmasonError('invalid-command', 'addBlock needs either block or blockType.');
       }
@@ -331,7 +334,7 @@ export function applyCommand(template, command, warnings = []) {
       let next = block;
 
       if (command.type === 'updateBlockValues') {
-        const def = getBlockDef(block.type);
+        const def = getBlockDef(block.type, customBlocks);
         if (!def) {
           throw new MailmasonError(
             'unknown-block-type',

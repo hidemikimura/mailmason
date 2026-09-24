@@ -5,7 +5,7 @@
 // - キャンバスの上下端 48px に入ったら自動スクロール、Esc で中止
 import { createBlock, createRow } from '../../core/model/factory.js';
 import { locateBlock } from '../../core/model/tree.js';
-import { getEditorBlockDef } from '../blocks/index.js';
+import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { findDropTarget } from './target.js';
 import { hasFiles, imageFieldOf } from '../upload.js';
 
@@ -384,14 +384,17 @@ export class DndController {
 
   /** @param {DragPayload} payload */
   _label(payload) {
-    const { t, store } = this.host.context();
+    const ctx = this.host.context();
+    const { t, store } = ctx;
     switch (payload.kind) {
       case 'new-block': {
-        const def = getEditorBlockDef(payload.type);
-        return def ? t(def.labelKey) : payload.type;
+        const def = getEditorBlockDef(payload.type, ctx.blocks);
+        return def ? blockLabel(def, ctx) : payload.type;
       }
       case 'new-row':
         return t(`layout.${payload.layout}`);
+      case 'component':
+        return payload.component.name || t('component.untitled');
       case 'move-row':
         return t('crumb.row');
       case 'move-block': {
@@ -400,8 +403,8 @@ export class DndController {
         const type = loc
           ? template.body.rows[loc.rowIndex].columns[loc.columnIndex].blocks[loc.blockIndex].type
           : '';
-        const def = getEditorBlockDef(type);
-        return def ? t(def.labelKey) : type;
+        const def = getEditorBlockDef(type, ctx.blocks);
+        return def ? blockLabel(def, ctx) : type;
       }
     }
   }
@@ -412,11 +415,14 @@ export class DndController {
    * @param {DropTarget} target
    */
   _drop(payload, target) {
-    const { store, t } = this.host.context();
+    const ctx = this.host.context();
+    const { store, t } = ctx;
     switch (payload.kind) {
       case 'new-block': {
-        const def = getEditorBlockDef(payload.type);
-        const block = createBlock(payload.type, def?.initialValues?.(t) ?? {});
+        const def = getEditorBlockDef(payload.type, ctx.blocks);
+        const block = createBlock(payload.type, def?.initialValues?.(t) ?? {}, {
+          blocks: ctx.blocks,
+        });
         if (target.kind === 'column') {
           store.dispatch({
             type: 'addBlock',
@@ -435,6 +441,31 @@ export class DndController {
         const row = createRow(payload.layout);
         store.dispatch({ type: 'addRow', row, index: target.index });
         store.select(row.id);
+        break;
+      }
+      case 'component': {
+        const result = ctx.instantiateComponent(payload.component);
+        if (!result) return;
+        if (result.kind === 'row') {
+          if (target.kind !== 'rowGap') return;
+          store.dispatch({ type: 'addRow', row: result.row, index: target.index });
+          store.select(result.row.id);
+        } else if (target.kind === 'column') {
+          store.dispatch({
+            type: 'addBlock',
+            columnId: target.columnId,
+            index: target.index,
+            block: result.block,
+          });
+          store.select(result.block.id);
+        } else {
+          store.dispatch({
+            type: 'addRow',
+            row: createRow('1', [[result.block]]),
+            index: target.index,
+          });
+          store.select(result.block.id);
+        }
         break;
       }
       case 'move-block':

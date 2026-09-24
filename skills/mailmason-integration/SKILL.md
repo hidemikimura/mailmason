@@ -65,27 +65,29 @@ Mailmason は Lit 製のノーコード HTML メールエディタです。カ�
 
 ## 守ること
 
-- **画像は公開 URL にする。** エディタは画像を保存しない。`onImageUpload` でサーバーやストレージに置き、URL を返す。data URL（base64）の画像は Gmail や Outlook で表示されないので返さない。`onImageUpload` が無ければアップロードの操作は出ない（URL の手入力と `onImageSelect` は使える）。
+- **画像は公開 URL にする。** エディタは画像を保存しない。`onImageUpload` でサーバーやストレージに置き、URL を返す。data URL（base64）の画像は Gmail や Outlook で表示されないので返さない。`onImageUpload` が無ければアップロードの操作と QR コードのブロックは出ない（URL の手入力と `onImageSelect` は使える）。QR コードもエディタが作った PNG をこのフックでアップロードする（ファイル名 `qr.png`）。
 - **差し込み変数は既定で `{{key}}`。** `mergeTags` に候補を渡すと、エディタのメニューに出て、未定義のキーは `mm-warning`（`unknown-merge-tag`）で知らせる。`sample` はプレビュー用、`fallback` は `exportHtml({ mergeValues })` で値が無いときの既定値。`mergeValues` を渡さなければタグのまま書き出すので、配信システム側で差し込める。
 - **本番配信は `minify: true`。** Gmail は約 102KB を超えると本文を省略する。90KB を超えると `mm-warning`（`html-size`）が出る。
 - **テキストパートは `exportText()` を使う。** 利用者が手で直していればその内容、無ければ自動生成を返す。手直しの後に本文が変わると `stale-text` の警告が出る。
 - **テンプレートを外で変更したら `loadJson` で読み込み直す。** `getJson()` はコピーを返し、`mm-change` の `detail.template` は変更してはいけない（イミュータブル）。`loadJson` は履歴をクリアし、`mm-change` を発火しない。
 - **ホスト側でキーボードショートカットを奪わない。** エディタは Ctrl/⌘+Z・Y・D・V、Delete、Alt+↑/↓、Enter、Esc を使う。
+- **コンポーネント（保存した行・ブロック）の保存先はアプリ。** `onSaveComponent` で保存して id を付けて返し、一覧は `editor.components` に渡す。入れると複製になり、元とは連動しない。
+- **カスタムブロックは `defineBlock()` で定義し、`editor.blocks` と書き出しの `blocks` オプションの両方に渡す。** 渡し忘れると未知のブロックとして出力されない。定義は core だけで書き、ブラウザとサーバーで同じファイルを import する。詳しくは api.md の「カスタムブロック」。
 - **サーバーで HTML を作るなら `@hidemikimura/mailmason/core`。** DOM に依存しないので Node で動く（`renderHtml` / `renderText` / `resolveTextPart` / `validate`）。エディタ本体（ルートの `@hidemikimura/mailmason`）は Node では import しない。
 
 ## よく使う API（抜粋）
 
-| 種類       | 名前                                                              | 内容                                                                  |
-| ---------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- |
-| プロパティ | `mergeTags` / `mergeTagDelimiters`                                | 差し込み変数の候補と区切り                                            |
-| プロパティ | `onImageUpload` / `onImageSelect`                                 | 画像のアップロード / 自前の画像選択画面。URL か `{ src, alt }` を返す |
-| プロパティ | `theme`                                                           | 新規テンプレートの既定デザイン（`BodySettings` の一部）               |
-| プロパティ | `locale` / `messages`                                             | `'ja'` / `'en'` と UI 文言の部分上書き                                |
-| 属性       | `color-mode` / `view` / `preview-device`                          | UI の配色、編集 ⇄ プレビュー、PC ⇄ スマホ                             |
-| メソッド   | `loadJson(json)` / `getJson()`                                    | 読み込み（警告を返す）/ コピーを取得                                  |
-| メソッド   | `exportHtml(o)` / `exportText(o)` / `export(o)`                   | 書き出し                                                              |
-| メソッド   | `undo()` / `redo()` / `select(id)`                                | 履歴と選択                                                            |
-| イベント   | `mm-change` / `mm-warning` / `mm-select` / `mm-ready` / `mm-view` | 変更・警告・選択・準備完了・表示切替                                  |
+| 種類       | 名前                                                              | 内容                                                                                                                   |
+| ---------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| プロパティ | `mergeTags` / `mergeTagDelimiters`                                | 差し込み変数の候補と区切り                                                                                             |
+| プロパティ | `onImageUpload` / `onImageSelect`                                 | 画像のアップロード / 自前の画像選択画面。URL か `{ url, data?, alt? }` を返す（`data` は JSON の `uploadData` に保存） |
+| プロパティ | `theme`                                                           | 新規テンプレートの既定デザイン（`BodySettings` の一部）                                                                |
+| プロパティ | `locale` / `messages`                                             | `'ja'` / `'en'` と UI 文言の部分上書き                                                                                 |
+| 属性       | `color-mode` / `view` / `preview-device`                          | UI の配色、編集 ⇄ プレビュー、PC ⇄ スマホ                                                                              |
+| メソッド   | `loadJson(json)` / `getJson()`                                    | 読み込み（警告を返す）/ コピーを取得                                                                                   |
+| メソッド   | `exportHtml(o)` / `exportText(o)` / `export(o)`                   | 書き出し                                                                                                               |
+| メソッド   | `undo()` / `redo()` / `select(id)`                                | 履歴と選択                                                                                                             |
+| イベント   | `mm-change` / `mm-warning` / `mm-select` / `mm-ready` / `mm-view` | 変更・警告・選択・準備完了・表示切替                                                                                   |
 
 全項目と型は [references/api.md](references/api.md) にあります。
 

@@ -16,6 +16,7 @@ import { wrapText } from './wrap.js';
  * @property {string} [locale] 既定 'ja'
  * @property {Record<string, string> | null} [mergeValues] 指定するとマージタグを値に置き換える
  * @property {MergeTagDelimiters} [mergeTagDelimiters] 既定 `{{` `}}`
+ * @property {readonly import('../blocks/types.js').CoreBlockDef[] | null} [blocks] カスタムブロックの定義
  */
 
 /**
@@ -31,6 +32,7 @@ export function resolveTextOptions(options) {
     locale: options.locale ?? 'ja',
     mergeValues: options.mergeValues ?? null,
     mergeTagDelimiters: options.mergeTagDelimiters ?? DEFAULT_DELIMITERS,
+    blocks: options.blocks ?? null,
   };
 }
 
@@ -58,13 +60,16 @@ function tidy(value) {
  */
 export function renderText(input, options = {}) {
   const resolved = resolveTextOptions(options);
-  const { template } = migrate(input, { mergeTagDelimiters: resolved.mergeTagDelimiters });
+  const { template } = migrate(input, {
+    mergeTagDelimiters: resolved.mergeTagDelimiters,
+    blocks: resolved.blocks,
+  });
   /** @type {string[]} */
   const chunks = [];
   for (const row of template.body.rows) {
     for (const column of row.columns) {
       for (const block of column.blocks) {
-        const def = getBlockDef(block.type);
+        const def = getBlockDef(block.type, resolved.blocks);
         if (!def) continue;
         const chunk = def.renderText(block, { options: resolved }).trim();
         if (chunk) chunks.push(chunk);

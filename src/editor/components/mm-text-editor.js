@@ -7,7 +7,7 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { sanitizeHtml } from '../../core/richtext/sanitize.js';
 import { escapeText } from '../../core/richtext/entities.js';
 import { patchAt } from '../util.js';
-import { getRangeIn, placeCaretAtEnd, restoreRange } from '../richtext/selection.js';
+import { findLink, getRangeIn, placeCaretAtEnd, restoreRange } from '../richtext/selection.js';
 import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
 import { controls } from '../styles.js';
 import { define } from '../context.js';
@@ -48,6 +48,7 @@ export class MmTextEditor extends LitElement {
     linkColor: { attribute: false },
     ctx: { attribute: false },
     _linkOpen: { state: true },
+    _linkValue: { state: true },
     _colorOpen: { state: true },
   };
 
@@ -189,6 +190,10 @@ export class MmTextEditor extends LitElement {
     /** @type {EditorContext} */
     this.ctx = /** @type {any} */ (null);
     this._linkOpen = false;
+    /** リンク入力欄の初期値（選択範囲に既存のリンクがあればその URL） */
+    this._linkValue = '';
+    /** @type {HTMLAnchorElement | null} 入力欄を開いたときに選択範囲にかかっていたリンク */
+    this._linkTarget = null;
     this._colorOpen = false;
     /** 最後にストアへ送った値（外部からの変更と区別するため） */
     this._lastHtml = /** @type {string | null} */ (null);
@@ -363,12 +368,20 @@ export class MmTextEditor extends LitElement {
 
   _openLink() {
     this._captureSelection();
+    const range = this._savedRange;
+    const link = range ? findLink(range, this.editable) : null;
+    this._linkTarget = link;
+    this._linkValue = link?.getAttribute('href') ?? '';
     this._colorOpen = false;
     this._linkOpen = true;
     this.updateComplete.then(() => {
-      /** @type {HTMLInputElement | null} */ (
+      const input = /** @type {HTMLInputElement | null} */ (
         this.renderRoot.querySelector('.link-input')
-      )?.focus();
+      );
+      if (!input) return;
+      input.value = this._linkValue; // 開き直したときも前回の入力ではなく今のリンクを出す
+      input.focus();
+      input.select();
     });
   }
 
@@ -378,6 +391,17 @@ export class MmTextEditor extends LitElement {
     const input = /** @type {HTMLInputElement} */ (this.renderRoot.querySelector('.link-input'));
     const url = input.value.trim();
     this._linkOpen = false;
+    const link = this._linkTarget;
+    this._linkTarget = null;
+    // 選択（キャレットだけの場合も）が 1 つのリンクの中に収まっているときは、リンク全体を対象にする
+    // （createLink は選択が無いと URL の文字を挿入し、一部だけ選ぶとリンクが分かれてしまう）
+    const range = this._savedRange;
+    if (link?.isConnected && range && link.contains(range.commonAncestorContainer)) {
+      const whole = document.createRange();
+      whole.selectNodeContents(link);
+      this._savedRange = whole;
+      restoreRange(whole);
+    }
     if (url) this.exec('createLink', url);
     else this.exec('unlink');
   }
