@@ -4,7 +4,7 @@
 
 ## 未公開
 
-- package.json に repository / homepage / bugs（https://github.com/hidemikimura/mailman）を追加
+- package.json に repository / homepage / bugs（https://github.com/hidemikimura/mailmason）を追加
 
 ## 0.1.0 - 2026-09-24
 

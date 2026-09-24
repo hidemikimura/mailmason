@@ -149,4 +149,4 @@ npm publish   # prepublishOnly で check・build・build:types を実行して�
 
 MIT
 
-不具合の報告や要望は [GitHub の Issues](https://github.com/hidemikimura/mailman/issues) へお願いします。
+不具合の報告や要望は [GitHub の Issues](https://github.com/hidemikimura/mailmason/issues) へお願いします。

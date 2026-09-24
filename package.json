@@ -14,11 +14,11 @@
   "author": "Hidemi Kimura",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hidemikimura/mailman.git"
+    "url": "git+https://github.com/hidemikimura/mailmason.git"
   },
-  "homepage": "https://github.com/hidemikimura/mailman#readme",
+  "homepage": "https://github.com/hidemikimura/mailmason#readme",
   "bugs": {
-    "url": "https://github.com/hidemikimura/mailman/issues"
+    "url": "https://github.com/hidemikimura/mailmason/issues"
   },
   "type": "module",
   "exports": {
