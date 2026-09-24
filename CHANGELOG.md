@@ -2,7 +2,11 @@
 
 このプロジェクトは [Semantic Versioning](https://semver.org/lang/ja/) に従います。1.0.0 までは、マイナーバージョンで互換性の無い変更を含むことがあります。
 
-## 0.1.0 - 未公開
+## 未公開
+
+- package.json に repository / homepage / bugs（https://github.com/hidemikimura/mailman）を追加
+
+## 0.1.0 - 2026-09-24
 
 最初の試用版。
 

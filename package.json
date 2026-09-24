@@ -12,6 +12,14 @@
   ],
   "license": "MIT",
   "author": "Hidemi Kimura",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hidemikimura/mailman.git"
+  },
+  "homepage": "https://github.com/hidemikimura/mailman#readme",
+  "bugs": {
+    "url": "https://github.com/hidemikimura/mailman/issues"
+  },
   "type": "module",
   "exports": {
     ".": {

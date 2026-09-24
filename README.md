@@ -148,3 +148,5 @@ npm publish   # prepublishOnly で check・build・build:types を実行して�
 ## ライセンス
 
 MIT
+
+不具合の報告や要望は [GitHub の Issues](https://github.com/hidemikimura/mailman/issues) へお願いします。
