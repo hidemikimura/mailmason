@@ -1,0 +1,37 @@
+見出し 2
+
+中央揃えの太字と斜体とリンク ( https://example.com/a?x=1&y=2 )、赤い文字
+
+・項目 1
+・項目 2
+  ・入れ子
+
+1. 手順 1
+2. 手順 2
+
+見出し 3
+
+お問い合わせは info@example.com まで
+
+カラム 1
+
+カラム 2
+
+カラム 3
+
+[右画像]
+
+画像を右に置いた説明文です。スマホでは画像が先に表示されます。
+
+▶ Full width
+  https://example.com/full
+
+----------------------------------------
+
+LINE: https://line.me/R/ti/p/@example
+Webサイト: https://example.com
+メール: info@example.com
+
+生 HTML の表
+
+セル 2

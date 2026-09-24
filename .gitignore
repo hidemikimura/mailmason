@@ -9,3 +9,4 @@ test/**/__screenshots__/
 .idea/
 .vscode/
 Claude outputs/
+samples/

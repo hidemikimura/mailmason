@@ -1,0 +1,26 @@
+[秋の新作] ( https://example.com/?utm_source=mail )
+
+{{name}} 様
+
+いつもご利用ありがとうございます。
+秋の新作が入荷しました。
+
+▶ 新作を見る
+  https://example.com/new
+
+[ニットカーディガン] ( https://example.com/items/1 )
+
+ニットカーディガン
+¥8,900
+
+[ウールコート] ( https://example.com/items/2 )
+
+ウールコート
+¥24,000
+
+----------------------------------------
+
+X: https://x.com/example
+Instagram: https://instagram.com/example
+
+配信停止はこちら ( {{unsubscribe_url}} )

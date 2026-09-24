@@ -1,0 +1,82 @@
+{
+  "name": "@hidemikimura/mailmason",
+  "version": "0.1.0",
+  "description": "Lit ベースのノーコード HTML メールエディタ。テーブル＋インライン CSS の HTML とマルチパート用テキストを出力する",
+  "keywords": [
+    "email",
+    "email-editor",
+    "html-email",
+    "no-code",
+    "lit",
+    "web-components"
+  ],
+  "license": "MIT",
+  "author": "Hidemi Kimura",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./core": {
+      "types": "./types/core/index.d.ts",
+      "default": "./src/core/index.js"
+    },
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "types": "./types/index.d.ts",
+  "files": [
+    "src",
+    "types",
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "./src/index.js",
+    "./src/editor/**/*.js"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "setup:browser": "playwright install chromium",
+    "setup:browser:all": "playwright install chromium webkit firefox",
+    "dev": "vite",
+    "build": "vite build",
+    "build:types": "tsc -p tsconfig.build.json",
+    "samples": "node scripts/export-samples.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:core": "vitest run --project core",
+    "test:editor": "vitest run --project editor",
+    "test:editor:all": "MM_BROWSERS=chromium,webkit,firefox vitest run --project editor",
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test",
+    "prepublishOnly": "npm run check && npm run build && npm run build:types"
+  },
+  "peerDependencies": {
+    "lit": "^3.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vitest/browser-playwright": "^5.0.1",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
+    "lit": "^3.3.3",
+    "playwright": "^1.63.0",
+    "prettier": "^3.9.9",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  }
+}

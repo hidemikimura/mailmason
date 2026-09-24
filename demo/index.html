@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mailmason demo</title>
+    <link rel="icon" href="data:," />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        font-family: system-ui, sans-serif;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 16px;
+        border-bottom: 1px solid #ddd;
+      }
+      mailmason-editor {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Mailmason demo</strong>
+      <select id="fixture" aria-label="サンプル">
+        <option value="basic">basic</option>
+        <option value="kitchen-sink">kitchen-sink</option>
+      </select>
+      <button id="load" type="button">サンプルを読み込む</button>
+      <button id="open-html" type="button">HTML を開く</button>
+      <button id="open-text" type="button">テキストを開く</button>
+      <button id="log-json" type="button">JSON をコンソールに出力</button>
+      <select id="color-mode" aria-label="配色">
+        <option value="light">ライト</option>
+        <option value="dark">ダーク</option>
+        <option value="auto">OS に合わせる</option>
+      </select>
+    </header>
+    <mailmason-editor></mailmason-editor>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

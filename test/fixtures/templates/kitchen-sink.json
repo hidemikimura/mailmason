@@ -1,0 +1,532 @@
+{
+  "version": 1,
+  "body": {
+    "settings": {
+      "width": 600,
+      "backgroundColor": "#f4f4f4",
+      "contentBackgroundColor": "#ffffff",
+      "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "fontSize": 16,
+      "lineHeight": 1.6,
+      "textColor": "#333333",
+      "linkColor": "#0066cc",
+      "preheader": "{{name}} さんへのお知らせ",
+      "title": "キッチンシンク"
+    },
+    "rows": [
+      {
+        "id": "r_ks000002",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 16,
+            "right": 24,
+            "bottom": 16,
+            "left": 24
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_ks000003",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_ks000001",
+                "type": "text",
+                "values": {
+                  "html": "<h2>見出し 2</h2><p style=\"text-align:center\">中央揃えの<strong>太字</strong>と<em>斜体</em>と<a href=\"https://example.com/a?x=1&amp;y=2\">リンク</a>、<span style=\"color:#cc0000\">赤い文字</span></p><ul><li>項目 1</li><li>項目 2<ul><li>入れ子</li></ul></li></ul><ol><li>手順 1</li><li>手順 2</li></ol><h3>見出し 3</h3><p>お問い合わせは <a href=\"mailto:info@example.com\">info@example.com</a> まで</p>",
+                  "fontFamily": null,
+                  "fontSize": null,
+                  "lineHeight": null,
+                  "color": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_ks000007",
+        "layout": "1:1:1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 24,
+            "bottom": 0,
+            "left": 24
+          },
+          "columnGap": 20,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_ks000008",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_ks000004",
+                "type": "text",
+                "values": {
+                  "html": "<p>カラム 1</p>",
+                  "fontFamily": null,
+                  "fontSize": null,
+                  "lineHeight": null,
+                  "color": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          },
+          {
+            "id": "c_ks000009",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_ks000005",
+                "type": "text",
+                "values": {
+                  "html": "<p>カラム 2</p>",
+                  "fontFamily": null,
+                  "fontSize": null,
+                  "lineHeight": null,
+                  "color": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": "mobile"
+              }
+            ]
+          },
+          {
+            "id": "c_ks000010",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_ks000006",
+                "type": "text",
+                "values": {
+                  "html": "<p>カラム 3</p>",
+                  "fontFamily": null,
+                  "fontSize": null,
+                  "lineHeight": null,
+                  "color": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_ks000013",
+        "layout": "2:1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": false,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_ks000014",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_ks000011",
+                "type": "imageText",
+                "values": {
+                  "image": {
+                    "src": "https://example.com/images/item1.png",
+                    "alt": "右画像",
+                    "href": "",
+                    "naturalWidth": 400,
+                    "naturalHeight": 400
+                  },
+                  "imagePosition": "right",
+                  "imageWidthPercent": 35,
+                  "html": "<p>画像を右に置いた説明文です。スマホでは画像が先に表示されます。</p>"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          },
+          {
+            "id": "c_ks000015",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_ks000012",
+                "type": "button",
+                "values": {
+                  "label": "Full width",
+                  "href": "https://example.com/full",
+                  "backgroundColor": "#0066cc",
+                  "color": "#ffffff",
+                  "fontSize": 16,
+                  "fontWeight": "bold",
+                  "borderRadius": 0,
+                  "innerPadding": {
+                    "top": 12,
+                    "right": 24,
+                    "bottom": 12,
+                    "left": 24
+                  },
+                  "width": "full",
+                  "align": "center"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_ks000022",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": "#f0f4ff",
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_ks000023",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_ks000016",
+                "type": "divider",
+                "values": {
+                  "thickness": 2,
+                  "color": "#999999",
+                  "lineStyle": "dashed",
+                  "widthPercent": 50,
+                  "align": "right"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_ks000017",
+                "type": "social",
+                "values": {
+                  "items": [
+                    {
+                      "service": "line",
+                      "url": "https://line.me/R/ti/p/@example"
+                    },
+                    {
+                      "service": "website",
+                      "url": "https://example.com"
+                    },
+                    {
+                      "service": "email",
+                      "url": "mailto:info@example.com"
+                    },
+                    {
+                      "service": "youtube",
+                      "url": ""
+                    }
+                  ],
+                  "iconSize": 24,
+                  "align": "left",
+                  "iconStyle": "mono"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_ks000018",
+                "type": "html",
+                "values": {
+                  "html": "<table><tr><td>生 HTML の表</td><td>セル 2</td></tr></table>"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_ks000019",
+                "type": "image",
+                "values": {
+                  "src": "https://example.com/images/logo.png",
+                  "alt": "",
+                  "href": "",
+                  "width": {
+                    "unit": "px",
+                    "value": 120
+                  },
+                  "align": "left",
+                  "naturalWidth": 240,
+                  "naturalHeight": 80
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_ks000020",
+                "type": "image",
+                "values": {
+                  "src": "",
+                  "alt": "空の画像",
+                  "href": "",
+                  "width": {
+                    "unit": "%",
+                    "value": 100
+                  },
+                  "align": "center",
+                  "naturalWidth": null,
+                  "naturalHeight": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_ks000021",
+                "type": "button",
+                "values": {
+                  "label": "",
+                  "href": "https://example.com/empty",
+                  "backgroundColor": "#0066cc",
+                  "color": "#ffffff",
+                  "fontSize": 16,
+                  "fontWeight": "bold",
+                  "borderRadius": 4,
+                  "innerPadding": {
+                    "top": 12,
+                    "right": 24,
+                    "bottom": 12,
+                    "left": 24
+                  },
+                  "width": "auto",
+                  "align": "center"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_ks000024",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": "mobile"
+        },
+        "columns": [
+          {
+            "id": "c_ks000025",
+            "settings": {
+              "backgroundColor": null,
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": []
+          }
+        ]
+      }
+    ]
+  },
+  "text": {
+    "mode": "auto",
+    "content": null,
+    "sourceHash": null
+  }
+}
