@@ -1,0 +1,11 @@
+node_modules/
+dist/
+types/
+coverage/
+test/**/__screenshots__/
+.vitest/
+.DS_Store
+*.log
+.idea/
+.vscode/
+Claude outputs/
