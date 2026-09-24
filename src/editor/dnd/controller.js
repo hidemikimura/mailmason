@@ -7,8 +7,17 @@ import { createBlock, createRow } from '../../core/model/factory.js';
 import { locateBlock } from '../../core/model/tree.js';
 import { getEditorBlockDef } from '../blocks/index.js';
 import { findDropTarget } from './target.js';
+import { hasFiles, imageFieldOf } from '../upload.js';
 
 /** @import { DragPayload, DropTarget, Geometry, Indicator } from './target.js' */
+
+/**
+ * ファイルを落とす先。画像を持つブロックの上なら差し替え、それ以外は新しい画像ブロックの位置
+ * @typedef {DropTarget | { kind: 'replace', blockId: string }} FileDropTarget
+ */
+
+/** 画像ファイルを新しいブロックとして置くときの判定用 */
+const FILE_PAYLOAD = /** @type {DragPayload} */ ({ kind: 'new-block', type: 'image' });
 /** @import { EditorContext } from '../context.js' */
 
 const THRESHOLD = 4;
@@ -43,6 +52,10 @@ export class DndController {
     /** @type {HTMLElement | null} */
     this.sourceElement = null;
     this.frame = 0;
+    /** @type {{ x: number, y: number, target: FileDropTarget | null } | null} ファイルのドラッグ（HTML5） */
+    this.fileDrag = null;
+    /** @type {ReturnType<typeof setTimeout> | undefined} */
+    this._fileTimer = undefined;
 
     this._onMove = this._onMove.bind(this);
     this._onUp = this._onUp.bind(this);
@@ -50,6 +63,125 @@ export class DndController {
     this._onKey = this._onKey.bind(this);
     this._onScroll = this._onScroll.bind(this);
     this._tick = this._tick.bind(this);
+    this._onFileScroll = this._onFileScroll.bind(this);
+  }
+
+  // ---- ファイルのドラッグ&ドロップ（OS からの画像ファイル。HTML5 の drag イベント） ----------------
+
+  /**
+   * キャンバスの dragover で呼ぶ
+   * @param {DragEvent} event
+   */
+  fileOver(event) {
+    const data = event.dataTransfer;
+    if (!hasFiles(data)) return;
+    // ファイルを落としたときにブラウザがページを開き直さないよう、常に既定の動作を止める
+    event.preventDefault();
+    const transfer = /** @type {DataTransfer} */ (data);
+    if (!this.host.context().onImageUpload || this.drag) {
+      transfer.dropEffect = 'none';
+      return;
+    }
+    transfer.dropEffect = 'copy';
+    if (!this.fileDrag) this._beginFile();
+    this._updateFile(event.clientX, event.clientY);
+    // dragleave は子要素の出入りでも起きるので、dragover が途切れたら終える
+    clearTimeout(this._fileTimer);
+    this._fileTimer = setTimeout(() => this._endFile(), 200);
+  }
+
+  /**
+   * キャンバスの drop で呼ぶ
+   * @param {DragEvent} event
+   */
+  fileDrop(event) {
+    const data = event.dataTransfer;
+    if (!hasFiles(data)) return;
+    event.preventDefault();
+    if (this.fileDrag) this._updateFile(event.clientX, event.clientY);
+    const target = this.fileDrag?.target ?? null;
+    this._endFile();
+    const ctx = this.host.context();
+    if (!target || !ctx.onImageUpload) return;
+    ctx.dropImageFiles(target, [.../** @type {DataTransfer} */ (data).files]);
+  }
+
+  _beginFile() {
+    this.fileDrag = { x: 0, y: 0, target: null };
+    this.host.onBegin?.();
+    this.indicator = document.createElement('div');
+    this.indicator.className = 'mm-drop-indicator';
+    this.indicator.hidden = true;
+    this.host.overlayRoot.append(this.indicator);
+    this.host.canvas()?.addEventListener('scroll', this._onFileScroll);
+    this._measure();
+  }
+
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
+  _updateFile(x, y) {
+    const drag = /** @type {NonNullable<typeof this.fileDrag>} */ (this.fileDrag);
+    drag.x = x;
+    drag.y = y;
+    const canvas = this.host.canvas();
+    const box = this.canvasBox;
+    if (canvas && box) {
+      // 端に近ければスクロールする（dragover は動かさなくても繰り返し届く）
+      if (y < box.top + SCROLL_EDGE) canvas.scrollTop -= SCROLL_MAX_SPEED;
+      else if (y > box.bottom - SCROLL_EDGE) canvas.scrollTop += SCROLL_MAX_SPEED;
+    }
+    const inside = box && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+    if (!inside || !this.geometry) {
+      drag.target = null;
+      this._showIndicator(null);
+      return;
+    }
+    // 画像を持つブロックの上なら差し替え
+    const { template } = this.host.context().store.getState();
+    for (const row of this.geometry.rows) {
+      for (const column of row.columns) {
+        for (const block of column.blocks) {
+          const b = block.box;
+          if (x < b.left || x > b.right || y < b.top || y > b.bottom) continue;
+          const loc = locateBlock(template, block.id);
+          const type = loc
+            ? template.body.rows[loc.rowIndex].columns[loc.columnIndex].blocks[loc.blockIndex].type
+            : '';
+          if (imageFieldOf(type)) {
+            drag.target = { kind: 'replace', blockId: block.id };
+            this._showIndicator({
+              type: 'box',
+              left: b.left,
+              top: b.top,
+              width: b.right - b.left,
+              height: b.bottom - b.top,
+            });
+            return;
+          }
+        }
+      }
+    }
+    const hit = findDropTarget(this.geometry, FILE_PAYLOAD, x, y);
+    drag.target = hit.target;
+    this._showIndicator(hit.indicator);
+  }
+
+  _onFileScroll() {
+    if (!this.fileDrag) return;
+    this._measure();
+    this._updateFile(this.fileDrag.x, this.fileDrag.y);
+  }
+
+  _endFile() {
+    clearTimeout(this._fileTimer);
+    if (!this.fileDrag) return;
+    this.host.canvas()?.removeEventListener('scroll', this._onFileScroll);
+    this.indicator?.remove();
+    this.indicator = null;
+    this.fileDrag = null;
+    this.geometry = null;
   }
 
   /** ドラッグ中か */

@@ -21,6 +21,7 @@ export class MmRow extends LitElement {
     ctx: { attribute: false },
     selection: { attribute: false },
     editing: { attribute: false },
+    uploads: { attribute: false },
     index: { type: Number },
     count: { type: Number },
   };
@@ -107,6 +108,8 @@ export class MmRow extends LitElement {
     this.selection = null;
     /** @type {string | null} この行の中で直接編集中のブロック ID */
     this.editing = null;
+    /** @type {ReadonlyMap<string, import('../upload.js').UploadState>} この行のブロックのアップロード */
+    this.uploads = new Map();
     this.index = 0;
     this.count = 1;
     this.addEventListener('click', (event) => {
@@ -178,6 +181,7 @@ export class MmRow extends LitElement {
                       .count=${column.blocks.length}
                       ?selected=${this.selection === block.id}
                       ?editing=${this.editing === block.id}
+                      .upload=${this.uploads.get(block.id) ?? null}
                     ></mm-block>`,
                 )
           }

@@ -1,5 +1,5 @@
 import { LitElement, css, html } from 'lit';
-import { createTemplate } from '../core/model/factory.js';
+import { createBlock, createRow, createTemplate } from '../core/model/factory.js';
 import { findRowIndex, locateBlock, locateColumn } from '../core/model/tree.js';
 import { migrate } from '../core/migrate/index.js';
 import { createStore } from '../core/store/store.js';
@@ -19,6 +19,9 @@ import './components/mm-canvas.js';
 import './components/mm-settings-panel.js';
 import './components/mm-preview.js';
 import { mergeTagValues } from './util.js';
+import { insertBlock } from './components/mm-palette.js';
+import { DEFAULT_MAX_IMAGE_SIZE, ImageUploader, imageFiles, uploadTargetOf } from './upload.js';
+import { getEditorBlockDef } from './blocks/index.js';
 
 /** @import { Template, BodySettings } from '../core/model/types.js' */
 /** @import { Store, StoreState, StoreAction } from '../core/store/store.js' */
@@ -27,6 +30,8 @@ import { mergeTagValues } from './util.js';
 /** @import { RenderHtmlOptions } from '../core/render-html/index.js' */
 /** @import { RenderTextOptions } from '../core/render-text/index.js' */
 /** @import { MergeTag, ImageSelectHook } from './fields/fields.js' */
+/** @import { ImageUploadHook, UploadState } from './upload.js' */
+/** @import { FileDropTarget } from './dnd/controller.js' */
 /** @import { EditorContext } from './context.js' */
 
 /**
@@ -57,6 +62,8 @@ export class MailmasonEditor extends LitElement {
     mergeTags: { attribute: false },
     mergeTagDelimiters: { attribute: false },
     onImageSelect: { attribute: false },
+    onImageUpload: { attribute: false },
+    maxImageSize: { type: Number, attribute: 'max-image-size' },
     socialIconBaseUrl: { type: String, attribute: 'social-icon-base-url' },
     outlookFontFamily: { type: String, attribute: 'outlook-font-family' },
     historyLimit: { type: Number, attribute: 'history-limit' },
@@ -66,6 +73,7 @@ export class MailmasonEditor extends LitElement {
     _state: { state: true },
     _editing: { state: true },
     _narrow: { state: true },
+    _uploads: { state: true },
     _drawer: { state: true },
   };
 
@@ -177,6 +185,10 @@ export class MailmasonEditor extends LitElement {
     this.mergeTagDelimiters = DEFAULT_DELIMITERS;
     /** @type {ImageSelectHook | null} 画像の「選択…」ボタンで呼ぶフック。URL を返す */
     this.onImageSelect = null;
+    /** @type {ImageUploadHook | null} ローカルの画像ファイルを受け取ってアップロードし、URL を返すフック */
+    this.onImageUpload = null;
+    /** アップロードできる画像の大きさの上限（バイト。0 で無制限） */
+    this.maxImageSize = DEFAULT_MAX_IMAGE_SIZE;
     /** SNS アイコン PNG の置き場所（空ならテキストリンク） */
     this.socialIconBaseUrl = '';
     /** Outlook（Windows）用のフォント */
@@ -202,6 +214,18 @@ export class MailmasonEditor extends LitElement {
     this._drawer = null;
     /** @type {ResizeObserver | null} */
     this._resizeObserver = null;
+    this._uploader = new ImageUploader({
+      store: () => this.store,
+      hook: () => this.onImageUpload,
+      maxSize: () => this.maxImageSize,
+      t: () => this._context().t,
+      warn: (warning) => this._warn(warning),
+      onChange: (uploads) => {
+        this._uploads = uploads;
+      },
+    });
+    /** @type {ReadonlyMap<string, UploadState>} アップロードの状態（ブロック ID ごと） */
+    this._uploads = this._uploader.uploads;
     /** テンプレートが明示的に読み込まれたか（theme を新規テンプレートにだけ適用するため） */
     this._loaded = false;
     /** @type {string[]} まだ通知していない変更のアクション */
@@ -224,6 +248,7 @@ export class MailmasonEditor extends LitElement {
     });
 
     this.addEventListener('keydown', (event) => this._onKeydown(event));
+    this.addEventListener('paste', (event) => this._onPaste(event));
   }
 
   connectedCallback() {
@@ -301,6 +326,7 @@ export class MailmasonEditor extends LitElement {
       this._scheduleChange();
     }
     if (state.selection !== prev.selection) {
+      this._uploader.clearErrors();
       this.dispatchEvent(
         new CustomEvent('mm-select', {
           detail: { id: state.selection, kind: this._kindOf(state.selection) },
@@ -487,6 +513,103 @@ export class MailmasonEditor extends LitElement {
   }
 
   /**
+   * 画像ファイルを新しい画像ブロックにする（アップロードは呼び出し側）
+   * @returns {import('../core/model/types.js').Block}
+   */
+  _newImageBlock() {
+    const def = getEditorBlockDef('image');
+    return createBlock('image', def?.initialValues?.(this._context().t) ?? {});
+  }
+
+  /**
+   * キャンバスに落とした画像ファイルを、差し替えまたは新しい画像ブロックにしてアップロードする
+   * @param {FileDropTarget} target
+   * @param {File[]} files
+   */
+  _dropImageFiles(target, files) {
+    const images = imageFiles(files);
+    if (images.length === 0) {
+      // 画像以外のファイル: 形式の案内を出す
+      if (files[0]) this._reportInvalid(files[0]);
+      return;
+    }
+    const { store } = this;
+    if (target.kind === 'replace') {
+      const upload = uploadTargetOf(store.getState().template, target.blockId);
+      if (upload) {
+        store.select(target.blockId);
+        void this._uploader.upload(images[0], upload);
+      }
+      return;
+    }
+    const valid = images.filter((file) => {
+      const problem = this._uploader.check(file);
+      if (problem) this._reportInvalid(file);
+      return !problem;
+    });
+    if (valid.length === 0) return;
+    const blocks = valid.map(() => this._newImageBlock());
+    if (target.kind === 'column') {
+      blocks.forEach((block, i) =>
+        store.dispatch({
+          type: 'addBlock',
+          columnId: target.columnId,
+          index: target.index + i,
+          block,
+        }),
+      );
+    } else {
+      store.dispatch({
+        type: 'addRow',
+        row: createRow('1', [blocks]),
+        index: target.index,
+      });
+    }
+    store.select(blocks[0].id);
+    blocks.forEach(
+      (block, i) => void this._uploader.upload(valid[i], { blockId: block.id, field: 'src' }),
+    );
+  }
+
+  /**
+   * 使えないファイルの警告（ブロックは作らない）
+   * @param {File} file
+   */
+  _reportInvalid(file) {
+    const problem = this._uploader.check(file) ?? {
+      code: 'image-upload-type',
+      message: this._context().t('image.errorType'),
+    };
+    this._warn({ ...problem, path: '', fileName: file.name });
+  }
+
+  /**
+   * クリップボードの画像を貼り付ける。画像を持つブロックを選択中なら差し替え、それ以外は画像ブロックを追加する
+   * @param {ClipboardEvent} event
+   */
+  _onPaste(event) {
+    if (!this.onImageUpload || this.view !== 'edit' || this._editing) return;
+    const origin = /** @type {HTMLElement | undefined} */ (event.composedPath()[0]);
+    if (origin && (FORM_TAGS.has(origin.tagName) || origin.isContentEditable)) return;
+    const files = imageFiles(event.clipboardData?.files);
+    if (files.length === 0) return;
+    event.preventDefault();
+    const { template, selection } = this.store.getState();
+    const target = uploadTargetOf(template, selection);
+    if (target) {
+      void this._uploader.upload(files[0], target);
+      return;
+    }
+    const problem = this._uploader.check(files[0]);
+    if (problem) {
+      this._reportInvalid(files[0]);
+      return;
+    }
+    const blockId = insertBlock(this._context(), 'image');
+    void this._uploader.upload(files[0], { blockId, field: 'src' });
+  }
+
+  /**
    * 表示を切り替える（ツールバーから）。変わったら mm-view を発火する
    * @param {{ view?: 'edit' | 'preview', device?: 'desktop' | 'mobile' }} change
    */
@@ -539,7 +662,11 @@ export class MailmasonEditor extends LitElement {
       this.socialIconBaseUrl,
       this.outlookFontFamily,
     ]);
-    if (this._ctxCache?.key === key && this._ctxCache.value.onImageSelect === this.onImageSelect) {
+    if (
+      this._ctxCache?.key === key &&
+      this._ctxCache.value.onImageSelect === this.onImageSelect &&
+      this._ctxCache.value.onImageUpload === this.onImageUpload
+    ) {
       return this._ctxCache.value;
     }
     /** @type {EditorContext} */
@@ -551,6 +678,9 @@ export class MailmasonEditor extends LitElement {
       mergeTags: this.mergeTags,
       delimiters: this.mergeTagDelimiters,
       onImageSelect: this.onImageSelect,
+      onImageUpload: this.onImageUpload,
+      upload: (file, target) => void this._uploader.upload(file, target),
+      dropImageFiles: (target, files) => this._dropImageFiles(target, files),
       dnd: this._dnd,
       edit: (id) => this._edit(id),
       setView: (change) => this._setView(change),
@@ -673,6 +803,7 @@ export class MailmasonEditor extends LitElement {
           .template=${template}
           .selection=${selection}
           .editing=${this._editing}
+          .uploads=${this._uploads}
           .ctx=${ctx}
         ></mm-canvas>
         <mm-settings-panel
@@ -680,6 +811,7 @@ export class MailmasonEditor extends LitElement {
           ?open=${this._drawer === 'settings'}
           .template=${template}
           .selection=${selection}
+          .uploads=${this._uploads}
           .ctx=${ctx}
         ></mm-settings-panel>
       </div>

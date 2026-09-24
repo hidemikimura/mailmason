@@ -10,3 +10,7 @@ test/**/__screenshots__/
 .vscode/
 Claude outputs/
 samples/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+docs/public/llms.txt
+docs/public/llms-full.txt

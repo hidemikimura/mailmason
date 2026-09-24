@@ -3,3 +3,6 @@ types/
 coverage/
 package-lock.json
 test/**/__snapshots__/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+docs/public/llms*.txt

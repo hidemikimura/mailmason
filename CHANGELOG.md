@@ -4,6 +4,10 @@
 
 ## 未公開
 
+- 画像のアップロード: `onImageUpload(file, { blockId })` フックと `max-image-size` 属性を追加。設定欄の「アップロード…」ボタン、設定欄・キャンバスへのファイルのドロップ、画像の貼り付けに対応（保存はフックが担当し、URL を返す）。アップロード中は手元のファイルを仮表示し、失敗は設定欄と `mm-warning` で知らせる
+- ドキュメントサイト（VitePress、デモ付き、GitHub Pages）と llms.txt / llms-full.txt を追加
+- AI 用の Agent Skills（`skills/mailmason-integration`・`skills/mailmason-templates`）を追加し、npm パッケージに同梱。テンプレートの検査スクリプトと例を含む
+- テンプレート JSON のリファレンスをスキーマから自動生成（`npm run docs:reference`）
 - package.json に repository / homepage / bugs（https://github.com/hidemikimura/mailmason）を追加
 
 ## 0.1.0 - 2026-09-24

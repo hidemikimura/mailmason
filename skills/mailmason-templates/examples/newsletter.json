@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "body": {
+    "settings": {
+      "width": 600,
+      "backgroundColor": "#efeae4",
+      "contentBackgroundColor": "#ffffff",
+      "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "fontSize": 16,
+      "lineHeight": 1.7,
+      "textColor": "#2b2b2b",
+      "linkColor": "#b3541e",
+      "title": "秋の新作コレクション",
+      "preheader": "ニットとコートの新作が入荷しました。会員様は送料無料です"
+    },
+    "rows": [
+      {
+        "id": "r_hero",
+        "layout": "1",
+        "columns": [
+          {
+            "id": "c_hero",
+            "blocks": [
+              {
+                "id": "b_hero",
+                "type": "image",
+                "values": {
+                  "src": "https://example.com/images/autumn-hero.jpg",
+                  "alt": "秋の新作コレクション",
+                  "href": "https://example.com/collection/autumn",
+                  "naturalWidth": 1200,
+                  "naturalHeight": 640
+                },
+                "style": { "padding": 0 }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_intro",
+        "layout": "1",
+        "settings": { "padding": { "top": 32, "right": 32, "bottom": 8, "left": 32 } },
+        "columns": [
+          {
+            "id": "c_intro",
+            "blocks": [
+              {
+                "id": "b_intro",
+                "type": "text",
+                "values": {
+                  "html": "<h1 style=\"text-align:center\">{{name}} 様へ、秋のおすすめ</h1><p style=\"text-align:center\">肌寒くなってきました。今シーズンの新作から、長く使えるニットとコートを選びました。</p>"
+                }
+              },
+              {
+                "id": "b_cta",
+                "type": "button",
+                "values": {
+                  "label": "新作をすべて見る",
+                  "href": "https://example.com/collection/autumn",
+                  "backgroundColor": "#b3541e",
+                  "borderRadius": 24,
+                  "innerPadding": { "top": 14, "right": 32, "bottom": 14, "left": 32 }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_items",
+        "layout": "1:1",
+        "settings": {
+          "backgroundColor": "#faf7f3",
+          "padding": { "top": 24, "right": 24, "bottom": 24, "left": 24 },
+          "columnGap": 16
+        },
+        "columns": [
+          {
+            "id": "c_item1",
+            "blocks": [
+              {
+                "id": "b_item1_image",
+                "type": "image",
+                "values": {
+                  "src": "https://example.com/images/knit.jpg",
+                  "alt": "ウールのケーブルニット",
+                  "href": "https://example.com/items/knit",
+                  "naturalWidth": 600,
+                  "naturalHeight": 600
+                }
+              },
+              {
+                "id": "b_item1_text",
+                "type": "text",
+                "values": {
+                  "html": "<h3>ウールのケーブルニット</h3><p>¥12,800（税込）<br><a href=\"https://example.com/items/knit\">商品を見る</a></p>"
+                }
+              }
+            ]
+          },
+          {
+            "id": "c_item2",
+            "blocks": [
+              {
+                "id": "b_item2_image",
+                "type": "image",
+                "values": {
+                  "src": "https://example.com/images/coat.jpg",
+                  "alt": "ロングチェスターコート",
+                  "href": "https://example.com/items/coat",
+                  "naturalWidth": 600,
+                  "naturalHeight": 600
+                }
+              },
+              {
+                "id": "b_item2_text",
+                "type": "text",
+                "values": {
+                  "html": "<h3>ロングチェスターコート</h3><p>¥29,800（税込）<br><a href=\"https://example.com/items/coat\">商品を見る</a></p>"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_footer",
+        "layout": "1",
+        "settings": { "padding": { "top": 24, "right": 32, "bottom": 32, "left": 32 } },
+        "columns": [
+          {
+            "id": "c_footer",
+            "blocks": [
+              {
+                "id": "b_social",
+                "type": "social",
+                "values": {
+                  "items": [
+                    { "service": "instagram", "url": "https://instagram.com/example" },
+                    { "service": "x", "url": "https://x.com/example" }
+                  ]
+                }
+              },
+              {
+                "id": "b_unsubscribe",
+                "type": "text",
+                "values": {
+                  "html": "<p style=\"text-align:center\">配信停止は<a href=\"{{unsubscribe_url}}\">こちら</a></p>",
+                  "fontSize": 12,
+                  "color": "#8a8580"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

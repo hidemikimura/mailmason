@@ -157,6 +157,7 @@ export class MmSettingsPanel extends LitElement {
   static properties = {
     template: { attribute: false },
     selection: { attribute: false },
+    uploads: { attribute: false },
     ctx: { attribute: false },
   };
 
@@ -305,6 +306,30 @@ export class MmSettingsPanel extends LitElement {
       .image {
         display: grid;
         gap: 6px;
+        border-radius: var(--mm-radius);
+        outline-offset: 4px;
+      }
+      .image-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .image.drop-over {
+        outline: 2px dashed var(--mm-color-accent);
+        background: var(--mm-color-accent-soft);
+      }
+      .image.uploading .thumb {
+        opacity: 0.5;
+      }
+      .image .status,
+      .image .error {
+        margin: 0;
+        font-size: 11px;
+      }
+      .image .status {
+        color: var(--mm-color-muted);
+      }
+      .image .error {
+        color: var(--mm-color-danger);
       }
       .thumb {
         max-width: 100%;
@@ -355,6 +380,8 @@ export class MmSettingsPanel extends LitElement {
     this.template = /** @type {any} */ (null);
     /** @type {string | null} */
     this.selection = null;
+    /** @type {ReadonlyMap<string, import('../upload.js').UploadState>} アップロードの状態（ブロック ID ごと） */
+    this.uploads = new Map();
     /** @type {EditorContext} */
     this.ctx = /** @type {any} */ (null);
   }
@@ -481,14 +508,21 @@ export class MmSettingsPanel extends LitElement {
       const { block } = target;
       const edef = getEditorBlockDef(block.type);
       const known = Boolean(getBlockDef(block.type));
-      const valuesCtx = this._fieldContext(`mm-${block.id}`, block.values, (key, value, merge) =>
-        store.dispatch({
-          type: 'updateBlockValues',
-          blockId: block.id,
-          patch: patchAt(key, value),
-          mergeKey: merge ? mergeKey(block.id, key) : undefined,
-        }),
-      );
+      const valuesCtx = {
+        ...this._fieldContext(`mm-${block.id}`, block.values, (key, value, merge) =>
+          store.dispatch({
+            type: 'updateBlockValues',
+            blockId: block.id,
+            patch: patchAt(key, value),
+            mergeKey: merge ? mergeKey(block.id, key) : undefined,
+          }),
+        ),
+        upload: this.ctx.onImageUpload
+          ? (/** @type {string} */ key, /** @type {File} */ file) =>
+              this.ctx.upload(file, { blockId: block.id, field: key })
+          : null,
+        uploadState: this.uploads.get(block.id) ?? null,
+      };
       const styleCtx = this._fieldContext(
         `mm-${block.id}-style`,
         block.style,

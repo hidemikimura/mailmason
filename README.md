@@ -5,6 +5,8 @@ Lit ベースのノーコード HTML メールエディタです。行×カラ�
 - 主要メーラー（Outlook デスクトップ含む）で崩れにくい、テーブル＋インライン CSS の HTML
 - マルチパート配信用のテキストパート（自動生成、手編集で上書き可）
 
+**ドキュメントとデモ: https://hidemikimura.github.io/mailmason/**
+
 > v0.1（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
 
 ## インストール
@@ -43,6 +45,14 @@ const editor = document.querySelector('mailmason-editor');
 // sample はプレビューで差し込む値、fallback は値が無いときの既定値
 editor.mergeTags = [{ key: 'name', label: '氏名', sample: '山田 太郎', fallback: 'お客様' }];
 editor.onImageSelect = async ({ current }) => openMyImagePicker(current); // 画像の URL を返す
+editor.onImageUpload = async (file) => {
+  // ローカルの画像ファイルを自分のサーバーに送り、公開 URL を返す
+  const body = new FormData();
+  body.append('file', file);
+  const res = await fetch('/api/images', { method: 'POST', body });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()).url;
+};
 
 editor.loadJson(savedTemplate); // 保存しておいたテンプレート JSON を読み込む
 editor.addEventListener('mm-change', (e) => save(e.detail.template)); // 編集のたびに（1 フレーム 1 回まで）
@@ -50,16 +60,18 @@ editor.addEventListener('mm-change', (e) => save(e.detail.template)); // 編集�
 const { html, text } = editor.export({ html: { minify: true } }); // 配信用の HTML とテキストパート
 ```
 
-| プロパティ / 属性                  | 内容                                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------------------- |
-| `theme`                            | 新規テンプレートの既定デザイン（`BodySettings` の一部）。読み込んだ JSON には適用しない |
-| `locale` / `messages`              | 表示言語（`ja` / `en`）と UI 文言の部分上書き                                           |
-| `mergeTags` / `mergeTagDelimiters` | 差し込み変数の候補と区切り文字（既定 `{{` `}}`）                                        |
-| `onImageSelect`                    | 画像の「選択…」ボタンで呼ぶ関数。URL（または `{ src, alt }`）を返す                     |
-| `social-icon-base-url`             | SNS アイコン PNG の置き場所（未指定ならテキストリンク）                                 |
-| `outlook-font-family`              | Outlook（Windows）用のフォント                                                          |
-| `color-mode`                       | エディタ UI の配色（`light` / `dark` / `auto`）                                         |
-| `view` / `preview-device`          | 表示中の画面（`edit` / `preview`）とプレビューの幅（`desktop` 900px / `mobile` 375px）  |
+| プロパティ / 属性                  | 内容                                                                                               |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `theme`                            | 新規テンプレートの既定デザイン（`BodySettings` の一部）。読み込んだ JSON には適用しない            |
+| `locale` / `messages`              | 表示言語（`ja` / `en`）と UI 文言の部分上書き                                                      |
+| `mergeTags` / `mergeTagDelimiters` | 差し込み変数の候補と区切り文字（既定 `{{` `}}`）                                                   |
+| `onImageSelect`                    | 画像の「選択…」ボタンで呼ぶ関数。URL（または `{ src, alt }`）を返す                                |
+| `onImageUpload`                    | ローカルの画像ファイル（`File`）を受け取ってアップロードし、URL（または `{ src, alt }`）を返す関数 |
+| `max-image-size`                   | アップロードできる画像の上限（バイト、既定 5MB。0 で無制限）                                       |
+| `social-icon-base-url`             | SNS アイコン PNG の置き場所（未指定ならテキストリンク）                                            |
+| `outlook-font-family`              | Outlook（Windows）用のフォント                                                                     |
+| `color-mode`                       | エディタ UI の配色（`light` / `dark` / `auto`）                                                    |
+| `view` / `preview-device`          | 表示中の画面（`edit` / `preview`）とプレビューの幅（`desktop` 900px / `mobile` 375px）             |
 
 | メソッド                                                          | 内容                                                           |
 | ----------------------------------------------------------------- | -------------------------------------------------------------- |
@@ -81,6 +93,8 @@ const { html, text } = editor.export({ html: { minify: true } }); // 配信用�
 テキスト: テキストブロックを選択してもう一度クリック（またはダブルクリック・Enter）すると、キャンバス上で直接編集できます。書式ツールバーで段落の種類・太字・斜体・下線・取り消し線・リンク・文字色・リスト・揃え・書式クリア・差し込み変数を使えます。貼り付けた HTML は許可タグだけに整えます。
 
 プレビュー: ツールバーの「プレビュー」で、配信用 HTML を PC（900px）・スマホ（375px）の幅で確認できます。差し込み変数は `sample`（無ければ `fallback`）の値で表示します。「テキスト」タブではテキストパートを確認でき、「編集する」で手直しできます。手直しの後にメール本文を変えると、テキストを確認するよう警告を出します（`mm-warning` の `stale-text`）。
+
+画像のアップロード: `onImageUpload` を設定すると、画像の設定欄の「アップロード…」ボタン、設定欄やキャンバスへのファイルのドロップ（画像ブロックの上なら差し替え、行間やカラムなら新しい画像ブロック）、画像の貼り付け（`Ctrl/⌘+V`）でローカルの画像を使えます。エディタは画像を保存しないため、フックでサーバーなどに置いて公開 URL を返してください（data URL の画像は Gmail や Outlook で表示されません）。形式は PNG・JPEG・GIF で、実寸はアップロード前に手元で測ります。失敗したときは設定欄に理由を出し、`mm-warning`（`image-upload-failed` / `image-upload-type` / `image-upload-size`）を発火します。
 
 操作: パレットの項目はキャンバスへドラッグして置けます（クリックでも追加できます）。選択中の行・ブロックは、上に出るラベル（つまみ）をドラッグして移動できます。ブロックを行の上下端に落とすと、新しい行になります。
 
@@ -135,6 +149,22 @@ npm run dev             # デモ（demo/）を開発サーバーで開く
 - `test/core/`, `test/editor/` — テスト
 
 `src/core` から `lit` や `document` などの DOM を使うと ESLint がエラーにします。
+
+### ドキュメントサイト
+
+`docs/` は VitePress のサイトです。`main` ブランチに push すると GitHub Actions（`.github/workflows/docs.yml`）でビルドし、GitHub Pages に公開します（リポジトリの Settings > Pages で Source を「GitHub Actions」にしておく）。
+
+```sh
+npm run docs:dev        # 開発サーバー
+npm run docs:build      # docs/.vitepress/dist にビルド
+npm run docs:reference  # テンプレート JSON のリファレンスをスキーマから作り直す
+```
+
+`docs/reference/template.md` と `skills/mailmason-templates/references/schema.md` は自動生成です。スキーマを変えたら `npm run docs:reference` を実行してください（古いままだとテストが失敗します）。
+
+### AI 用スキル
+
+`skills/` に AI コーディングエージェント向けの Agent Skills（組み込み用・テンプレート作成用）があり、npm パッケージにも同梱しています。使い方は [skills/README.md](skills/README.md) を参照してください。
 
 ### 公開
 

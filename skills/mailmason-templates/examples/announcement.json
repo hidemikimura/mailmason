@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "body": {
+    "settings": {
+      "width": 600,
+      "backgroundColor": "#f4f4f4",
+      "contentBackgroundColor": "#ffffff",
+      "textColor": "#333333",
+      "linkColor": "#0066cc",
+      "title": "システムメンテナンスのお知らせ",
+      "preheader": "10月5日（日）2:00〜5:00 にサービスを停止します"
+    },
+    "rows": [
+      {
+        "id": "r_body",
+        "layout": "1",
+        "settings": { "padding": { "top": 32, "right": 32, "bottom": 16, "left": 32 } },
+        "columns": [
+          {
+            "id": "c_body",
+            "blocks": [
+              {
+                "id": "b_title",
+                "type": "text",
+                "values": {
+                  "html": "<h2>システムメンテナンスのお知らせ</h2><p>{{name}} 様</p><p>いつもご利用いただきありがとうございます。下記の日時にメンテナンスを行います。メンテナンス中はサービスをご利用いただけません。</p>"
+                }
+              },
+              {
+                "id": "b_schedule",
+                "type": "text",
+                "values": {
+                  "html": "<ul><li><strong>日時</strong>: 10月5日（日）2:00〜5:00</li><li><strong>対象</strong>: Web サイトとアプリのすべての機能</li></ul>"
+                },
+                "style": {
+                  "backgroundColor": "#f6f8fa",
+                  "padding": { "top": 16, "right": 16, "bottom": 16, "left": 16 }
+                }
+              },
+              {
+                "id": "b_details",
+                "type": "button",
+                "values": {
+                  "label": "詳しく見る",
+                  "href": "https://example.com/news/maintenance",
+                  "backgroundColor": "#1f2328",
+                  "align": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_footer",
+        "layout": "1",
+        "settings": { "padding": { "top": 0, "right": 32, "bottom": 32, "left": 32 } },
+        "columns": [
+          {
+            "id": "c_footer",
+            "blocks": [
+              { "id": "b_rule", "type": "divider", "values": { "color": "#e3e6ea" } },
+              {
+                "id": "b_note",
+                "type": "text",
+                "values": {
+                  "html": "<p>このメールは送信専用です。お問い合わせは <a href=\"https://example.com/contact\">お問い合わせフォーム</a> からお願いします。</p>",
+                  "fontSize": 12,
+                  "color": "#6e7781"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -9,12 +9,17 @@ import './mm-row.js';
 /** @import { Template, Row } from '../../core/model/types.js' */
 /** @import { RowBox } from '../../core/model/layout.js' */
 /** @import { EditorContext } from '../context.js' */
+/** @import { UploadState } from '../upload.js' */
+
+/** @type {ReadonlyMap<string, UploadState>} アップロード中のブロックが無い行に渡す（再描画を避けるため同じ参照） */
+const NO_UPLOADS = new Map();
 
 export class MmCanvas extends LitElement {
   static properties = {
     template: { attribute: false },
     selection: { attribute: false },
     editing: { attribute: false },
+    uploads: { attribute: false },
     ctx: { attribute: false },
   };
 
@@ -52,6 +57,11 @@ export class MmCanvas extends LitElement {
     this.selection = null;
     /** @type {string | null} 直接編集中のブロック ID */
     this.editing = null;
+    /** @type {ReadonlyMap<string, UploadState>} アップロードの状態（ブロック ID ごと） */
+    this.uploads = NO_UPLOADS;
+    // OS からの画像ファイルのドロップ
+    this.addEventListener('dragover', (event) => this.ctx?.dnd.fileOver(event));
+    this.addEventListener('drop', (event) => this.ctx?.dnd.fileDrop(event));
     /** @type {EditorContext} */
     this.ctx = /** @type {any} */ (null);
     /** 行の寸法のキャッシュ（行と本文幅が同じなら同じオブジェクトを返し、行の再描画を防ぐ） */
@@ -154,6 +164,14 @@ export class MmCanvas extends LitElement {
     const boxes = this._layout();
     const ownerRow = this._ownerRow();
     const editingRow = this._ownerRow(this.editing);
+    /** @type {Map<string, Map<string, UploadState>>} 行 ID → その行のアップロード */
+    const uploadsByRow = new Map();
+    for (const [blockId, state] of this.uploads) {
+      const rowId = this._ownerRow(blockId);
+      if (!rowId) continue;
+      if (!uploadsByRow.has(rowId)) uploadsByRow.set(rowId, new Map());
+      /** @type {Map<string, UploadState>} */ (uploadsByRow.get(rowId)).set(blockId, state);
+    }
 
     return html`<div
       class="surface"
@@ -181,6 +199,7 @@ export class MmCanvas extends LitElement {
                     .ctx=${ctx}
                     .selection=${ownerRow === row.id ? this.selection : null}
                     .editing=${editingRow === row.id ? this.editing : null}
+                    .uploads=${uploadsByRow.get(row.id) ?? NO_UPLOADS}
                     .index=${i}
                     .count=${rows.length}
                   ></mm-row>`,

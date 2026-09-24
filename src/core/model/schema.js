@@ -21,8 +21,23 @@ import { isPlainObject } from './utils.js';
  */
 
 /**
+ * スキーマの中身（ドキュメントの自動生成用。正規化には使わない）
+ * @typedef {Object} SchemaInfo
+ * @property {'any' | 'string' | 'number' | 'boolean' | 'color' | 'oneOf' | 'spacing' | 'object' | 'array'} type
+ * @property {boolean} [nullable]
+ * @property {number} [min]
+ * @property {number} [max]
+ * @property {boolean} [integer]
+ * @property {readonly (string | null)[]} [values] oneOf の候補
+ * @property {Record<string, Schema>} [shape] object の項目
+ * @property {Schema} [item] array の要素
+ * @property {() => unknown} [itemDefault] array の要素の既定値
+ */
+
+/**
  * @typedef {Object} Schema
  * @property {(input: unknown, fallback: any, ctx: NormalizeContext) => any} normalize
+ * @property {SchemaInfo} [info]
  */
 
 /**
@@ -79,7 +94,10 @@ export const s = {
    * @returns {Schema}
    */
   any() {
-    return { normalize: (input, fallback) => (input === undefined ? clone(fallback) : input) };
+    return {
+      info: { type: 'any' },
+      normalize: (input, fallback) => (input === undefined ? clone(fallback) : input),
+    };
   },
 
   /**
@@ -88,6 +106,7 @@ export const s = {
    */
   string({ nullable = false } = {}) {
     return {
+      info: { type: 'string', nullable },
       normalize(input, fallback, ctx) {
         if (input === undefined) return fallback;
         if (input === null && nullable) return null;
@@ -102,6 +121,7 @@ export const s = {
    */
   number({ min = -Infinity, max = Infinity, integer = false, nullable = false } = {}) {
     return {
+      info: { type: 'number', min, max, integer, nullable },
       normalize(input, fallback, ctx) {
         if (input === undefined) return fallback;
         if (input === null && nullable) return null;
@@ -117,6 +137,7 @@ export const s = {
   /** @returns {Schema} */
   boolean() {
     return {
+      info: { type: 'boolean' },
       normalize(input, fallback, ctx) {
         if (input === undefined) return fallback;
         return typeof input === 'boolean' ? input : invalid(ctx, input, fallback);
@@ -131,6 +152,7 @@ export const s = {
    */
   color({ nullable = false } = {}) {
     return {
+      info: { type: 'color', nullable },
       normalize(input, fallback, ctx) {
         if (input === undefined) return fallback;
         if (input === null && nullable) return null;
@@ -149,6 +171,7 @@ export const s = {
    */
   oneOf(values) {
     return {
+      info: { type: 'oneOf', values },
       normalize(input, fallback, ctx) {
         if (input === undefined) return fallback;
         return values.includes(/** @type {any} */ (input)) ? input : invalid(ctx, input, fallback);
@@ -163,6 +186,7 @@ export const s = {
   spacing() {
     const side = s.number({ min: 0, max: 1000 });
     return {
+      info: { type: 'spacing', min: 0, max: 1000 },
       normalize(input, fallback, ctx) {
         if (input === undefined) return clone(fallback);
         if (typeof input === 'number') {
@@ -184,6 +208,7 @@ export const s = {
    */
   object(shape) {
     return {
+      info: { type: 'object', shape },
       normalize(input, fallback, ctx) {
         if (input === undefined) return clone(fallback);
         if (!isPlainObject(input)) return invalid(ctx, input, fallback);
@@ -210,6 +235,7 @@ export const s = {
    */
   arrayOf(item, itemDefault) {
     return {
+      info: { type: 'array', item, itemDefault },
       normalize(input, fallback, ctx) {
         if (input === undefined) return clone(fallback);
         if (!Array.isArray(input)) return invalid(ctx, input, fallback);

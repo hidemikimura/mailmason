@@ -3,7 +3,16 @@ import globals from 'globals';
 import prettier from 'eslint-config-prettier';
 
 export default [
-  { ignores: ['dist/', 'types/', 'coverage/', 'node_modules/'] },
+  {
+    ignores: [
+      'dist/',
+      'types/',
+      'coverage/',
+      'node_modules/',
+      'docs/.vitepress/cache/',
+      'docs/.vitepress/dist/',
+    ],
+  },
   js.configs.recommended,
   {
     languageOptions: {
@@ -19,9 +28,14 @@ export default [
     files: ['src/index.js', 'src/editor/**/*.js', 'demo/**/*.js', 'test/editor/**/*.js'],
     languageOptions: { globals: { ...globals.browser } },
   },
+  // ドキュメントサイト（設定は Node、テーマはブラウザ）
+  {
+    files: ['docs/.vitepress/**/*.{js,mjs}'],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
   // Node で動くコード
   {
-    files: ['*.config.js', 'test/core/**/*.js', 'scripts/**/*.js'],
+    files: ['*.config.js', 'test/core/**/*.js', 'scripts/**/*.js', 'skills/**/*.mjs'],
     languageOptions: { globals: { ...globals.node } },
   },
   // core は DOM・Lit・editor に依存しない（Node でもそのまま動かすため）

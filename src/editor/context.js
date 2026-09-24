@@ -15,7 +15,12 @@
  * @property {MergeTag[]} mergeTags
  * @property {MergeTagDelimiters} delimiters
  * @property {ImageSelectHook | null} onImageSelect
- * @property {{ start(event: PointerEvent, payload: import('./dnd/target.js').DragPayload): void }} dnd
+ * @property {import('./upload.js').ImageUploadHook | null} onImageUpload
+ * @property {(file: File, target: import('./upload.js').UploadTarget) => void} upload
+ *   画像ファイルをアップロードしてブロックに設定する（onImageUpload が無ければ何もしない）
+ * @property {(target: import('./dnd/controller.js').FileDropTarget, files: File[]) => void} dropImageFiles
+ *   キャンバスに落とした画像ファイルを、差し替え・新しい画像ブロックにしてアップロードする
+ * @property {{ start(event: PointerEvent, payload: import('./dnd/target.js').DragPayload): void, fileOver(event: DragEvent): void, fileDrop(event: DragEvent): void }} dnd
  *   ドラッグ&ドロップの開始（pointerdown で呼ぶ）
  * @property {(blockId: string | null) => void} edit テキストの直接編集を開始・終了する
  * @property {(change: { view?: 'edit' | 'preview', device?: 'desktop' | 'mobile' }) => void} setView

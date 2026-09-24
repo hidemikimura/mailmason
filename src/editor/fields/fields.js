@@ -4,10 +4,12 @@ import { ROW_LAYOUT_NAMES, getLayoutSpans } from '../../core/model/layout.js';
 import { SOCIAL_SERVICES, socialLabel } from '../../core/blocks/social.js';
 import { sanitizeHtml } from '../../core/richtext/sanitize.js';
 import { getIn, measureImage } from '../util.js';
+import { UPLOAD_TYPES, hasFiles } from '../upload.js';
 
 /** @import { TemplateResult } from 'lit' */
 /** @import { Translate } from '../i18n.js' */
 /** @import { MergeTagDelimiters } from '../../core/merge-tags.js' */
+/** @import { UploadState } from '../upload.js' */
 
 /**
  * @typedef {{ value: string | null, labelKey: string }} Choice
@@ -41,6 +43,8 @@ import { getIn, measureImage } from '../util.js';
  * @property {MergeTag[]} mergeTags
  * @property {MergeTagDelimiters} delimiters
  * @property {ImageSelectHook | null} onImageSelect
+ * @property {((key: string, file: File) => void) | null} [upload] 画像ファイルをアップロードする（フックが無ければ null）
+ * @property {UploadState | null} [uploadState] 編集対象のアップロードの状態
  */
 
 /**
@@ -274,6 +278,8 @@ function control(spec, value, ctx, id) {
 
     case 'image': {
       const src = String(value ?? '');
+      const state = ctx.uploadState?.field === spec.key ? ctx.uploadState : null;
+      const uploading = state?.status === 'uploading';
       /** @param {string} next */
       const measure = async (next) => {
         const size = await measureImage(next);
@@ -292,24 +298,97 @@ function control(spec, value, ctx, id) {
         if (picked.alt && !getIn(ctx.values, altKey)) change(altKey, picked.alt);
         void measure(picked.src);
       };
-      return html`<div class="image">
-        ${src ? html`<img class="thumb" src=${src} alt="" />` : nothing}
-        <div class="with-menu">
-          <input
-            id=${id}
-            type="text"
-            inputmode="url"
-            placeholder="https://"
-            .value=${src}
-            @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
-            @change=${(/** @type {Event} */ e) => void measure(inputValue(e))}
-          />
-          ${
-            ctx.onImageSelect
-              ? html`<button type="button" @click=${choose}>${ctx.t('image.choose')}</button>`
-              : nothing
-          }
-        </div>
+      const upload = ctx.upload;
+      /** @param {FileList | null} files */
+      const send = (files) => {
+        const file = files?.[0];
+        if (file && upload) upload(spec.key, file);
+      };
+      /** @param {DragEvent} event */
+      const onDragOver = (event) => {
+        if (!upload || !hasFiles(event.dataTransfer)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        /** @type {DataTransfer} */ (event.dataTransfer).dropEffect = 'copy';
+        /** @type {HTMLElement} */ (event.currentTarget).classList.add('drop-over');
+      };
+      /** @param {DragEvent} event */
+      const onDragLeave = (event) =>
+        /** @type {HTMLElement} */ (event.currentTarget).classList.remove('drop-over');
+      /** @param {DragEvent} event */
+      const onDrop = (event) => {
+        if (!upload || !hasFiles(event.dataTransfer)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        /** @type {HTMLElement} */ (event.currentTarget).classList.remove('drop-over');
+        send(/** @type {DataTransfer} */ (event.dataTransfer).files);
+      };
+      const thumb = uploading && state?.preview ? state.preview : src;
+      return html`<div
+        class="image ${uploading ? 'uploading' : ''}"
+        @dragover=${onDragOver}
+        @dragleave=${onDragLeave}
+        @drop=${onDrop}
+      >
+        ${thumb ? html`<img class="thumb" src=${thumb} alt="" />` : nothing}
+        <input
+          id=${id}
+          type="text"
+          inputmode="url"
+          placeholder="https://"
+          .value=${src}
+          ?disabled=${uploading}
+          @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
+          @change=${(/** @type {Event} */ e) => void measure(inputValue(e))}
+        />
+        ${
+          upload || ctx.onImageSelect
+            ? html`<div class="image-actions">
+                ${
+                  upload
+                    ? html`<button
+                          type="button"
+                          data-action="upload"
+                          ?disabled=${uploading}
+                          @click=${(/** @type {Event} */ e) =>
+                            /** @type {HTMLInputElement | null} */ (
+                              /** @type {HTMLElement} */ (e.currentTarget).nextElementSibling
+                            )?.click()}
+                        >
+                          ${ctx.t('image.upload')}
+                        </button>
+                        <input
+                          type="file"
+                          class="file"
+                          hidden
+                          accept=${UPLOAD_TYPES.join(',')}
+                          @change=${(/** @type {Event} */ e) => {
+                            const input = /** @type {HTMLInputElement} */ (e.target);
+                            send(input.files);
+                            input.value = '';
+                          }}
+                        />`
+                    : nothing
+                }
+                ${
+                  ctx.onImageSelect
+                    ? html`<button type="button" ?disabled=${uploading} @click=${choose}>
+                        ${ctx.t('image.choose')}
+                      </button>`
+                    : nothing
+                }
+              </div>`
+            : nothing
+        }
+        ${
+          uploading
+            ? html`<p class="status" role="status">${ctx.t('image.uploading')}</p>`
+            : state?.status === 'error'
+              ? html`<p class="error" role="alert">${state.message}</p>`
+              : upload
+                ? html`<p class="help">${ctx.t('image.dropHint')}</p>`
+                : nothing
+        }
       </div>`;
     }
 

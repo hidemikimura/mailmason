@@ -16,6 +16,17 @@ editor.mergeTags = [
 ];
 // 画像の「選択…」ボタン。実際のアプリではアップロード画面などを開いて URL を返す
 editor.onImageSelect = async ({ current }) => window.prompt('画像の URL', current) ?? null;
+// ローカルの画像ファイルのアップロード。実際のアプリではサーバーに送り、公開 URL を返す。
+// デモでは送らずに data URL を返す（メールでは data URL の画像は表示されないので本番では使わない）
+editor.onImageUpload = async (file) => {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(/** @type {string} */ (reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+};
 
 /** プレビュー用のサンプル値 */
 const mergeValues = Object.fromEntries(editor.mergeTags.map((tag) => [tag.key, tag.sample ?? '']));

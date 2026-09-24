@@ -28,6 +28,7 @@ export class MmBlock extends LitElement {
     count: { type: Number },
     selected: { type: Boolean, reflect: true },
     editing: { type: Boolean, reflect: true },
+    upload: { attribute: false },
   };
 
   static styles = [
@@ -100,6 +101,29 @@ export class MmBlock extends LitElement {
         width: 100%;
         border: 0;
       }
+      .uploading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.6);
+        pointer-events: none;
+      }
+      .uploading span {
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        font: 12px/1.5 var(--mm-font-family);
+      }
+      .upload-preview {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto;
+        opacity: 0.6;
+      }
       .badge {
         position: absolute;
         right: 4px;
@@ -128,6 +152,8 @@ export class MmBlock extends LitElement {
     this.count = 1;
     this.selected = false;
     this.editing = false;
+    /** @type {import('../upload.js').UploadState | null} このブロックのアップロードの状態 */
+    this.upload = null;
     this.addEventListener('click', (event) => {
       event.stopPropagation();
       // キャンバス内のリンクで画面遷移しないようにする
@@ -236,8 +262,19 @@ export class MmBlock extends LitElement {
     const content = def ? renderBlockContent(block, contentWidth, body, ctx.htmlOptions) : '';
     const label = edef ? ctx.t(edef.labelKey) : ctx.t('block.unknown', { type: block.type });
 
+    const uploading = this.upload?.status === 'uploading';
     let inner;
-    if (this.editing && def && EDITABLE_TYPES.has(block.type)) {
+    if (uploading && this.upload?.preview && block.type === 'image') {
+      // アップロード中は手元のファイルを仮表示する
+      const width = /** @type {any} */ (block.values).width;
+      const size = width?.unit === 'px' ? `${width.value}px` : `${width?.value ?? 100}%`;
+      inner = html`<img
+        class="upload-preview"
+        src=${this.upload.preview}
+        alt=""
+        style=${styleMap({ width: size })}
+      />`;
+    } else if (this.editing && def && EDITABLE_TYPES.has(block.type)) {
       inner = this._renderEditor();
     } else if (!def) {
       inner = html`<div class="placeholder">${label}<br />${ctx.t('placeholder.unknown')}</div>`;
@@ -265,6 +302,13 @@ export class MmBlock extends LitElement {
 
     return html`<div class="content" style=${styleMap(style)}>${inner}</div>
       ${block.hideOn === 'mobile' ? html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>` : nothing}
+      ${
+        uploading
+          ? html`<div class="uploading" role="status">
+              <span>${ctx.t('image.uploading')}</span>
+            </div>`
+          : nothing
+      }
       ${
         this.selected && !this.editing
           ? renderChrome(
