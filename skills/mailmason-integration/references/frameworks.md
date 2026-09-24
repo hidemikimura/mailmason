@@ -13,7 +13,7 @@ Lit を同梱した単一バンドルを CDN から読み込みます。
 ```html
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.2/dist/mailmason.bundle.js"
 ></script>
 <mailmason-editor id="editor" style="height: 100vh"></mailmason-editor>
 <script type="module">

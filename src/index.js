@@ -7,6 +7,7 @@ export { MailmasonEditor };
 
 /** @typedef {import('./editor/fields/fields.js').MergeTag} MergeTag */
 /** @typedef {import('./editor/fields/fields.js').ImageSelectHook} ImageSelectHook */
+/** @typedef {import('./editor/upload.js').ImageUploadHook} ImageUploadHook */
 
 if (!customElements.get('mailmason-editor')) {
   customElements.define('mailmason-editor', MailmasonEditor);

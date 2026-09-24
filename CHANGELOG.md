@@ -2,13 +2,27 @@
 
 このプロジェクトは [Semantic Versioning](https://semver.org/lang/ja/) に従います。1.0.0 までは、マイナーバージョンで互換性の無い変更を含むことがあります。
 
-## 未公開
+## 0.2.0 - 2026-09-24
 
-- 画像のアップロード: `onImageUpload(file, { blockId })` フックと `max-image-size` 属性を追加。設定欄の「アップロード…」ボタン、設定欄・キャンバスへのファイルのドロップ、画像の貼り付けに対応（保存はフックが担当し、URL を返す）。アップロード中は手元のファイルを仮表示し、失敗は設定欄と `mm-warning` で知らせる
-- ドキュメントサイト（VitePress、デモ付き、GitHub Pages）と llms.txt / llms-full.txt を追加
-- AI 用の Agent Skills（`skills/mailmason-integration`・`skills/mailmason-templates`）を追加し、npm パッケージに同梱。テンプレートの検査スクリプトと例を含む
-- テンプレート JSON のリファレンスをスキーマから自動生成（`npm run docs:reference`）
-- package.json に repository / homepage / bugs（https://github.com/hidemikimura/mailmason）を追加
+画像のアップロードに対応し、ドキュメントサイトと AI 用のスキルを用意しました。互換性の無い変更はありません。
+
+### 追加
+
+- 画像のアップロード: `onImageUpload(file, { blockId })` フックと `max-image-size` 属性（既定 5MB）。設定欄の「アップロード…」ボタン、設定欄・キャンバスへのファイルのドロップ（画像ブロックの上なら差し替え、行間・カラムなら新しい画像ブロック）、画像の貼り付け（`Ctrl/⌘+V`）に対応。保存はフックが担当し、公開 URL を返す。形式は PNG・JPEG・GIF。アップロード中は手元のファイルを仮表示し、実寸を測って設定する
+- `mm-warning` の警告コード `image-upload-failed` / `image-upload-type` / `image-upload-size`
+- 型 `ImageUploadHook` を `@hidemikimura/mailmason` から export
+- AI 用の Agent Skills を npm パッケージに同梱（`skills/mailmason-integration`・`skills/mailmason-templates`）。テンプレートの検査スクリプト（`validate.mjs`）と例を含む
+- ドキュメントサイト（https://hidemikimura.github.io/mailmason/ 、デモ付き）と llms.txt / llms-full.txt
+- package.json に repository / homepage / bugs
+
+### 変更
+
+- キャンバスにファイルを落としたとき、ブラウザがそのファイルを開いて編集中の内容が失われないよう、ドロップを止めるようにした（`onImageUpload` を設定していなくても）
+
+### 開発
+
+- テンプレート JSON のリファレンス（ドキュメントとスキル）をスキーマから自動生成（`npm run docs:reference`）。古いとテストが失敗する
+- リリース手順を `RELEASING.md` にまとめた
 
 ## 0.1.0 - 2026-09-24
 

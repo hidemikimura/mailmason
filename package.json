@@ -1,6 +1,6 @@
 {
   "name": "@hidemikimura/mailmason",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lit ベースのノーコード HTML メールエディタ。テーブル＋インライン CSS の HTML とマルチパート用テキストを出力する",
   "keywords": [
     "email",
