@@ -10,10 +10,10 @@ import { isCovered } from '../../core/blocks/table-layout.js';
 import { resolveTextStyle } from '../../core/render-html/styles.js';
 import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
-import { chromeStyles, hideBadge, renderChrome } from './chrome.js';
+import { chromeStyles, hideBadge, isToggleClick, renderChrome } from './chrome.js';
 import { define } from '../context.js';
 import './mm-text-editor.js';
-import './mm-table-editor.js';
+import { loadTableEditor, preload } from '../lazy.js';
 
 /** キャンバス上で直接編集できるブロック */
 export const EDITABLE_TYPES = new Set(['text', 'imageText', 'table']);
@@ -58,6 +58,7 @@ export class MmBlock extends LitElement {
     index: { type: Number },
     count: { type: Number },
     selected: { type: Boolean, reflect: true },
+    multi: { type: Boolean },
     editing: { type: Boolean, reflect: true },
     upload: { attribute: false },
     _editCell: { state: true },
@@ -192,6 +193,8 @@ export class MmBlock extends LitElement {
     this.index = 0;
     this.count = 1;
     this.selected = false;
+    /** 複数の要素をまとめて選んでいる（操作ボタンは出さない） */
+    this.multi = false;
     this.editing = false;
     /** @type {import('../upload.js').UploadState | null} このブロックのアップロードの状態 */
     this.upload = null;
@@ -204,14 +207,20 @@ export class MmBlock extends LitElement {
         event.preventDefault();
       }
       if (this.editing) return;
+      // Shift / Cmd（Ctrl）+クリックで、ブロックをまとめて選ぶ
+      if (isToggleClick(event)) {
+        this.ctx.store.toggleSelect(this.block.id);
+        return;
+      }
       // 選択中のテキストをもう一度クリックすると直接編集に入る
-      if (this.selected && EDITABLE_TYPES.has(this.block.type)) {
+      if (this.selected && !this.multi && EDITABLE_TYPES.has(this.block.type)) {
         this._editCell = tableCellOf(event, this.block);
         this.ctx.edit(this.block.id);
       } else this.ctx.store.select(this.block.id);
     });
     this.addEventListener('dblclick', (event) => {
       event.stopPropagation();
+      if (isToggleClick(event)) return;
       if (!this.editing && EDITABLE_TYPES.has(this.block.type)) {
         this._editCell = tableCellOf(event, this.block);
         this.ctx.store.select(this.block.id);
@@ -225,11 +234,32 @@ export class MmBlock extends LitElement {
     clearHighlights(this);
   }
 
+  /** @param {Map<string, unknown>} changed */
+  willUpdate(changed) {
+    // 表を選んだら、直接編集に入る前に編集部品を読み込んでおく
+    if (changed.has('selected') && this.selected && this.block?.type === 'table') {
+      preload(loadTableEditor);
+    }
+  }
+
   updated() {
     // 編集していないブロックのマージタグもハイライトする
     const content = this.renderRoot.querySelector('.content');
     if (this.editing || !this.ctx) clearHighlights(this);
     else highlightMergeTags(this, content, this.ctx.delimiters);
+  }
+
+  /**
+   * 直接編集の部品を使えるか。表の編集部品は初めて使うときに読み込み、読み込むまでは出力と同じ表示にする
+   * @returns {boolean}
+   */
+  _editorReady() {
+    if (this.block.type !== 'table' || customElements.get('mm-table-editor')) return true;
+    loadTableEditor().then(
+      () => this.requestUpdate(),
+      (error) => console.error('[mailmason] 表の編集部品を読み込めませんでした', error),
+    );
+    return false;
   }
 
   /**
@@ -341,7 +371,7 @@ export class MmBlock extends LitElement {
         alt=""
         style=${styleMap({ width: size })}
       />`;
-    } else if (this.editing && def && EDITABLE_TYPES.has(block.type)) {
+    } else if (this.editing && def && EDITABLE_TYPES.has(block.type) && this._editorReady()) {
       inner = this._renderEditor(contentWidth);
     } else if (!def) {
       inner = html`<div class="placeholder">${label}<br />${ctx.t('placeholder.unknown')}</div>`;
@@ -386,7 +416,7 @@ export class MmBlock extends LitElement {
           : nothing
       }
       ${
-        this.selected && !this.editing
+        this.selected && !this.editing && !this.multi
           ? renderChrome(
               label,
               {

@@ -111,8 +111,11 @@ export interface MmChangeDetail {
 }
 
 export interface MmSelectDetail {
+  /** 選択中の要素（まとめて選んだときは最後に選んだもの） */
   id: string | null;
   kind: SelectionKind;
+  /** 選択中の要素すべて（まとめて選べるのは行どうし・ブロックどうし。選んでいなければ []） */
+  ids: string[];
 }
 
 export interface MmViewDetail {
@@ -219,8 +222,8 @@ export declare class MailmasonEditor extends LitElement {
   redo(): boolean;
   canUndo(): boolean;
   canRedo(): boolean;
-  /** 行・カラム・ブロックを ID で選択する（null で解除） */
-  select(id: string | null): void;
+  /** 行・カラム・ブロックを ID で選択する（null で解除）。配列なら行どうし・ブロックどうしをまとめて選ぶ */
+  select(id: string | readonly string[] | null): void;
 
   addEventListener<K extends keyof MailmasonEditorEventMap>(
     type: K,

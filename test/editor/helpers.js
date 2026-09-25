@@ -4,6 +4,7 @@ import kitchenSinkJson from '../fixtures/templates/kitchen-sink.json';
 import contentBlocksJson from '../fixtures/templates/content-blocks.json';
 import backgroundsJson from '../fixtures/templates/backgrounds.json';
 import tablesJson from '../fixtures/templates/tables.json';
+import { loadAllEditorModules } from '../../src/editor/lazy.js';
 
 /** @typedef {import('../../src/index.js').MailmasonEditor} MailmasonEditor */
 
@@ -64,6 +65,9 @@ export async function frame() {
  * @returns {Promise<MailmasonEditor>}
  */
 export async function mount(props = {}) {
+  // 後から読み込む部品（プレビュー・表の編集・QR・英語の文言など）を先に読み込み、テストの待ち時間を一定にする
+  // （読み込みそのものは lazy-loading.test.js で確かめる）
+  await loadAllEditorModules();
   const el = /** @type {MailmasonEditor} */ (document.createElement('mailmason-editor'));
   Object.assign(el, props);
   el.style.height = '800px';

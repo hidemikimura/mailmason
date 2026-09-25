@@ -7,7 +7,7 @@ Lit ベースのノーコード HTML メールエディタです。行×カラ�
 
 **ドキュメントとデモ: https://hidemikimura.github.io/mailmason/**
 
-> v0.6（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
+> v0.7（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
 
 ## インストール
 
@@ -21,11 +21,13 @@ Lit（3.3 以上）は peer dependency です。バンドラーを使わない�
 <!-- ES モジュール版 -->
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.6/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.bundle.js"
 ></script>
 <!-- 従来の script タグ版（グローバル変数 Mailmason） -->
-<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.6/dist/mailmason.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.iife.js"></script>
 ```
+
+プレビュー・表の直接編集・QR コードの作成・英語の UI 文言は、使うときに読み込みます。ES モジュール版は最初に約 80KB（gzip）を読み込み、残りを `dist/chunks/` から読み込みます（自分のサーバーに置くときは `chunks/` も同じ場所に置いてください）。script タグ版はすべて 1 ファイル（約 97KB）です。
 
 動作環境: Chrome・Edge・Firefox・Safari の最新版。画面幅は 1024px 以上を想定しています（それより狭いと、パレットと設定パネルはツールバーのボタンで開閉する重ね表示になります）。
 
@@ -82,13 +84,13 @@ const { html, text } = editor.export({ html: { minify: true } }); // 配信用�
 | `exportHtml(options)` / `exportText(options)` / `export(options)` | 配信用 HTML / テキストパート / 両方                            |
 | `undo()` / `redo()` / `select(id)`                                | 履歴の操作と選択                                               |
 
-| イベント     | detail                                                                                |
-| ------------ | ------------------------------------------------------------------------------------- |
-| `mm-ready`   | なし                                                                                  |
-| `mm-change`  | `{ template, actions }`（template は変更しないこと）                                  |
-| `mm-select`  | `{ id, kind }`（kind は `row` / `column` / `block` / `null`）                         |
-| `mm-warning` | `{ code, path, message, ... }`（読込時の補正、未定義のマージタグ、HTML の大きさなど） |
-| `mm-view`    | `{ view, device }`（ツールバーで表示を切り替えたとき）                                |
+| イベント     | detail                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| `mm-ready`   | なし                                                                                         |
+| `mm-change`  | `{ template, actions }`（template は変更しないこと）                                         |
+| `mm-select`  | `{ id, kind, ids }`（kind は `row` / `column` / `block` / `null`、ids はまとめて選んだ要素） |
+| `mm-warning` | `{ code, path, message, ... }`（読込時の補正、未定義のマージタグ、HTML の大きさなど）        |
+| `mm-view`    | `{ view, device }`（ツールバーで表示を切り替えたとき）                                       |
 
 見た目は CSS カスタムプロパティ（`--mm-color-accent` など）と `::part(toolbar | palette | canvas | settings | preview)` で調整できます。ツールバーの右端には `slot="toolbar"` で要素（保存ボタンなど）を置けます。
 
@@ -116,7 +118,7 @@ QR コード: `onImageUpload` を設定すると QR コードのブロックが�
 
 操作: パレットの項目はキャンバスへドラッグして置けます（クリックでも追加できます）。選択中の行・ブロックは、上に出るラベル（つまみ）をドラッグして移動できます。ブロックを行の上下端に落とすと、新しい行になります。
 
-キーボード: `Ctrl/⌘+Z` 元に戻す、`Ctrl/⌘+Shift+Z`・`Ctrl+Y` やり直す、`Delete` 削除、`Ctrl/⌘+D` 複製、`Alt+↑/↓` 並べ替え、`Esc` 選択解除。
+キーボード: `Ctrl/⌘+Z` 元に戻す、`Ctrl/⌘+Shift+Z`・`Ctrl+Y` やり直す、`Delete` 削除、`Ctrl/⌘+D` 複製、`Alt+↑/↓` 並べ替え、`Esc` 選択解除。`Shift`・`Ctrl/⌘`+クリックで行どうし・ブロックどうしをまとめて選べ、`Ctrl/⌘+C` / `X` / `V` で行・ブロックをコピー・切り取り・貼り付けできます（OS のクリップボードを使うので、別のメールにも貼り付けられます）。
 
 Node など DOM の無い環境では、出力用の関数だけを `@hidemikimura/mailmason/core` から使えます。
 
@@ -147,7 +149,8 @@ npm run dev             # デモ（demo/）を開発サーバーで開く
 | コマンド                  | 内容                                                                       |
 | ------------------------- | -------------------------------------------------------------------------- |
 | `npm run dev`             | デモを開発サーバーで起動                                                   |
-| `npm run build`           | 単一バンドル（`dist/`）を生成                                              |
+| `npm run build`           | Lit を同梱したバンドル（`dist/`。ES モジュール版と script タグ版）を生成   |
+| `npm run size`            | バンドルの大きさ（gzip）を表示し、上限を超えていないか確かめる             |
 | `npm run types:schema`    | 型定義の検査用ファイル（`test/types/schema.gen.ts`）をスキーマから作り直す |
 | `npm run lint`            | ESLint                                                                     |
 | `npm run format`          | Prettier で整形                                                            |

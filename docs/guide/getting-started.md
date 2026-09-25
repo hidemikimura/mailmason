@@ -12,11 +12,25 @@ Lit（3.3 以上）は peer dependency です。バンドラーを使わない�
 <!-- ES モジュール版 -->
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.6/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.bundle.js"
 ></script>
 <!-- 従来の script タグ版（グローバル変数 Mailmason） -->
-<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.6/dist/mailmason.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.iife.js"></script>
 ```
+
+### 読み込む量
+
+プレビュー・表の直接編集・QR コードの作成・英語の UI 文言は、使うときに読み込みます（最初に開いたときは読み込みません）。
+
+| 使い方                                   | 最初に読み込む量（gzip） | 後から読み込むもの                           |
+| ---------------------------------------- | ------------------------ | -------------------------------------------- |
+| npm（バンドラーを使う）                  | バンドラーの分割による   | バンドラーが別ファイルに分ける               |
+| ES モジュール版（`mailmason.bundle.js`） | 約 80KB                  | `dist/chunks/` のファイル（合わせて約 20KB） |
+| script タグ版（`mailmason.iife.js`）     | 約 97KB                  | なし（すべて 1 ファイルに入っている）        |
+
+::: tip ES モジュール版を自分のサーバーに置くとき
+`mailmason.bundle.js` と同じ場所に `chunks/` フォルダも置いてください。後から読み込むファイルは、`mailmason.bundle.js` の場所を基準に `./chunks/…` から読み込みます。CDN を使う場合は何もしなくてかまいません。
+:::
 
 ## エディタを置く
 

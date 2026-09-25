@@ -56,6 +56,8 @@ import { mergeBySchema } from '../model/schema.js';
  * @typedef {{ type: 'resetTextPart' }} ResetTextPartCommand
  * @typedef {{ type: 'loadTemplate', template: Template }} LoadTemplateCommand
  *   正規化済みのテンプレートを渡すこと（外部データは先に migrate() を通す）
+ * @typedef {{ type: 'batch', commands: Command[] }} BatchCommand
+ *   複数のコマンドを順に適用する（1 つの履歴になる。途中で失敗したら何も変えない。loadTemplate は入れられない）
  */
 
 /**
@@ -64,7 +66,8 @@ import { mergeBySchema } from '../model/schema.js';
  *   | UpdateBodySettingsCommand | AddBlockCommand | MoveBlockCommand | MoveBlockToNewRowCommand
  *   | DuplicateBlockCommand
  *   | RemoveBlockCommand | UpdateBlockValuesCommand | UpdateBlockStyleCommand
- *   | SetBlockHideOnCommand | SetTextPartCommand | ResetTextPartCommand | LoadTemplateCommand)
+ *   | SetBlockHideOnCommand | SetTextPartCommand | ResetTextPartCommand | LoadTemplateCommand
+ *   | BatchCommand)
  *   & { mergeKey?: string }} Command
  *   mergeKey: 同じ値のコマンドが短時間に続いたら、ストアが 1 つの履歴にまとめる
  */
@@ -388,6 +391,17 @@ export function applyCommand(template, command, warnings = [], options = {}) {
     case 'resetTextPart': {
       if (template.text.mode === 'auto') return template;
       return { ...template, text: { mode: 'auto', content: null, sourceHash: null } };
+    }
+
+    case 'batch': {
+      let next = template;
+      for (const sub of command.commands) {
+        if (sub.type === 'loadTemplate') {
+          throw new MailmasonError('unknown-command', 'loadTemplate cannot be used in a batch.');
+        }
+        next = applyCommand(next, sub, warnings, options);
+      }
+      return next;
     }
 
     case 'loadTemplate':

@@ -1034,6 +1034,11 @@ export interface LoadTemplateCommand {
   type: 'loadTemplate';
   template: Template;
 }
+/** 複数のコマンドを順に適用する（1 つの履歴になる。途中で失敗したら何も変えない。loadTemplate は入れられない） */
+export interface BatchCommand {
+  type: 'batch';
+  commands: Command[];
+}
 
 /** テンプレートを変更するコマンド。mergeKey が同じ連続した変更は 1 つの履歴にまとめる */
 export type Command = (
@@ -1056,6 +1061,7 @@ export type Command = (
   | SetTextPartCommand
   | ResetTextPartCommand
   | LoadTemplateCommand
+  | BatchCommand
 ) & { mergeKey?: string };
 
 /**
@@ -1071,12 +1077,17 @@ export declare function applyCommand(
 
 export interface StoreState {
   template: Template;
-  /** 選択中の行・カラム・ブロックの ID */
+  /** 選択中の行・カラム・ブロックの ID（まとめて選んだときは最後に選んだもの） */
   selection: string | null;
+  /** 選択中の要素の ID（まとめて選べるのは行どうし・ブロックどうし。選んでいなければ []） */
+  selectedIds: readonly string[];
 }
 
 export type StoreAction =
-  Command | { type: 'undo' } | { type: 'redo' } | { type: 'select'; id: string | null };
+  | Command
+  | { type: 'undo' }
+  | { type: 'redo' }
+  | { type: 'select'; id: string | null; ids: readonly string[] };
 
 export type StoreListener = (
   state: StoreState,
@@ -1100,7 +1111,10 @@ export interface Store {
   getState(): StoreState;
   /** コマンドを適用する（変わったら true） */
   dispatch(command: Command): boolean;
-  select(id: string | null): void;
+  /** 選択する（配列ならまとめて選ぶ。種類の違うもの・カラムは最後の 1 つに合わせて除く） */
+  select(id: string | readonly string[] | null): void;
+  /** 選択に加える・外す（行どうし・ブロックどうし。種類が違えば選び直す） */
+  toggleSelect(id: string): void;
   undo(): boolean;
   redo(): boolean;
   canUndo(): boolean;

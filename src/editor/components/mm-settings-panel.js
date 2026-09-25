@@ -185,10 +185,12 @@ export class MmSettingsPanel extends LitElement {
   static properties = {
     template: { attribute: false },
     selection: { attribute: false },
+    selectedIds: { attribute: false },
     uploads: { attribute: false },
     ctx: { attribute: false },
     _actions: { state: true },
     _component: { state: true },
+    _clipboardMessage: { state: true },
   };
 
   static styles = [
@@ -482,6 +484,14 @@ export class MmSettingsPanel extends LitElement {
         display: grid;
         gap: 6px;
       }
+      .multiple-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .multiple .help {
+        margin: 8px 0 0;
+      }
       mm-web-fonts,
       mm-font-select {
         display: block;
@@ -596,6 +606,10 @@ export class MmSettingsPanel extends LitElement {
     this.template = /** @type {any} */ (null);
     /** @type {string | null} */
     this.selection = null;
+    /** @type {readonly string[]} まとめて選んだ要素 */
+    this.selectedIds = [];
+    /** @type {string} ボタンでのコピーの結果 */
+    this._clipboardMessage = '';
     /** @type {ReadonlyMap<string, import('../upload.js').UploadState>} アップロードの状態（ブロック ID ごと） */
     this.uploads = new Map();
     /** @type {EditorContext} */
@@ -815,9 +829,66 @@ export class MmSettingsPanel extends LitElement {
     </nav>`;
   }
 
+  /** @param {Map<string, unknown>} changed */
+  willUpdate(changed) {
+    if (changed.has('selectedIds')) this._clipboardMessage = '';
+  }
+
+  /** まとめて選んだときの表示（件数と、まとめての操作） */
+  _renderMultiple() {
+    const { t, store } = this.ctx;
+    const ids = this.selectedIds;
+    const kind = findRowIndex(this.template, ids[0]) !== -1 ? 'rows' : 'blocks';
+    /** @param {boolean} cut */
+    const copy = async (cut) => {
+      const ok = await this.ctx.copySelection(cut);
+      this._clipboardMessage = ok
+        ? t(cut ? 'multi.cutDone' : 'multi.copied')
+        : t('multi.copyFailed');
+    };
+    return html`<nav aria-label="breadcrumb">
+        <button type="button" aria-current="false" @click=${() => store.select(null)}>
+          ${t('crumb.body')}
+        </button>
+      </nav>
+      <section class="multiple">
+        <h3>${t(kind === 'rows' ? 'multi.rows' : 'multi.blocks', { count: ids.length })}</h3>
+        <div class="multiple-actions">
+          <button
+            type="button"
+            data-action="duplicate"
+            @click=${() => this.ctx.duplicateSelection()}
+          >
+            ${t('action.duplicate')}
+          </button>
+          <button type="button" data-action="copy" @click=${() => copy(false)}>
+            ${t('multi.copy')}
+          </button>
+          <button type="button" data-action="cut" @click=${() => copy(true)}>
+            ${t('multi.cut')}
+          </button>
+          <button
+            type="button"
+            class="danger"
+            data-action="remove"
+            @click=${() => this.ctx.removeSelection()}
+          >
+            ${t('action.delete')}
+          </button>
+        </div>
+        ${
+          this._clipboardMessage
+            ? html`<p class="help" role="status">${this._clipboardMessage}</p>`
+            : nothing
+        }
+        <p class="help">${t('multi.help')}</p>
+      </section>`;
+  }
+
   render() {
     const { template, ctx } = this;
     if (!template || !ctx) return nothing;
+    if (this.selectedIds.length > 1) return this._renderMultiple();
     const { t, store } = ctx;
     const target = resolveTarget(template, this.selection);
     /** @param {string} id @param {string} key */

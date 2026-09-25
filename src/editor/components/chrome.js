@@ -135,3 +135,11 @@ export function hideBadge(hideOn, ctx) {
   }
   return nothing;
 }
+
+/**
+ * まとめて選ぶクリックか（Shift / Cmd / Ctrl を押しながら）
+ * @param {MouseEvent} event
+ */
+export function isToggleClick(event) {
+  return event.shiftKey || event.metaKey || event.ctrlKey;
+}

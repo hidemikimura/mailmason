@@ -38,6 +38,9 @@
  * @property {{ start(event: PointerEvent, payload: import('./dnd/target.js').DragPayload): void, fileOver(event: DragEvent): void, fileDrop(event: DragEvent): void }} dnd
  *   ドラッグ&ドロップの開始（pointerdown で呼ぶ）
  * @property {(blockId: string | null) => void} edit テキストの直接編集を開始・終了する
+ * @property {(cut: boolean) => Promise<boolean>} copySelection 選んだ行・ブロックをクリップボードに入れる（切り取りなら消す）
+ * @property {() => void} removeSelection 選んだ行・ブロックをまとめて消す
+ * @property {() => void} duplicateSelection 選んだ行・ブロックをまとめて複製する
  * @property {(change: { view?: 'edit' | 'preview', device?: 'desktop' | 'mobile' }) => void} setView
  *   編集 ⇄ プレビュー、PC ⇄ スマホを切り替える
  * @property {(name: 'palette' | 'settings') => void} toggleDrawer 狭い画面でパレット・設定パネルを開閉する

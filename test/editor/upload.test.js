@@ -363,7 +363,7 @@ describe('画像のアップロード', () => {
   });
 
   it('行間やカラムに落とすと、ファイルごとに新しい画像ブロックを作ってアップロードする', async () => {
-    const { el, calls } = await setup();
+    const { el, calls, onImageUpload } = await setup();
     const text = canvasBlocks(el)[1].getBoundingClientRect();
     const data = transfer([await pngFile(20, 20, 'a.png'), await pngFile(20, 20, 'b.png')]);
     const canvas = /** @type {HTMLElement} */ (deep(el, 'mm-canvas'));
@@ -374,8 +374,11 @@ describe('画像のアップロード', () => {
     expect(blocks.map((b) => b.type)).toEqual(['text', 'image', 'image', 'button']);
     expect(el.store.getState().selection).toBe(blocks[1].id);
     await vi.waitFor(() => expect(calls).toHaveLength(2));
-    calls[0].resolve('https://cdn.example.com/a.png');
-    calls[1].resolve('https://cdn.example.com/b.png');
+    // 画像の大きさを測る時間しだいで呼ばれる順は前後する（Firefox）ので、渡されたファイル名で返す
+    calls.forEach((call, i) => {
+      const file = /** @type {File} */ (/** @type {any[]} */ (onImageUpload.mock.calls[i])[0]);
+      call.resolve(`https://cdn.example.com/${file.name}`);
+    });
     await vi.waitFor(() =>
       expect(blockValues(el, blocks[2].id).src).toBe('https://cdn.example.com/b.png'),
     );

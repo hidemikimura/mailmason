@@ -161,7 +161,8 @@ if (editor) {
   });
   editor.addEventListener('mm-select', (event) => {
     const kind: 'row' | 'column' | 'block' | null = event.detail.kind;
-    void kind;
+    const ids: string[] = event.detail.ids;
+    void [kind, ids];
   });
   editor.addEventListener('mm-warning', (event) => {
     const warning: EditorWarning = event.detail;
@@ -186,6 +187,7 @@ if (editor) {
     content: button,
   });
   editor.select(null);
+  editor.select(['b_1', 'b_2']);
   // @ts-expect-error 内部の状態は公開しない
   editor._store;
   void [same, warningsOnLoad, current, exported, inserted];

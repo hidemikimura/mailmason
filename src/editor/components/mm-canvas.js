@@ -19,6 +19,7 @@ export class MmCanvas extends LitElement {
   static properties = {
     template: { attribute: false },
     selection: { attribute: false },
+    selectedIds: { attribute: false },
     editing: { attribute: false },
     uploads: { attribute: false },
     ctx: { attribute: false },
@@ -56,6 +57,10 @@ export class MmCanvas extends LitElement {
     this.template = /** @type {any} */ (null);
     /** @type {string | null} */
     this.selection = null;
+    /** @type {readonly string[]} まとめて選んだ要素 */
+    this.selectedIds = [];
+    /** @type {{ ids: readonly string[], set: ReadonlySet<string> }} */
+    this._selected = { ids: [], set: new Set() };
     /** @type {string | null} 直接編集中のブロック ID */
     this.editing = null;
     /** @type {ReadonlyMap<string, UploadState>} アップロードの状態（ブロック ID ごと） */
@@ -164,6 +169,10 @@ export class MmCanvas extends LitElement {
     const { settings, rows } = template.body;
     const boxes = this._layout();
     const ownerRow = this._ownerRow();
+    if (this._selected.ids !== this.selectedIds) {
+      this._selected = { ids: this.selectedIds, set: new Set(this.selectedIds) };
+    }
+    const selected = this._selected.set;
     const editingRow = this._ownerRow(this.editing);
     /** @type {Map<string, Map<string, UploadState>>} 行 ID → その行のアップロード */
     const uploadsByRow = new Map();
@@ -203,6 +212,7 @@ export class MmCanvas extends LitElement {
                     .body=${settings}
                     .ctx=${ctx}
                     .selection=${ownerRow === row.id ? this.selection : null}
+                    .selected=${selected}
                     .editing=${editingRow === row.id ? this.editing : null}
                     .uploads=${uploadsByRow.get(row.id) ?? NO_UPLOADS}
                     .index=${i}

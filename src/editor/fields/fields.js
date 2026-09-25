@@ -6,6 +6,7 @@ import { sanitizeHtml } from '../../core/richtext/sanitize.js';
 import { getIn, measureImage, setIn } from '../util.js';
 import { UPLOAD_TYPES, hasFiles, pickImage } from '../upload.js';
 import '../components/mm-text-input.js';
+// Web フォントとフォントの欄は、全体設定（何も選んでいないときの表示）で最初から使うので同梱する
 import '../components/mm-web-fonts.js';
 import '../components/mm-font-select.js';
 import { qrSignature } from '../../core/blocks/qr.js';

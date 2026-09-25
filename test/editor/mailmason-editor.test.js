@@ -92,7 +92,11 @@ describe('選択と設定パネル', () => {
     await frame();
     const selected = once(el, 'mm-select');
     canvasBlocks(el)[2].click(); // ボタン
-    expect((await selected).detail).toEqual({ id: 'b_button01', kind: 'block' });
+    expect((await selected).detail).toEqual({
+      id: 'b_button01',
+      kind: 'block',
+      ids: ['b_button01'],
+    });
     await frame();
     const crumbs = deepAll(el, ['mm-settings-panel'], 'nav button').map((b) =>
       b.textContent?.trim(),

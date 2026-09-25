@@ -2,7 +2,7 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { chromeStyles, hideBadge, renderChrome } from './chrome.js';
+import { chromeStyles, hideBadge, isToggleClick, renderChrome } from './chrome.js';
 import { define } from '../context.js';
 import { backgroundStyles } from '../util.js';
 import './mm-block.js';
@@ -21,6 +21,7 @@ export class MmRow extends LitElement {
     body: { attribute: false },
     ctx: { attribute: false },
     selection: { attribute: false },
+    selected: { attribute: false },
     editing: { attribute: false },
     uploads: { attribute: false },
     index: { type: Number },
@@ -107,6 +108,8 @@ export class MmRow extends LitElement {
     this.ctx = /** @type {any} */ (null);
     /** @type {string | null} この行の中の要素が選択されているときだけ、その ID */
     this.selection = null;
+    /** @type {ReadonlySet<string>} 選択中の要素（まとめて選んだものを含む） */
+    this.selected = new Set();
     /** @type {string | null} この行の中で直接編集中のブロック ID */
     this.editing = null;
     /** @type {ReadonlyMap<string, import('../upload.js').UploadState>} この行のブロックのアップロード */
@@ -115,14 +118,16 @@ export class MmRow extends LitElement {
     this.count = 1;
     this.addEventListener('click', (event) => {
       event.stopPropagation();
-      this.ctx.store.select(this.row.id);
+      // Shift / Cmd（Ctrl）+クリックで、行をまとめて選ぶ
+      if (isToggleClick(event)) this.ctx.store.toggleSelect(this.row.id);
+      else this.ctx.store.select(this.row.id);
     });
   }
 
   /** @param {Map<string, unknown>} changed */
   updated(changed) {
-    if (changed.has('selection'))
-      this.toggleAttribute('data-selected', this.selection === this.row.id);
+    if (changed.has('selected'))
+      this.toggleAttribute('data-selected', this.selected.has(this.row.id));
   }
 
   /** @param {number} to */
@@ -141,7 +146,8 @@ export class MmRow extends LitElement {
     const { row, box, ctx, body } = this;
     if (!row || !box || !ctx) return nothing;
     const { settings } = row;
-    const selectedRow = this.selection === row.id;
+    const multi = this.selected.size > 1;
+    const selectedRow = this.selection === row.id && !multi;
 
     const columns = row.columns.map((column, i) => {
       const size = box.columns[i];
@@ -181,7 +187,8 @@ export class MmRow extends LitElement {
                       .columnId=${column.id}
                       .index=${j}
                       .count=${column.blocks.length}
-                      ?selected=${this.selection === block.id}
+                      ?selected=${this.selected.has(block.id)}
+                      ?multi=${multi}
                       ?editing=${this.editing === block.id}
                       .upload=${this.uploads.get(block.id) ?? null}
                     ></mm-block>`,

@@ -25,6 +25,7 @@ npm version X.Y.Z --no-git-tag-version   # package.json と package-lock.json
 npm run check              # lint・整形・型・テスト（エディタは Chromium）
 npm run test:editor:all    # エディタを Chromium・Firefox・WebKit で
 npm run build
+npm run size               # バンドルの大きさ（gzip）と上限
 npm run docs:build
 npm pack --dry-run         # 同梱されるファイル（src・types・dist・skills など）
 ```

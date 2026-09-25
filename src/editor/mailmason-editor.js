@@ -10,14 +10,13 @@ import {
   resolveHtmlOptions,
 } from '../core/render-html/index.js';
 import { resolveTextPart } from '../core/text-part.js';
-import { createTranslator } from './i18n.js';
+import { createTranslator, loadMessages, needsMessages } from './i18n.js';
 import { controls, tokens } from './styles.js';
 import { DndController } from './dnd/controller.js';
 import './components/mm-toolbar.js';
 import './components/mm-palette.js';
 import './components/mm-canvas.js';
 import './components/mm-settings-panel.js';
-import './components/mm-preview.js';
 import { mergeTagValues } from './util.js';
 import { insertBlock, placeBlock, placeRow } from './components/mm-palette.js';
 import { DEFAULT_MAX_IMAGE_SIZE, ImageUploader, imageFiles, uploadTargetOf } from './upload.js';
@@ -25,8 +24,17 @@ import { getEditorBlockDef } from './blocks/index.js';
 import { EDITABLE_TYPES } from './components/mm-block.js';
 import { extractComponent, instantiateComponent } from '../core/components.js';
 import { qrSignature, qrStatus } from '../core/blocks/qr.js';
-import { QrTooLongError, createQrFile } from './qr.js';
+import { loadPreview, loadQr, preload } from './lazy.js';
 import { DEFAULT_WEB_FONT_OPTIONS, syncDocumentFonts } from './web-fonts.js';
+import {
+  createPayload,
+  duplicateCommands,
+  instantiatePayload,
+  pasteCommands,
+  readFromEvent,
+  removeCommands,
+  writeToEvent,
+} from './clipboard.js';
 
 /** @import { WebFontOption } from './web-fonts.js' */
 
@@ -68,7 +76,7 @@ export const NARROW_WIDTH = 1024;
  *
  * @fires mm-ready 初期化完了時
  * @fires mm-change 編集内容が変わったとき（1 フレームに 1 回まで）。detail: `{ template, actions }`
- * @fires mm-select 選択が変わったとき。detail: `{ id, kind }`（kind は 'row' | 'column' | 'block' | null）
+ * @fires mm-select 選択が変わったとき。detail: `{ id, kind, ids }`（kind は 'row' | 'column' | 'block' | null、ids はまとめて選んだ要素）
  * @fires mm-warning 読込時の補正・未定義のマージタグ・HTML の大きさなどの警告。detail: 警告
  * @fires mm-view ツールバーで表示（編集 ⇄ プレビュー、PC ⇄ スマホ）を切り替えたとき。detail: `{ view, device }`
  * @csspart toolbar / palette / canvas / settings / preview
@@ -112,6 +120,19 @@ export class MailmasonEditor extends LitElement {
     tokens,
     controls,
     css`
+      /* キーボードのコピー・貼り付けを受ける見えない入力欄 */
+      .clipboard-proxy {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        border: 0;
+        opacity: 0;
+        pointer-events: none;
+        resize: none;
+      }
       :host {
         display: block;
         height: 100%;
@@ -292,6 +313,8 @@ export class MailmasonEditor extends LitElement {
 
     this.addEventListener('keydown', (event) => this._onKeydown(event));
     this.addEventListener('paste', (event) => this._onPaste(event));
+    this.addEventListener('copy', (event) => this._onCopy(event, false));
+    this.addEventListener('cut', (event) => this._onCopy(event, true));
   }
 
   connectedCallback() {
@@ -377,11 +400,15 @@ export class MailmasonEditor extends LitElement {
       this._pendingActions.push(action.type);
       this._scheduleChange();
     }
-    if (state.selection !== prev.selection) {
-      this._uploader.clearErrors();
+    if (state.selection !== prev.selection || state.selectedIds !== prev.selectedIds) {
+      if (state.selection !== prev.selection) this._uploader.clearErrors();
       this.dispatchEvent(
         new CustomEvent('mm-select', {
-          detail: { id: state.selection, kind: this._kindOf(state.selection) },
+          detail: {
+            id: state.selection,
+            kind: this._kindOf(state.selection),
+            ids: [...state.selectedIds],
+          },
           bubbles: true,
           composed: true,
         }),
@@ -429,14 +456,32 @@ export class MailmasonEditor extends LitElement {
 
   /** @param {Map<string, unknown>} changed */
   willUpdate(changed) {
-    // プレビューに切り替えたら直接編集を終える
-    if (changed.has('view') && this.view === 'preview') this._editing = null;
+    // プレビューに切り替えたら直接編集を終え、プレビューの部品を読み込む（初めてのときだけ）
+    if (changed.has('view') && this.view === 'preview') {
+      this._editing = null;
+      preload(loadPreview);
+    }
     // 何も読み込んでいなければ、theme を新規テンプレートに反映する
     if (changed.has('theme') && !this._loaded && !this.store.canUndo()) {
       this.store.dispatch({ type: 'loadTemplate', template: createTemplate(this.theme) });
     }
     // 読み込んだ後にカスタムブロックの定義が渡されたら、そのブロックの値を定義に沿って整え直す
     if (changed.has('blocks') && changed.get('blocks') !== undefined) this._renormalize();
+  }
+
+  /**
+   * 英語などの文言を使うときは、辞書を読み込んでから描く（日本語の画面が一瞬出ないように）
+   * @override
+   */
+  async scheduleUpdate() {
+    if (needsMessages(this.locale)) {
+      await loadMessages(this.locale).catch((error) =>
+        console.error('[mailmason] 文言を読み込めませんでした', error),
+      );
+      // 読み込んだ辞書で翻訳関数を作り直す
+      this._ctxCache = null;
+    }
+    super.scheduleUpdate();
   }
 
   firstUpdated() {
@@ -565,8 +610,8 @@ export class MailmasonEditor extends LitElement {
   }
 
   /**
-   * 要素を選択する（null で選択解除）
-   * @param {string | null} id
+   * 要素を選択する（null で選択解除）。配列を渡すと行どうし・ブロックどうしをまとめて選ぶ
+   * @param {string | readonly string[] | null} id
    */
   select(id) {
     this.store.select(id);
@@ -610,9 +655,10 @@ export class MailmasonEditor extends LitElement {
     /** @type {File} */
     let file;
     try {
+      const { createQrFile } = await loadQr();
       file = await createQrFile(values);
     } catch (error) {
-      const tooLong = error instanceof QrTooLongError;
+      const tooLong = /** @type {Error} */ (error)?.name === 'QrTooLongError';
       const t = this._context().t;
       this._uploader.fail(blockId, 'src', t(tooLong ? 'qr.errorTooLong' : 'qr.errorFailed'));
       this._warn({
@@ -698,9 +744,19 @@ export class MailmasonEditor extends LitElement {
    * @param {ClipboardEvent} event
    */
   _onPaste(event) {
-    if (!this.onImageUpload || this.view !== 'edit' || this._editing) return;
+    if (this.view !== 'edit' || this._editing) return;
     const origin = /** @type {HTMLElement | undefined} */ (event.composedPath()[0]);
-    if (origin && (FORM_TAGS.has(origin.tagName) || origin.isContentEditable)) return;
+    if (origin && !this._isClipboardProxy(origin)) {
+      if (FORM_TAGS.has(origin.tagName) || origin.isContentEditable) return;
+    }
+    // コピーした行・ブロック（別のメール・別のタブからも）
+    const payload = readFromEvent(event);
+    if (payload) {
+      event.preventDefault();
+      this._pastePayload(payload);
+      return;
+    }
+    if (!this.onImageUpload) return;
     const files = imageFiles(event.clipboardData?.files);
     if (files.length === 0) return;
     event.preventDefault();
@@ -717,6 +773,120 @@ export class MailmasonEditor extends LitElement {
     }
     const blockId = insertBlock(this._context(), 'image');
     void this._uploader.upload(files[0], { blockId, field: 'src' });
+  }
+
+  // ---- 複数選択・コピー＆貼り付け ---------------------------------------------
+
+  /**
+   * キーボードの コピー・切り取り・貼り付け を受けるための見えない入力欄。
+   * 入力欄以外にフォーカスがあると、ブラウザによっては（Safari など）copy / paste イベントが起きないため、
+   * キーを押したときにここへフォーカスを移してから、ブラウザ本来の操作をさせる
+   * @returns {HTMLTextAreaElement}
+   */
+  _clipboardProxy() {
+    let proxy = /** @type {HTMLTextAreaElement | null} */ (
+      this.renderRoot.querySelector('textarea.clipboard-proxy')
+    );
+    if (!proxy) {
+      proxy = document.createElement('textarea');
+      proxy.className = 'clipboard-proxy';
+      proxy.setAttribute('aria-hidden', 'true');
+      proxy.tabIndex = -1;
+      this.renderRoot.append(proxy);
+    }
+    return proxy;
+  }
+
+  /** @param {EventTarget} target */
+  _isClipboardProxy(target) {
+    return target instanceof HTMLTextAreaElement && target.classList.contains('clipboard-proxy');
+  }
+
+  /**
+   * コピー・切り取り・貼り付けのキーで、見えない入力欄にフォーカスを移す（操作の後で元に戻す）
+   * @param {HTMLElement | undefined} origin キーを押したときのフォーカス
+   */
+  _routeClipboardKey(origin) {
+    const proxy = this._clipboardProxy();
+    proxy.value = ' ';
+    proxy.focus({ preventScroll: true });
+    proxy.select();
+    const back = origin && origin !== proxy && typeof origin.focus === 'function' ? origin : null;
+    setTimeout(() => {
+      proxy.value = '';
+      if (back && this.shadowRoot?.activeElement === proxy) back.focus({ preventScroll: true });
+    });
+  }
+
+  /**
+   * 選んだ行・ブロックをクリップボードに入れる（切り取りなら消す）
+   * @param {ClipboardEvent} event
+   * @param {boolean} cut
+   */
+  _onCopy(event, cut) {
+    if (this.view !== 'edit' || this._editing) return;
+    const origin = /** @type {HTMLElement | undefined} */ (event.composedPath()[0]);
+    if (origin && !this._isClipboardProxy(origin)) {
+      if (FORM_TAGS.has(origin.tagName) || origin.isContentEditable) return;
+      // 文字を選んでいるときは、その文字をコピーさせる
+      if (!getSelection()?.isCollapsed) return;
+    }
+    const { template, selectedIds } = this.store.getState();
+    const payload = createPayload(template, selectedIds);
+    if (!payload || !writeToEvent(event, payload)) return;
+    event.preventDefault();
+    if (cut) this._removeSelection();
+  }
+
+  /**
+   * ボタンからコピー・切り取りする（非同期のクリップボード API。使えなければ false）
+   * @param {boolean} cut
+   * @returns {Promise<boolean>}
+   */
+  async _copySelection(cut) {
+    const { template, selectedIds } = this.store.getState();
+    const payload = createPayload(template, selectedIds);
+    if (!payload) return false;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(payload));
+    } catch {
+      return false;
+    }
+    if (cut) this._removeSelection();
+    return true;
+  }
+
+  /**
+   * コピーした行・ブロックを貼り付け、貼り付けたものを選ぶ
+   * @param {import('./clipboard.js').ClipboardPayload} payload
+   * @returns {string[]} 貼り付けた要素の ID
+   */
+  _pastePayload(payload) {
+    const { store } = this;
+    const items = instantiatePayload(payload, { blocks: this.blocks });
+    for (const warning of items.warnings) this._warn(warning);
+    const { template, selection } = store.getState();
+    const { commands, ids } = pasteCommands(template, selection, items);
+    if (commands.length === 0) return [];
+    store.dispatch({ type: 'batch', commands });
+    store.select(ids);
+    return ids;
+  }
+
+  /** 選んだ行・ブロックをまとめて消す */
+  _removeSelection() {
+    const { template, selectedIds } = this.store.getState();
+    const commands = removeCommands(template, selectedIds);
+    if (commands.length > 0) this.store.dispatch({ type: 'batch', commands });
+  }
+
+  /** 選んだ行・ブロックを、それぞれの直後に複製して、複製を選ぶ */
+  _duplicateSelection() {
+    const { template, selectedIds } = this.store.getState();
+    const { commands, ids } = duplicateCommands(template, selectedIds);
+    if (commands.length === 0) return;
+    this.store.dispatch({ type: 'batch', commands });
+    this.store.select(ids);
   }
 
   /**
@@ -938,6 +1108,9 @@ export class MailmasonEditor extends LitElement {
       dropImageFiles: (target, files) => this._dropImageFiles(target, files),
       dnd: this._dnd,
       edit: (id) => this._edit(id),
+      copySelection: (cut) => this._copySelection(cut),
+      removeSelection: () => this._removeSelection(),
+      duplicateSelection: () => this._duplicateSelection(),
       setView: (change) => this._setView(change),
       toggleDrawer: (name) => {
         this._drawer = this._drawer === name ? null : name;
@@ -989,12 +1162,22 @@ export class MailmasonEditor extends LitElement {
       else store.select(null);
       return;
     }
+    // コピー・切り取り・貼り付け（貼り付けは何も選んでいなくてもできる）
+    if (mod && !event.shiftKey && !event.altKey && (key === 'c' || key === 'x' || key === 'v')) {
+      // 文字を選んでいるときのコピーは、その文字をコピーさせる
+      const copyingText = key !== 'v' && !getSelection()?.isCollapsed;
+      if (!copyingText && (key === 'v' || createPayload(template, store.getState().selectedIds))) {
+        this._routeClipboardKey(origin);
+      }
+      return;
+    }
     if (!selection) return;
 
     const block = locateBlock(template, selection);
     const rowIndex = findRowIndex(template, selection);
+    const multiple = store.getState().selectedIds.length > 1;
 
-    if (event.key === 'Enter' && block && !this._editing) {
+    if (event.key === 'Enter' && block && !this._editing && !multiple) {
       const { type } =
         template.body.rows[block.rowIndex].columns[block.columnIndex].blocks[block.blockIndex];
       if (EDITABLE_TYPES.has(type)) {
@@ -1006,16 +1189,20 @@ export class MailmasonEditor extends LitElement {
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
-      if (block) store.dispatch({ type: 'removeBlock', blockId: selection });
+      if (multiple) this._removeSelection();
+      else if (block) store.dispatch({ type: 'removeBlock', blockId: selection });
       else if (rowIndex !== -1) store.dispatch({ type: 'removeRow', rowId: selection });
       return;
     }
     if (mod && key === 'd') {
       event.preventDefault();
-      if (block) store.dispatch({ type: 'duplicateBlock', blockId: selection });
+      if (multiple) this._duplicateSelection();
+      else if (block) store.dispatch({ type: 'duplicateBlock', blockId: selection });
       else if (rowIndex !== -1) store.dispatch({ type: 'duplicateRow', rowId: selection });
       return;
     }
+    // 並べ替えは 1 つだけ選んでいるとき
+    if (multiple) return;
     if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
       event.preventDefault();
       const delta = event.key === 'ArrowUp' ? -1 : 1;
@@ -1036,7 +1223,7 @@ export class MailmasonEditor extends LitElement {
 
   render() {
     const ctx = this._context();
-    const { template, selection } = this._state ?? this.store.getState();
+    const { template, selection, selectedIds } = this._state ?? this.store.getState();
     return html`<div class="layout">
       <mm-toolbar
         part="toolbar"
@@ -1057,6 +1244,7 @@ export class MailmasonEditor extends LitElement {
           tabindex="0"
           .template=${template}
           .selection=${selection}
+          .selectedIds=${selectedIds}
           .editing=${this._editing}
           .uploads=${this._uploads}
           .ctx=${ctx}
@@ -1066,6 +1254,7 @@ export class MailmasonEditor extends LitElement {
           ?open=${this._drawer === 'settings'}
           .template=${template}
           .selection=${selection}
+          .selectedIds=${selectedIds}
           .uploads=${this._uploads}
           .ctx=${ctx}
         ></mm-settings-panel>
