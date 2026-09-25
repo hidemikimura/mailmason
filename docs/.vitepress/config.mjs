@@ -46,7 +46,7 @@ export default defineConfig({
       { text: 'デモ', link: '/demo' },
       { text: 'AI 向け', link: '/ai' },
       {
-        text: 'v0.4',
+        text: 'v0.5',
         items: [
           { text: '変更履歴', link: '/changelog' },
           { text: 'npm', link: 'https://www.npmjs.com/package/@hidemikimura/mailmason' },
