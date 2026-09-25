@@ -10,9 +10,10 @@ import {
   withVmlBackground,
 } from './background.js';
 import { TABLE_OPEN } from './styles.js';
+import { webFontHead } from './web-fonts.js';
 
 /** @import { Lines, Wrapped } from './lines.js' */
-/** @import { BodySettings } from '../model/types.js' */
+/** @import { BodySettings, WebFont } from '../model/types.js' */
 /** @import { ResolvedHtmlOptions } from '../blocks/types.js' */
 
 /** プリヘッダーの後ろを埋める不可視文字（本文の冒頭がプレビューに混ざらないようにする） */
@@ -21,9 +22,10 @@ const PREHEADER_FILLER = '&#847;&zwnj;&nbsp;'.repeat(40);
 /**
  * @param {BodySettings} body
  * @param {ResolvedHtmlOptions} options
+ * @param {WebFont[]} fonts 読み込む Web フォント
  * @returns {Wrapped}
  */
-function head(body, options) {
+function head(body, options, fonts) {
   const breakpoint = body.width + 20;
   return wrap(
     '<head>',
@@ -36,6 +38,7 @@ function head(body, options) {
       '<meta name="color-scheme" content="light dark" />',
       '<meta name="supported-color-schemes" content="light dark" />',
       `<title>${escapeText(body.title)}</title>`,
+      ...webFontHead(fonts),
       '<!--[if mso]>',
       '<noscript><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>',
       `<style type="text/css">table,td,div,p,h1,h2,h3,li,a,span,center{font-family:${options.outlookFontFamily} !important;}</style>`,
@@ -58,6 +61,9 @@ function head(body, options) {
               '.mm-video-43{height:67vw !important;}',
               '.mm-video-11{height:89vw !important;}',
               '.mm-hide-mobile{display:none !important;max-height:0 !important;overflow:hidden !important;mso-hide:all !important;}',
+              '.mm-show-mobile{display:block !important;max-height:none !important;overflow:visible !important;}',
+              '.mm-hide-desktop{display:table-row !important;}',
+              ...options.mobileStyles.rules(),
             ],
             '}',
           ),
@@ -73,9 +79,10 @@ function head(body, options) {
  * @param {BodySettings} body
  * @param {ResolvedHtmlOptions} options
  * @param {Lines} rows 本文テーブルの中身（行の <tr> 群）
+ * @param {WebFont[]} [fonts] 読み込む Web フォント
  * @returns {Lines}
  */
-export function skeleton(body, options, rows) {
+export function skeleton(body, options, rows, fonts = []) {
   const preheader = body.preheader
     ? [
         `<div${styleAttr('display:none', 'font-size:1px', `color:${body.backgroundColor}`, 'line-height:1px', 'max-height:0', 'max-width:0', 'opacity:0', 'overflow:hidden', 'mso-hide:all')}>${escapeText(body.preheader)}${PREHEADER_FILLER}</div>`,
@@ -110,7 +117,7 @@ export function skeleton(body, options, rows) {
     wrap(
       `<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="${options.lang}">`,
       [
-        head(body, options),
+        head(body, options, fonts),
         wrap(
           `<body${styleAttr('margin:0', 'padding:0', 'word-spacing:normal', `background-color:${body.backgroundColor}`)}>`,
           [

@@ -29,12 +29,25 @@ const BODY_FIELDS = [
     labelKey: 'field.contentBackgroundImage',
     helpKey: 'field.backgroundImageNestHelp',
   },
-  { key: 'fontFamily', kind: 'text', labelKey: 'field.fontFamily' },
+  {
+    key: 'webFonts',
+    kind: 'webFonts',
+    labelKey: 'field.webFonts',
+    helpKey: 'field.webFontsHelp',
+  },
+  { key: 'fontFamily', kind: 'fontFamily', labelKey: 'field.fontFamily' },
   {
     key: 'fontSize',
     kind: 'number',
     labelKey: 'field.fontSize',
     options: { min: 8, max: 72, unit: 'px' },
+  },
+  {
+    key: 'mobileFontSize',
+    kind: 'number',
+    labelKey: 'field.mobileFontSize',
+    helpKey: 'field.mobileFontSizeBodyHelp',
+    options: { min: 8, max: 72, unit: 'px', nullable: true },
   },
   {
     key: 'lineHeight',
@@ -53,6 +66,25 @@ const BODY_FIELDS = [
   },
   { key: 'title', kind: 'text', labelKey: 'field.title', options: { mergeTags: true } },
 ];
+
+/**
+ * 表示する画面（すべて / PC だけ / スマホだけ）。スマホだけのときは、表示されないメールソフトの注意を出す
+ * @type {FieldSpec}
+ */
+const VISIBILITY_FIELD = {
+  key: 'hideOn',
+  kind: 'align',
+  labelKey: 'field.visibleOn',
+  helpKey: 'field.mobileOnlyHelp',
+  helpVisible: (v) => v.hideOn === 'desktop',
+  options: {
+    choices: [
+      { value: null, labelKey: 'visibleOn.all' },
+      { value: 'mobile', labelKey: 'visibleOn.desktop' },
+      { value: 'desktop', labelKey: 'visibleOn.mobile' },
+    ],
+  },
+};
 
 /** @type {FieldSpec[]} */
 const ROW_FIELDS = [
@@ -78,12 +110,7 @@ const ROW_FIELDS = [
     labelKey: 'field.stackOnMobile',
     visible: (v) => v.layout !== '1',
   },
-  {
-    key: 'hideOn',
-    kind: 'toggle',
-    labelKey: 'field.hideOnMobile',
-    options: { on: 'mobile', off: null },
-  },
+  VISIBILITY_FIELD,
 ];
 
 /** @type {FieldSpec[]} */
@@ -120,14 +147,6 @@ const BLOCK_STYLE_FIELDS = [
   },
   { key: 'padding', kind: 'spacing', labelKey: 'field.padding' },
 ];
-
-/** @type {FieldSpec} */
-const HIDE_FIELD = {
-  key: 'hideOn',
-  kind: 'toggle',
-  labelKey: 'field.hideOnMobile',
-  options: { on: 'mobile', off: null },
-};
 
 /**
  * @typedef {{ kind: 'body' }
@@ -463,6 +482,71 @@ export class MmSettingsPanel extends LitElement {
         display: grid;
         gap: 6px;
       }
+      mm-web-fonts,
+      mm-font-select {
+        display: block;
+      }
+      .web-fonts,
+      mm-font-select {
+        display: grid;
+        gap: 6px;
+      }
+      .web-font-list {
+        display: grid;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .web-font {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 4px 4px 8px;
+        border: 1px solid var(--mm-color-border);
+        border-radius: var(--mm-radius);
+        background: var(--mm-color-surface-2);
+      }
+      .web-font-name {
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .web-font-url {
+        font-size: 11px;
+        color: var(--mm-color-muted);
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .web-font .icon-button {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+      .web-font-custom {
+        display: grid;
+        gap: 6px;
+        padding: 8px;
+        border: 1px solid var(--mm-color-border);
+        border-radius: var(--mm-radius);
+        background: var(--mm-color-surface-2);
+      }
+      .web-font-custom-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .web-font-custom .error {
+        margin: 0;
+        font-size: 11px;
+        color: var(--mm-color-danger);
+      }
+      mm-font-select .help {
+        margin: 0;
+      }
       .table-column {
         display: grid;
         grid-template-columns: 44px auto 1fr;
@@ -669,6 +753,8 @@ export class MmSettingsPanel extends LitElement {
       delimiters: ctx.delimiters,
       mergeTagTrigger: ctx.mergeTagTrigger,
       onImageSelect: ctx.onImageSelect,
+      webFonts: ctx.store.getState().template.body.settings.webFonts,
+      webFontOptions: ctx.webFontOptions,
       change: (key, value, options = {}) => onChange(key, value, options.merge ?? false),
     };
   }
@@ -855,7 +941,7 @@ export class MmSettingsPanel extends LitElement {
               </section>
               <section>
                 <h3>${t('section.visibility')}</h3>
-                ${this._fields([HIDE_FIELD], hideCtx)}
+                ${this._fields([VISIBILITY_FIELD], hideCtx)}
               </section>
               ${this._renderSaveComponent(block.id, blockLabel(edef, this.ctx))}`
           : html`<section>

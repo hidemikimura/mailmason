@@ -3,6 +3,7 @@
 import { parseHtml } from '../richtext/parse.js';
 import { escapeAttr, escapeText } from '../richtext/entities.js';
 import { fontDecls, styleAttr } from './styles.js';
+import { classAttr } from './mobile.js';
 
 /** @import { ElementNode, RichNode } from '../richtext/ast.js' */
 /** @import { TextStyle } from './styles.js' */
@@ -14,7 +15,20 @@ const HEADING_SCALE = { h1: 1.75, h2: 1.4, h3: 1.2 };
  * @typedef {Object} RichTextContext
  * @property {TextStyle} style
  * @property {string} linkColor
+ * @property {{ fontSize: number, styles: import('./mobile.js').MobileStyles } | null} [mobile] スマホの文字サイズ（PC と同じなら無し）
  */
+
+/**
+ * スマホの文字サイズのクラス（見出しは本文に対する倍率を掛ける）
+ * @param {RichTextContext} ctx
+ * @param {number} lineHeight
+ * @param {number} [scale]
+ */
+function mobileClass(ctx, lineHeight, scale = 1) {
+  if (!ctx.mobile) return '';
+  const size = scale === 1 ? ctx.mobile.fontSize : Math.round(ctx.mobile.fontSize * scale);
+  return classAttr(ctx.mobile.styles.font(size, lineHeight));
+}
 
 /**
  * @param {number} px
@@ -90,10 +104,10 @@ function list(node, ctx, nested, last = false) {
     .filter((child) => child.type === 'element')
     .map((item, i, all) => {
       const itemMargin = marginBottom(i === all.length - 1 ? 0 : gap);
-      return `<li${styleAttr(itemMargin, ...fontDecls(style), alignOf(item))}>${inline(item.children, ctx)}</li>`;
+      return `<li${mobileClass(ctx, style.lineHeight)}${styleAttr(itemMargin, ...fontDecls(style), alignOf(item))}>${inline(item.children, ctx)}</li>`;
     })
     .join('');
-  return `<${node.tag}${styleAttr(margin, `padding:0 0 0 ${Math.round(style.fontSize * 1.5)}px`, ...fontDecls(style))}>${items}</${node.tag}>`;
+  return `<${node.tag}${mobileClass(ctx, style.lineHeight)}${styleAttr(margin, `padding:0 0 0 ${Math.round(style.fontSize * 1.5)}px`, ...fontDecls(style))}>${items}</${node.tag}>`;
 }
 
 /**
@@ -115,14 +129,15 @@ export function renderRichText(html, ctx) {
         const size = Math.round(style.fontSize * HEADING_SCALE[node.tag]);
         const heading = { ...style, lineHeight: Math.min(style.lineHeight, 1.4) };
         const margin = marginBottom(last ? 0 : Math.round(size * 0.5));
-        return `<${node.tag}${styleAttr(margin, ...fontDecls(heading, size), 'font-weight:bold', alignOf(node))}>${inline(node.children, ctx)}</${node.tag}>`;
+        const mobile = mobileClass(ctx, heading.lineHeight, HEADING_SCALE[node.tag]);
+        return `<${node.tag}${mobile}${styleAttr(margin, ...fontDecls(heading, size), 'font-weight:bold', alignOf(node))}>${inline(node.children, ctx)}</${node.tag}>`;
       }
       case 'ul':
       case 'ol':
         return list(node, ctx, false, last);
       default: {
         const margin = marginBottom(last ? 0 : style.fontSize);
-        return `<p${styleAttr(margin, ...fontDecls(style), alignOf(node))}>${inline(node.children, ctx)}</p>`;
+        return `<p${mobileClass(ctx, style.lineHeight)}${styleAttr(margin, ...fontDecls(style), alignOf(node))}>${inline(node.children, ctx)}</p>`;
       }
     }
   });

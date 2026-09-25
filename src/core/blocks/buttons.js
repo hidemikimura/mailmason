@@ -22,6 +22,7 @@ export const buttonsBlock = {
   defaults: () => ({
     items: [],
     fontSize: 16,
+    mobileFontSize: null,
     fontWeight: 'bold',
     borderRadius: 4,
     innerPadding: { top: 12, right: 24, bottom: 12, left: 24 },
@@ -41,6 +42,7 @@ export const buttonsBlock = {
       defaultButtonItem,
     ),
     fontSize: s.number({ min: 8, max: 72 }),
+    mobileFontSize: s.number({ min: 8, max: 72, nullable: true }),
     fontWeight: s.oneOf(['normal', 'bold']),
     borderRadius: s.number({ min: 0, max: 100, integer: true }),
     innerPadding: s.spacing(),
@@ -67,6 +69,7 @@ export const buttonsBlock = {
         backgroundColor: item.backgroundColor,
         color: item.color,
         fontSize: v.fontSize,
+        mobileFontSize: v.mobileFontSize,
         fontWeight: v.fontWeight,
         borderRadius: v.borderRadius,
         innerPadding: v.innerPadding,

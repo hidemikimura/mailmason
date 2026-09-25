@@ -20,7 +20,9 @@
         "uploadData": null
       },
       "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "webFonts": [],
       "fontSize": 16,
+      "mobileFontSize": null,
       "lineHeight": 1.6,
       "textColor": "#333333",
       "linkColor": "#0066cc",
@@ -96,6 +98,7 @@
                   "separator": "|",
                   "spacing": 12,
                   "fontSize": 14,
+                  "mobileFontSize": null,
                   "fontWeight": "normal",
                   "color": null,
                   "separatorColor": "#c5cad1",
@@ -374,6 +377,7 @@
                       "align": "right"
                     }
                   ],
+                  "merges": [],
                   "headerRow": true,
                   "headerBackgroundColor": "#f3f4f6",
                   "headerColor": null,
@@ -383,7 +387,9 @@
                   "striped": true,
                   "stripeColor": "#f9fafb",
                   "fontSize": 14,
-                  "color": null
+                  "mobileFontSize": null,
+                  "color": null,
+                  "mobileLayout": "table"
                 },
                 "style": {
                   "backgroundColor": null,
@@ -462,6 +468,7 @@
                     }
                   ],
                   "fontSize": 16,
+                  "mobileFontSize": null,
                   "fontWeight": "bold",
                   "borderRadius": 4,
                   "innerPadding": {

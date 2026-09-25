@@ -27,6 +27,7 @@
  * @property {MergeTagDelimiters} delimiters
  * @property {boolean} mergeTagTrigger 区切り開始文字を入力したときに差し込み変数の候補を出す
  * @property {ImageSelectHook | null} onImageSelect
+ * @property {readonly import('./web-fonts.js').WebFontOption[]} webFontOptions Web フォントの候補
  * @property {import('./upload.js').ImageUploadHook | null} onImageUpload
  * @property {(file: File, target: import('./upload.js').UploadTarget) => void} upload
  *   画像ファイルをアップロードしてブロックに設定する（onImageUpload が無ければ何もしない）

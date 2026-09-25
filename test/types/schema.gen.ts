@@ -57,7 +57,9 @@ export type Checks = [
           uploadData: Record<string, unknown> | null;
         };
         fontFamily: string;
+        webFonts: Array<{ family: string; url: string }>;
         fontSize: number;
+        mobileFontSize: number | null;
         lineHeight: number;
         textColor: string;
         linkColor: string;
@@ -90,7 +92,7 @@ export type Checks = [
         padding: { top: number; right: number; bottom: number; left: number };
         columnGap: number;
         stackOnMobile: boolean;
-        hideOn: 'mobile' | null;
+        hideOn: 'mobile' | 'desktop' | null;
       }
     >
   >,
@@ -139,6 +141,7 @@ export type Checks = [
         html: string;
         fontFamily: string | null;
         fontSize: number | null;
+        mobileFontSize: number | null;
         lineHeight: number | null;
         color: string | null;
       }
@@ -168,6 +171,7 @@ export type Checks = [
         backgroundColor: string;
         color: string;
         fontSize: number;
+        mobileFontSize: number | null;
         fontWeight: 'normal' | 'bold';
         borderRadius: number;
         innerPadding: { top: number; right: number; bottom: number; left: number };
@@ -252,6 +256,7 @@ export type Checks = [
       {
         items: Array<{ label: string; href: string; backgroundColor: string; color: string }>;
         fontSize: number;
+        mobileFontSize: number | null;
         fontWeight: 'normal' | 'bold';
         borderRadius: number;
         innerPadding: { top: number; right: number; bottom: number; left: number };
@@ -270,6 +275,7 @@ export type Checks = [
         separator: string;
         spacing: number;
         fontSize: number;
+        mobileFontSize: number | null;
         fontWeight: 'normal' | 'bold';
         color: string | null;
         separatorColor: string;
@@ -284,6 +290,7 @@ export type Checks = [
       {
         cells: Array<Array<string>>;
         columns: Array<{ width: number | null; align: 'left' | 'center' | 'right' }>;
+        merges: Array<{ row: number; column: number; rowSpan: number; colSpan: number }>;
         headerRow: boolean;
         headerBackgroundColor: string;
         headerColor: string | null;
@@ -293,7 +300,9 @@ export type Checks = [
         striped: boolean;
         stripeColor: string;
         fontSize: number | null;
+        mobileFontSize: number | null;
         color: string | null;
+        mobileLayout: 'table' | 'stack';
       }
     >
   >,

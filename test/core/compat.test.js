@@ -57,15 +57,17 @@ function ownOutputOnly(name) {
   return template;
 }
 
-const OUTPUTS = ['basic', 'kitchen-sink', 'content-blocks', 'backgrounds'].flatMap((name) => [
-  { name, variant: 'pretty', html: renderHtml(ownOutputOnly(name)) },
-  { name, variant: 'minify', html: renderHtml(ownOutputOnly(name), { minify: true }) },
-  {
-    name,
-    variant: 'icons',
-    html: renderHtml(ownOutputOnly(name), { socialIconBaseUrl: 'https://cdn.example.com/icons' }),
-  },
-]);
+const OUTPUTS = ['basic', 'kitchen-sink', 'content-blocks', 'backgrounds', 'tables'].flatMap(
+  (name) => [
+    { name, variant: 'pretty', html: renderHtml(ownOutputOnly(name)) },
+    { name, variant: 'minify', html: renderHtml(ownOutputOnly(name), { minify: true }) },
+    {
+      name,
+      variant: 'icons',
+      html: renderHtml(ownOutputOnly(name), { socialIconBaseUrl: 'https://cdn.example.com/icons' }),
+    },
+  ],
+);
 
 describe.each(OUTPUTS)('メールクライアント互換: $name ($variant)', ({ html }) => {
   it('XHTML として整形式（タグの対応が取れていて、空要素は自己終了）', () => {
@@ -84,7 +86,7 @@ describe.each(OUTPUTS)('メールクライアント互換: $name ($variant)', ({
     expect(tables.length).toBeGreaterThan(0);
     for (const table of tables) {
       // 表ブロック（データの表）は読み上げで表として扱わせるため role を付けない
-      if (!table.includes('class="mm-table"')) expect(table).toContain('role="presentation"');
+      if (!/class="mm-table( [^"]*)?"/.test(table)) expect(table).toContain('role="presentation"');
       expect(table).toContain('cellpadding="0"');
       expect(table).toContain('cellspacing="0"');
       expect(table).toContain('border="0"');
@@ -158,7 +160,7 @@ describe('メールクライアント互換: 検査関数', () => {
 
 describe('メールクライアント互換: 出力サイズ', () => {
   it('サンプルの minify 出力は Gmail の省略（約 102KB）よりずっと小さい', () => {
-    for (const name of ['basic', 'kitchen-sink', 'content-blocks', 'backgrounds']) {
+    for (const name of ['basic', 'kitchen-sink', 'content-blocks', 'backgrounds', 'tables']) {
       const bytes = new TextEncoder().encode(
         renderHtml(loadFixture(name), { minify: true }),
       ).length;

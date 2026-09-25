@@ -18,14 +18,14 @@ template
 │  ├─ settings        幅・背景色・フォント・文字色・リンク色・title・preheader
 │  └─ rows[]          上から順に並ぶ行
 │     ├─ id, layout   '1' | '1:1' | '1:1:1' | '1:2' | '2:1' | '1:1:1:1'
-│     ├─ settings     背景色・余白・カラム間隔・スマホで縦積みするか・スマホで隠すか
+│     ├─ settings     背景色・余白・カラム間隔・スマホで縦積みするか・表示する画面（hideOn）
 │     └─ columns[]    数はレイアウトと同じ
 │        ├─ id, settings（背景色・余白・縦位置）
 │        └─ blocks[]  上から順に並ぶブロック
 │           ├─ id, type  text | image | button | divider | spacer | imageText | social | qr | html
 │           ├─ values    種類ごとの値
 │           ├─ style     { backgroundColor, padding }（既定の余白は 10px、spacer は 0）
-│           └─ hideOn    'mobile' | null
+│           └─ hideOn    'mobile'（PC だけ）| 'desktop'（スマホだけ）| null
 └─ text               テキストパート（通常は { mode: 'auto' }。省略可）
 ```
 
@@ -37,10 +37,11 @@ template
 2. `body.settings` を決める。`title`（HTML の title）と `preheader`（受信一覧に出る短い文）は必ず書く。色は `#rrggbb`。
 3. 行を上から並べる。行とカラムの余白（`padding`）で本文の左右の余白を作る（例: 左右 24〜32px）。背景色を変えたい帯は行の `backgroundColor` で作る。
 4. ブロックを置く。
-   - `text` の `html` は許可したタグだけ（`p` `h1`〜`h3` `ul` `ol` `li` `br` `strong` `em` `u` `s` `a` `span`）。揃えは段落の `style="text-align:center"`、文字色は `<span style="color:#...">`。文字サイズやフォントはブロックの `fontSize` / `fontFamily` で指定する。
+   - `text` の `html` は許可したタグだけ（`p` `h1`〜`h3` `ul` `ol` `li` `br` `strong` `em` `u` `s` `a` `span`）。揃えは段落の `style="text-align:center"`、文字色は `<span style="color:#...">`。文字サイズやフォントはブロックの `fontSize` / `fontFamily` で指定する。スマホだけ文字を大きくしたいときは `body.settings.mobileFontSize`（ブロックごとは `mobileFontSize`）。Web フォントを使うときは `body.settings.webFonts` に `{ family, url }`（Google Fonts などの CSS の URL）を入れ、`fontFamily` の先頭にその名前、後ろに端末のフォントを書く（Gmail・Outlook などは Web フォントを表示しない）。
    - `image` は受信者が読める公開 URL を `src` に、内容を表す `alt` を必ず書く。実寸が分かれば `naturalWidth` / `naturalHeight` も書く（Outlook の崩れを防ぐ）。
    - 行動してほしいリンクは `button` にする（`label` と `href`）。
-   - 表は `table`。`cells` は行ごとのセルの配列で、各セルは段落を持たないリッチテキスト（`strong` `em` `u` `s` `a` `span` `br`。`p` 見出し リストは使わない）。`columns` は列ごとの `width`（%、`null` なら残りを等分）と `align`。1 行目は `headerRow` で見出しになる。レイアウトには使わず、スペック・料金・日程などのデータに使う。
+   - 表は `table`。`cells` は行ごとのセルの配列で、各セルは段落を持たないリッチテキスト（`strong` `em` `u` `s` `a` `span` `br`。`p` 見出し リストは使わない）。`columns` は列ごとの `width`（%、`null` なら残りを等分）と `align`。1 行目は `headerRow` で見出しになる。セルの結合は `merges`（左上のセルの `row` `column` と `rowSpan` `colSpan`。覆われたセルは空文字列にしておく）。列が 4 列を超えるなど横に長い表は `mobileLayout: "stack"` にすると、スマホで 1 行ずつ「見出し：値」の縦並びになる。レイアウトには使わず、スペック・料金・日程などのデータに使う。
+   - `hideOn` は `"mobile"` で PC だけ、`"desktop"` でスマホだけに出す。スマホだけの要素は Outlook（Windows）やメディアクエリに対応しないメールソフトでは表示されないので、PC 用とスマホ用のバナーの出し分けなどに使い、必ず届けたい情報には使わない。
    - 複数のリンクを横に並べるときは `menu`（文字のリンク）か `buttons`（ボタン）、画像を格子に並べるときは `gallery` を使う（`items` の配列）。
    - 背景画像は `body.settings.backgroundImage`（外側）・`contentBackgroundImage`（本文）と、行・カラムの `settings.backgroundImage`（`{ src, size, position, repeat }`）。上に文字を載せるときは、画像が表示されない場合に備えて文字が読める背景色（`backgroundColor`）も指定する。Outlook（Windows）では、背景画像のある要素の中の背景画像は背景色になるので、本文と行など入れ子で使わない
    - `video` はサムネイル画像（`thumbnail`）に再生ボタンを重ね、`url` の動画ページにリンクする。メールの中では再生できない。YouTube なら `https://i.ytimg.com/vi/<動画ID>/hqdefault.jpg`（480×360）をサムネイルに使える。

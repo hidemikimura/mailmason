@@ -14,7 +14,19 @@ editor.theme = {
 };
 ```
 
-設定できる項目は[テンプレート JSON](/reference/template)の「ボディ設定」と同じです。
+設定できる項目は[テンプレート JSON](/reference/template)の「ボディ設定」と同じです。Web フォントを既定にするときは `webFonts` も入れます（[フォント](./fonts#web-フォント)）。
+
+```js
+editor.theme = {
+  fontFamily: "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+  webFonts: [
+    {
+      family: 'Noto Sans JP',
+      url: 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap',
+    },
+  ],
+};
+```
 
 ## エディタの見た目
 

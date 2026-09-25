@@ -122,3 +122,16 @@ export const chromeStyles = css`
     height: 16px;
   }
 `;
+
+/**
+ * 表示する画面のバッジ（スマホで非表示 / PC で非表示）
+ * @param {'mobile' | 'desktop' | null} hideOn
+ * @param {{ t: Translate }} ctx
+ */
+export function hideBadge(hideOn, ctx) {
+  if (hideOn === 'mobile') return html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>`;
+  if (hideOn === 'desktop') {
+    return html`<span class="badge" data-hide="desktop">${ctx.t('badge.hiddenOnDesktop')}</span>`;
+  }
+  return nothing;
+}

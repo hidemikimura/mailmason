@@ -107,16 +107,17 @@ export const s = {
   },
 
   /**
-   * @param {{ nullable?: boolean }} [options]
+   * @param {{ nullable?: boolean, pattern?: RegExp }} [options] pattern: 合わない文字列は既定値に直す
    * @returns {Schema}
    */
-  string({ nullable = false } = {}) {
+  string({ nullable = false, pattern } = {}) {
     return {
       info: { type: 'string', nullable },
       normalize(input, fallback, ctx) {
         if (input === undefined) return fallback;
         if (input === null && nullable) return null;
-        return typeof input === 'string' ? input : invalid(ctx, input, fallback);
+        if (typeof input !== 'string') return invalid(ctx, input, fallback);
+        return pattern && !pattern.test(input) ? invalid(ctx, input, fallback) : input;
       },
     };
   },

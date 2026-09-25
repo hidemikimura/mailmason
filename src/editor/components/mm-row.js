@@ -2,7 +2,7 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { chromeStyles, renderChrome } from './chrome.js';
+import { chromeStyles, hideBadge, renderChrome } from './chrome.js';
 import { define } from '../context.js';
 import { backgroundStyles } from '../util.js';
 import './mm-block.js';
@@ -201,7 +201,7 @@ export class MmRow extends LitElement {
       >
         <div class="columns">${columns}</div>
       </div>
-      ${settings.hideOn === 'mobile' ? html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>` : nothing}
+      ${hideBadge(settings.hideOn, ctx)}
       ${
         selectedRow
           ? renderChrome(

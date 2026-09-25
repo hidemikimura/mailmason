@@ -13,6 +13,8 @@
  * @property {string} lang
  * @property {string} outlookFontFamily
  * @property {readonly CoreBlockDef[] | null} blocks カスタムブロックの定義
+ * @property {boolean} webFonts Web フォントを読み込む
+ * @property {import('../render-html/mobile.js').MobileStyles} mobileStyles スマホの文字サイズの規則（出力 1 回ごとに集める）
  */
 
 /**

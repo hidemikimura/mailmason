@@ -30,6 +30,18 @@ const table = createBlock('table', {
   columns: [{ align: 'left' }, { width: 40, align: 'right' }],
 });
 const tableCells: string[][] = table.values.cells;
+template.body.settings.webFonts.push({
+  family: 'Noto Sans JP',
+  url: 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap',
+});
+renderHtml(template, { webFonts: false });
+const merged = createBlock('table', {
+  merges: [{ row: 1, column: 0, rowSpan: 2, colSpan: 1 }],
+  mobileLayout: 'stack',
+});
+const firstMerge: core.TableMerge | undefined = merged.values.merges[0];
+// @ts-expect-error スマホでの表示にない値
+createBlock('table', { mobileLayout: 'cards' });
 const button = createBlock('button', { label: '購入する', innerPadding: { top: 16 } });
 template.body.rows.push(createRow('1:1', [[table], [button]]));
 
@@ -127,6 +139,12 @@ if (editor) {
     { key: 'name', label: '氏名', group: '会員', sample: '山田 太郎' },
   ] satisfies MergeTag[];
   editor.mergeTagTrigger = false;
+  editor.webFontOptions = [
+    ...editor.webFontOptions,
+    { family: '社内フォント', url: 'https://cdn.example.com/font.css', fallback: 'sans-serif' },
+  ];
+  // @ts-expect-error url は必須
+  editor.webFontOptions = [{ family: 'x' }];
 
   const upload: ImageUploadHook = async (file, { blockId, target }) => ({
     alt: target === 'block' ? file.name : undefined,
@@ -176,4 +194,4 @@ if (editor) {
 // core だけでも同じ型を使える（DOM・Lit なし）
 const coreTemplate: core.Template = core.createTemplate();
 const tableBlock: core.BlockOf<'table'> = core.createBlock('table');
-void [tableCells, ratio, codes, html, text, mode, stale, coreTemplate, tableBlock];
+void [tableCells, firstMerge, ratio, codes, html, text, mode, stale, coreTemplate, tableBlock];

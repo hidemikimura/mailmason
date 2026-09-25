@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "body": {
+    "settings": {
+      "width": 600,
+      "backgroundColor": "#f4f4f4",
+      "backgroundImage": {
+        "src": "",
+        "size": "cover",
+        "position": "center center",
+        "repeat": "no-repeat",
+        "uploadData": null
+      },
+      "contentBackgroundColor": "#ffffff",
+      "contentBackgroundImage": {
+        "src": "",
+        "size": "cover",
+        "position": "center center",
+        "repeat": "no-repeat",
+        "uploadData": null
+      },
+      "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "webFonts": [],
+      "fontSize": 16,
+      "mobileFontSize": 17,
+      "lineHeight": 1.6,
+      "textColor": "#333333",
+      "linkColor": "#0066cc",
+      "preheader": "セルの結合とスマホの縦並びを使った表",
+      "title": "料金プランのご案内"
+    },
+    "rows": [
+      {
+        "id": "r_tbl000001",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": null,
+          "backgroundImage": {
+            "src": "",
+            "size": "cover",
+            "position": "center center",
+            "repeat": "no-repeat",
+            "uploadData": null
+          },
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "columnGap": 16,
+          "stackOnMobile": true,
+          "hideOn": null
+        },
+        "columns": [
+          {
+            "id": "c_tbl000002",
+            "settings": {
+              "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
+              "padding": {
+                "top": 0,
+                "right": 0,
+                "bottom": 0,
+                "left": 0
+              },
+              "verticalAlign": "top"
+            },
+            "blocks": [
+              {
+                "id": "b_tbl000003",
+                "type": "image",
+                "values": {
+                  "src": "https://example.com/images/logo.png",
+                  "alt": "Mailmason",
+                  "href": "",
+                  "width": {
+                    "unit": "%",
+                    "value": 100
+                  },
+                  "align": "center",
+                  "naturalWidth": 240,
+                  "naturalHeight": 60,
+                  "uploadData": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_tbl000004",
+                "type": "text",
+                "values": {
+                  "html": "<h2>料金プラン</h2><p>プランの詳細は<a href=\"https://example.com/plans\">料金ページ</a>をご覧ください。</p>",
+                  "fontFamily": null,
+                  "fontSize": null,
+                  "mobileFontSize": null,
+                  "lineHeight": null,
+                  "color": null
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_tbl000005",
+                "type": "table",
+                "values": {
+                  "cells": [
+                    ["プラン", "期間", "料金", "特典"],
+                    ["ライト", "月額", "500円", "初月無料"],
+                    ["", "年額", "5,000円", ""],
+                    ["スタンダード", "月額", "1,000円", "<strong>2 か月無料</strong>"],
+                    ["", "年額", "10,000円", ""],
+                    [
+                      "注記",
+                      "料金はすべて税込です。<a href=\"https://example.com/terms\">利用規約</a>",
+                      "",
+                      ""
+                    ]
+                  ],
+                  "columns": [
+                    {
+                      "width": 28,
+                      "align": "left"
+                    },
+                    {
+                      "width": 16,
+                      "align": "center"
+                    },
+                    {
+                      "width": 22,
+                      "align": "right"
+                    },
+                    {
+                      "width": null,
+                      "align": "left"
+                    }
+                  ],
+                  "merges": [
+                    {
+                      "row": 1,
+                      "column": 0,
+                      "rowSpan": 2,
+                      "colSpan": 1
+                    },
+                    {
+                      "row": 1,
+                      "column": 3,
+                      "rowSpan": 2,
+                      "colSpan": 1
+                    },
+                    {
+                      "row": 3,
+                      "column": 0,
+                      "rowSpan": 2,
+                      "colSpan": 1
+                    },
+                    {
+                      "row": 3,
+                      "column": 3,
+                      "rowSpan": 2,
+                      "colSpan": 1
+                    },
+                    {
+                      "row": 5,
+                      "column": 1,
+                      "rowSpan": 1,
+                      "colSpan": 3
+                    }
+                  ],
+                  "headerRow": true,
+                  "headerBackgroundColor": "#f3f4f6",
+                  "headerColor": null,
+                  "borderColor": "#d0d7de",
+                  "borderWidth": 1,
+                  "cellPadding": 8,
+                  "striped": true,
+                  "stripeColor": "#f9fafb",
+                  "fontSize": 14,
+                  "mobileFontSize": null,
+                  "color": null,
+                  "mobileLayout": "stack"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": null
+              },
+              {
+                "id": "b_tbl000006",
+                "type": "text",
+                "values": {
+                  "html": "<p>スマホでは、表を 1 行ずつ縦に並べて表示しています。</p>",
+                  "fontFamily": null,
+                  "fontSize": 13,
+                  "mobileFontSize": 14,
+                  "lineHeight": null,
+                  "color": "#6b7280"
+                },
+                "style": {
+                  "backgroundColor": null,
+                  "padding": {
+                    "top": 10,
+                    "right": 10,
+                    "bottom": 10,
+                    "left": 10
+                  }
+                },
+                "hideOn": "desktop"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "text": {
+    "mode": "auto",
+    "content": null,
+    "sourceHash": null
+  }
+}

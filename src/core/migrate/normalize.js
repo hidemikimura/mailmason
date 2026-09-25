@@ -241,10 +241,23 @@ export function normalizeTemplate(input, ctx, options = {}) {
   }
   const rawBody = /** @type {Record<string, unknown>} */ (body ?? {});
 
+  const settingsCtx = child(bodyCtx, 'settings');
   const settings = bodySettingsSchema.normalize(
     rawBody.settings,
     defaultBodySettings(),
-    child(bodyCtx, 'settings'),
+    settingsCtx,
+  );
+  // 名前か URL の無い Web フォントは読み込めないので除く
+  settings.webFonts = settings.webFonts.filter(
+    (/** @type {{ family: string, url: string }} */ font, /** @type {number} */ i) => {
+      if (font.family.trim() !== '' && font.url !== '') return true;
+      warn(
+        child(child(settingsCtx, 'webFonts'), `[${i}]`),
+        'invalid-value',
+        'A web font without a family name or a valid https URL was removed.',
+      );
+      return false;
+    },
   );
   const rowsCtx = child(bodyCtx, 'rows');
   /** @type {Row[]} */

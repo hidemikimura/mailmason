@@ -27,6 +27,7 @@ const DEFAULT_TEMPLATES = [
   'test/fixtures/templates/kitchen-sink.json',
   'test/fixtures/templates/content-blocks.json',
   'test/fixtures/templates/backgrounds.json',
+  'test/fixtures/templates/tables.json',
 ];
 
 const DEFAULT_IMAGE_BASE = 'https://hidemikimura.github.io/mailmason/demo/';

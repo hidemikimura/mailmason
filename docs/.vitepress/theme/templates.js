@@ -6,6 +6,7 @@ import newsletter from '../../../skills/mailmason-templates/examples/newsletter.
 import announcement from '../../../skills/mailmason-templates/examples/announcement.json';
 import contentBlocks from '../../../test/fixtures/templates/content-blocks.json';
 import backgrounds from '../../../test/fixtures/templates/backgrounds.json';
+import tables from '../../../test/fixtures/templates/tables.json';
 
 export const DEMO_TEMPLATES = [
   { id: 'newsletter', label: 'メールマガジン', template: newsletter },
@@ -13,6 +14,7 @@ export const DEMO_TEMPLATES = [
   { id: 'announcement', label: 'メンテナンスのお知らせ', template: announcement },
   { id: 'content-blocks', label: '表・動画・ギャラリー', template: contentBlocks },
   { id: 'backgrounds', label: '背景画像', template: backgrounds },
+  { id: 'tables', label: '料金表（セルの結合）', template: tables },
   { id: 'kitchen-sink', label: '全ブロック', template: kitchenSink },
   { id: 'empty', label: '白紙', template: null },
 ];

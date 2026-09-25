@@ -20,7 +20,18 @@
         "uploadData": null
       },
       "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "webFonts": [
+        {
+          "family": "Noto Serif JP",
+          "url": "https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap"
+        },
+        {
+          "family": "M PLUS Rounded 1c",
+          "url": "https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap"
+        }
+      ],
       "fontSize": 16,
+      "mobileFontSize": null,
       "lineHeight": 1.6,
       "textColor": "#333333",
       "linkColor": "#0066cc",
@@ -76,8 +87,9 @@
                 "type": "text",
                 "values": {
                   "html": "<h2>見出し 2</h2><p style=\"text-align:center\">中央揃えの<strong>太字</strong>と<em>斜体</em>と<a href=\"https://example.com/a?x=1&amp;y=2\">リンク</a>、<span style=\"color:#cc0000\">赤い文字</span></p><ul><li>項目 1</li><li>項目 2<ul><li>入れ子</li></ul></li></ul><ol><li>手順 1</li><li>手順 2</li></ol><h3>見出し 3</h3><p>お問い合わせは <a href=\"mailto:info@example.com\">info@example.com</a> まで</p>",
-                  "fontFamily": null,
+                  "fontFamily": "'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', YuMincho, serif",
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -146,6 +158,7 @@
                   "html": "<p>カラム 1</p>",
                   "fontFamily": null,
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -189,6 +202,7 @@
                   "html": "<p>カラム 2</p>",
                   "fontFamily": null,
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -232,6 +246,7 @@
                   "html": "<p>カラム 3</p>",
                   "fontFamily": null,
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -351,6 +366,7 @@
                   "backgroundColor": "#0066cc",
                   "color": "#ffffff",
                   "fontSize": 16,
+                  "mobileFontSize": null,
                   "fontWeight": "bold",
                   "borderRadius": 0,
                   "innerPadding": {
@@ -586,6 +602,7 @@
                   "backgroundColor": "#0066cc",
                   "color": "#ffffff",
                   "fontSize": 16,
+                  "mobileFontSize": null,
                   "fontWeight": "bold",
                   "borderRadius": 4,
                   "innerPadding": {

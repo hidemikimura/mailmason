@@ -2,6 +2,7 @@ import { s } from '../model/schema.js';
 import { escapeAttr, escapeText } from '../richtext/entities.js';
 import { translate } from '../i18n/index.js';
 import { fontDecls, resolveTextStyle, styleAttr } from '../render-html/styles.js';
+import { classAttr, mobileFontClass } from '../render-html/mobile.js';
 
 /** 対応する SNS サービス */
 export const SOCIAL_SERVICES = Object.freeze([
@@ -79,7 +80,7 @@ export const socialBlock = {
           `<a href="${escapeAttr(item.url)}" target="_blank"${styleAttr(`color:${ctx.body.linkColor}`, 'text-decoration:underline')}>${escapeText(socialLabel(item.service, locale))}</a>`,
       );
       return [
-        `<p${styleAttr('margin:0', ...fontDecls(style), `text-align:${v.align}`)}>${links.join(' | ')}</p>`,
+        `<p${classAttr(mobileFontClass(ctx, null, null, style.lineHeight))}${styleAttr('margin:0', ...fontDecls(style), `text-align:${v.align}`)}>${links.join(' | ')}</p>`,
       ];
     }
 

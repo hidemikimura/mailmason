@@ -5,6 +5,7 @@ import { renderRichText } from '../render-html/richtext.js';
 import { TABLE_OPEN, fontDecls, resolveTextStyle, styleAttr } from '../render-html/styles.js';
 import { wrap } from '../render-html/lines.js';
 import { imageHtml, imageText } from './image.js';
+import { classAttr, resolveMobileFontSize } from '../render-html/mobile.js';
 
 /** 画像とテキストの間隔（px） */
 const GAP = 12;
@@ -44,11 +45,16 @@ export const imageTextBlock = {
   renderHtml(block, ctx) {
     const v = /** @type {any} */ (block.values);
     const style = resolveTextStyle(ctx.body);
+    // 文字の大きさは本文と同じ（スマホではメール全体のスマホの文字サイズ）
+    const size = resolveMobileFontSize(ctx.body, null);
+    const styles = ctx.options.mobileStyles;
+    const mobile = size === null ? null : { fontSize: size, styles };
+    const cls = size === null ? '' : classAttr(styles.font(size, style.lineHeight));
     const text = v.html
       ? [
           wrap(
-            `<div${styleAttr(...fontDecls(style))}>`,
-            renderRichText(v.html, { style, linkColor: ctx.body.linkColor }),
+            `<div${cls}${styleAttr(...fontDecls(style))}>`,
+            renderRichText(v.html, { style, linkColor: ctx.body.linkColor, mobile }),
             '</div>',
           ),
         ]

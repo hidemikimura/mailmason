@@ -5,7 +5,7 @@ Mailmason の出力 HTML は、既知の落とし穴を `test/core/compat.test.j
 ## サンプルを用意する
 
 ```sh
-npm run samples                                   # テスト用フィクスチャ（basic / kitchen-sink / content-blocks / backgrounds）
+npm run samples                                   # テスト用フィクスチャ（basic / kitchen-sink / content-blocks / backgrounds / tables）
 npm run samples -- path/to/template.json          # 自分のテンプレート（複数指定可）
 npm run samples -- --icons https://cdn.example.com/icons   # SNS アイコン PNG の置き場所を指定
 ```
@@ -51,7 +51,7 @@ Gmail から送る場合は、Google アカウントで 2 段階認証を有効�
 ### 2. 送る
 
 ```sh
-npm run samples:send                                  # 既定の 6 通（basic / newsletter / announcement / kitchen-sink / content-blocks / backgrounds）
+npm run samples:send                                  # 既定の 7 通（basic / newsletter / announcement / kitchen-sink / content-blocks / backgrounds / tables）
 npm run samples:send -- path/to/template.json          # 自分のテンプレート（複数指定可）
 npm run samples:send -- --to someone@example.com       # 宛先を一時的に変える
 npm run samples:send -- --dry-run                      # 送らずに samples/sent/*.eml を書き出す
@@ -70,22 +70,25 @@ npm run samples:send -- --embed                        # 画像を公開 URL で
 
 ## 確認するメールソフト
 
-| 種類    | メールソフト                                         | 主な確認点                                  |
-| ------- | ---------------------------------------------------- | ------------------------------------------- |
-| Windows | Outlook（従来版 2016 / 2019 / 2021 / Microsoft 365） | Word エンジンでの崩れ、VML ボタン、フォント |
-| Windows | 新しい Outlook / Outlook.com                         | 余白、ダークモード                          |
-| Mac     | Apple Mail、Outlook for Mac                          | 表示幅、ダークモード                        |
-| iPhone  | iOS メール、Gmail アプリ                             | 縦積み、文字サイズ、スマホで非表示の要素    |
-| Android | Gmail アプリ                                         | 縦積み、画像の縮小                          |
-| Web     | Gmail、Yahoo!メール                                  | 省略表示（約 102KB）、リンク、プリヘッダー  |
+| 種類    | メールソフト                                         | 主な確認点                                    |
+| ------- | ---------------------------------------------------- | --------------------------------------------- |
+| Windows | Outlook（従来版 2016 / 2019 / 2021 / Microsoft 365） | Word エンジンでの崩れ、VML ボタン、フォント   |
+| Windows | 新しい Outlook / Outlook.com                         | 余白、ダークモード                            |
+| Mac     | Apple Mail、Outlook for Mac                          | 表示幅、ダークモード                          |
+| iPhone  | iOS メール、Gmail アプリ                             | 縦積み、文字サイズ、PC だけ・スマホだけの要素 |
+| Android | Gmail アプリ                                         | 縦積み、画像の縮小                            |
+| Web     | Gmail、Yahoo!メール                                  | 省略表示（約 102KB）、リンク、プリヘッダー    |
 
 ## 確認項目
 
 - [ ] 本文の幅が設定どおり（PC は既定 600px）で、中央に表示される
 - [ ] 2 カラム以上の行が、スマホでは縦に並ぶ（`stackOnMobile: false` の行は並ばない）
-- [ ] 「スマホで非表示」にした行・ブロックがスマホで表示されない（PC では表示される）
+- [ ] 「PC だけ」にした行・ブロックがスマホで表示されない（PC では表示される）
+- [ ] 「スマホだけ」にした行・ブロック（`tables` の最後の注記）がスマホだけに表示され、PC・Outlook（Windows）では表示されない。Gmail アプリで Gmail 以外のアカウントを使う場合など、メディアクエリに対応しないメールソフトでは表示されない（仕様）
+- [ ] 「スマホの文字サイズ」（`tables` は本文 17px、注記 14px）がスマホで効き、PC と Outlook（Windows）では元の大きさのまま
 - [ ] Outlook（Windows）でボタンが角丸の色付きボタンとして表示され、クリックできる
 - [ ] Outlook（Windows）で文字が明朝体にならない（`outlookFontFamily` のフォントになる）
+- [ ] Web フォント（`kitchen-sink` の最初のテキストの Noto Serif JP）が Apple Mail・iOS メールで表示され、Gmail・Outlook では後ろに並べた端末のフォント（明朝体）になる
 - [ ] 見出し・本文・リストの文字サイズと行間が、エディタのキャンバスと同じ
 - [ ] 画像がはみ出さず、スマホでは幅に合わせて縮む。画像を表示しない設定では代替テキストが出る
 - [ ] リンクとボタンのリンク先が正しい。マージタグを使ったリンクも差し込み後に正しい
@@ -93,7 +96,8 @@ npm run samples:send -- --embed                        # 画像を公開 URL で
 - [ ] ダークモードで文字が読める（背景色・文字色の組み合わせ）
 - [ ] Gmail で「メッセージの一部が表示されていません」と省略されない（minify 後 102KB 未満）
 - [ ] テキストパート（`.txt`）が読みやすく、URL が途中で切れていない
-- [ ] 表の罫線・見出し行・しま模様が崩れず、スマホでも表のまま読める
+- [ ] 表の罫線・見出し行・しま模様が崩れず、スマホでも表のまま読める。結合したセル（縦・横）が正しい範囲に広がる
+- [ ] 「縦に並べる」にした表（`tables` の料金表）が、スマホでは 1 行ずつ「見出し：値」の縦並びになり、PC と Outlook（Windows）では表のまま表示される。縦並びと表が両方出ることがない
 - [ ] 動画のサムネイルに再生ボタンが重なり、クリックで動画のページが開く（Outlook（Windows）でも背景のサムネイルが出る。背景画像を出さないメールソフトでは黒地に再生ボタン）。スマホで高さが縮む
 - [ ] 画像ギャラリーが格子に並び、「スマホでは 1 列」の設定では画面幅いっぱいに縦に並ぶ
 - [ ] 背景画像（外側・行・カラム）が表示され、上の文字が読める。Outlook（Windows）でも表示され、行の高さが中身に合っている。背景画像を表示しない設定では背景色になる

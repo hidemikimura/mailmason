@@ -24,6 +24,13 @@
  */
 
 /**
+ * Web フォント（Google Fonts などの CSS）
+ * @typedef {Object} WebFont
+ * @property {string} family フォント名（fontFamily で使う名前。例: 'Noto Sans JP'）
+ * @property {string} url CSS の URL（https）
+ */
+
+/**
  * @typedef {Object} BodySettings
  * @property {number} width 本文の幅（px）
  * @property {string} backgroundColor 外側の背景色
@@ -31,7 +38,9 @@
  * @property {string} contentBackgroundColor 本文の背景色
  * @property {BackgroundImage} contentBackgroundImage 本文の背景画像
  * @property {string} fontFamily
+ * @property {WebFont[]} webFonts 読み込む Web フォント（fontFamily で名前を使ったものだけ出力する）
  * @property {number} fontSize 基本文字サイズ（px）
+ * @property {number | null} mobileFontSize スマホの基本文字サイズ（px、null なら PC と同じ）
  * @property {number} lineHeight 行の高さ（倍率）
  * @property {string} textColor
  * @property {string} linkColor
@@ -45,7 +54,7 @@
  * @property {string} type
  * @property {Record<string, unknown>} values
  * @property {{ backgroundColor: string | null, padding: Spacing }} style
- * @property {'mobile' | null} hideOn
+ * @property {'mobile' | 'desktop' | null} hideOn スマホで隠す / PC で隠す（スマホだけに出す）
  */
 
 /**
@@ -62,7 +71,7 @@
  * @property {Spacing} padding
  * @property {number} columnGap
  * @property {boolean} stackOnMobile
- * @property {'mobile' | null} hideOn
+ * @property {'mobile' | 'desktop' | null} hideOn スマホで隠す / PC で隠す（スマホだけに出す）
  */
 
 /**

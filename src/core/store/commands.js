@@ -51,7 +51,7 @@ import { mergeBySchema } from '../model/schema.js';
  * @typedef {{ type: 'updateBlockValues', blockId: string, patch: Record<string, unknown> }} UpdateBlockValuesCommand
  *   patch は values に深くマージする（配列は置き換え）
  * @typedef {{ type: 'updateBlockStyle', blockId: string, patch: Partial<Block['style']> }} UpdateBlockStyleCommand
- * @typedef {{ type: 'setBlockHideOn', blockId: string, hideOn: 'mobile' | null }} SetBlockHideOnCommand
+ * @typedef {{ type: 'setBlockHideOn', blockId: string, hideOn: 'mobile' | 'desktop' | null }} SetBlockHideOnCommand
  * @typedef {{ type: 'setTextPart', content: string, sourceHash?: string | null }} SetTextPartCommand
  * @typedef {{ type: 'resetTextPart' }} ResetTextPartCommand
  * @typedef {{ type: 'loadTemplate', template: Template }} LoadTemplateCommand

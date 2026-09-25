@@ -26,6 +26,9 @@ import { EDITABLE_TYPES } from './components/mm-block.js';
 import { extractComponent, instantiateComponent } from '../core/components.js';
 import { qrSignature, qrStatus } from '../core/blocks/qr.js';
 import { QrTooLongError, createQrFile } from './qr.js';
+import { DEFAULT_WEB_FONT_OPTIONS, syncDocumentFonts } from './web-fonts.js';
+
+/** @import { WebFontOption } from './web-fonts.js' */
 
 /** @import { Template, BodySettings } from '../core/model/types.js' */
 /** @import { Store, StoreState, StoreAction } from '../core/store/store.js' */
@@ -86,6 +89,7 @@ export class MailmasonEditor extends LitElement {
     },
     onImageSelect: { attribute: false },
     onImageUpload: { attribute: false },
+    webFontOptions: { attribute: false },
     blocks: { attribute: false },
     components: { attribute: false },
     onSaveComponent: { attribute: false },
@@ -212,6 +216,8 @@ export class MailmasonEditor extends LitElement {
     this.mergeTagDelimiters = DEFAULT_DELIMITERS;
     /** 区切り開始文字（`{{` など）を入力したときに差し込み変数の候補を出す */
     this.mergeTagTrigger = true;
+    /** @type {readonly WebFontOption[]} 全体設定の「Web フォントを追加」に出す候補（既定は Google Fonts） */
+    this.webFontOptions = DEFAULT_WEB_FONT_OPTIONS;
     /** @type {ImageSelectHook | null} 画像の「選択…」ボタンで呼ぶフック。URL を返す */
     this.onImageSelect = null;
     /** @type {ImageUploadHook | null} ローカルの画像ファイルを受け取ってアップロードし、URL を返すフック */
@@ -291,6 +297,7 @@ export class MailmasonEditor extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     if (!this._state) this._state = this.store.getState();
+    syncDocumentFonts(this, this.store.getState().template.body.settings.webFonts);
     if (typeof ResizeObserver === 'function') {
       this._resizeObserver = new ResizeObserver((entries) => {
         const width = entries[entries.length - 1].contentRect.width;
@@ -302,6 +309,7 @@ export class MailmasonEditor extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    syncDocumentFonts(this, []);
     this._resizeObserver?.disconnect();
     this._resizeObserver = null;
   }
@@ -345,6 +353,10 @@ export class MailmasonEditor extends LitElement {
    */
   _onStoreChange(state, prev, action, warnings) {
     this._state = state;
+    // キャンバスで表示するため、登録した Web フォントを読み込む
+    if (state.template.body.settings.webFonts !== prev.template.body.settings.webFonts) {
+      syncDocumentFonts(this, state.template.body.settings.webFonts);
+    }
     // 選択が変わったとき・編集中のブロックが消えたときは直接編集を終える
     if (
       this._editing &&
@@ -893,6 +905,7 @@ export class MailmasonEditor extends LitElement {
       this._ctxCache?.key === key &&
       this._ctxCache.value.onImageSelect === this.onImageSelect &&
       this._ctxCache.value.onImageUpload === this.onImageUpload &&
+      this._ctxCache.value.webFontOptions === this.webFontOptions &&
       this._ctxCache.value.blocks === this.blocks &&
       this._ctxCache.value.components === this.components &&
       this._ctxCache.value.canSaveComponents === Boolean(this.onSaveComponent) &&
@@ -919,6 +932,7 @@ export class MailmasonEditor extends LitElement {
       mergeTagTrigger: this.mergeTagTrigger !== false,
       onImageSelect: this.onImageSelect,
       onImageUpload: this.onImageUpload,
+      webFontOptions: this.webFontOptions,
       upload: (file, target) => void this._uploader.upload(file, target),
       generateQr: (blockId) => void this._generateQr(blockId),
       dropImageFiles: (target, files) => this._dropImageFiles(target, files),

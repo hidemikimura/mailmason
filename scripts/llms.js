@@ -60,6 +60,22 @@ const PAGES = [
   },
   {
     section: 'ガイド',
+    title: 'スマホでの表示',
+    path: '/guide/mobile',
+    source: 'docs/guide/mobile.md',
+    summary:
+      'スマホで自動で切り替わるもの、表示する画面（PC だけ / スマホだけ）、スマホの文字サイズ',
+  },
+  {
+    section: 'ガイド',
+    title: 'フォント',
+    path: '/guide/fonts',
+    source: 'docs/guide/fonts.md',
+    summary:
+      '端末のフォントと Web フォント（Google Fonts・URL 指定）、表示されるメールソフト、webFontOptions',
+  },
+  {
+    section: 'ガイド',
     title: '差し込み変数',
     path: '/guide/merge-tags',
     source: 'docs/guide/merge-tags.md',

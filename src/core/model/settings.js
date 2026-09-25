@@ -47,6 +47,17 @@ export const backgroundImageSchema = s.object({
   uploadData: s.record({ nullable: true }),
 });
 
+/** Web フォントの CSS の URL（https のみ。引用符・括弧・空白・山括弧は使えない） */
+export const WEB_FONT_URL = /^https:\/\/[^\s"'()<>\\]+$/;
+
+/** @returns {import('./types.js').WebFont} */
+export const defaultWebFont = () => ({ family: '', url: '' });
+
+export const webFontSchema = s.object({
+  family: s.string(),
+  url: s.string({ pattern: WEB_FONT_URL }),
+});
+
 /** @returns {BodySettings} */
 export function defaultBodySettings() {
   return {
@@ -56,7 +67,9 @@ export function defaultBodySettings() {
     contentBackgroundColor: '#ffffff',
     contentBackgroundImage: defaultBackgroundImage(),
     fontFamily: "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+    webFonts: [],
     fontSize: 16,
+    mobileFontSize: null,
     lineHeight: 1.6,
     textColor: '#333333',
     linkColor: '#0066cc',
@@ -72,7 +85,9 @@ export const bodySettingsSchema = s.object({
   contentBackgroundColor: s.color(),
   contentBackgroundImage: backgroundImageSchema,
   fontFamily: s.string(),
+  webFonts: s.arrayOf(webFontSchema, defaultWebFont),
   fontSize: s.number({ min: 8, max: 72 }),
+  mobileFontSize: s.number({ min: 8, max: 72, nullable: true }),
   lineHeight: s.number({ min: 0.8, max: 3 }),
   textColor: s.color(),
   linkColor: s.color(),
@@ -98,7 +113,7 @@ export const rowSettingsSchema = s.object({
   padding: s.spacing(),
   columnGap: s.number({ min: 0, max: 200, integer: true }),
   stackOnMobile: s.boolean(),
-  hideOn: s.oneOf(['mobile', null]),
+  hideOn: s.oneOf(['mobile', 'desktop', null]),
 });
 
 /** @returns {Column['settings']} */
@@ -128,7 +143,7 @@ export const blockStyleSchema = s.object({
   padding: s.spacing(),
 });
 
-export const hideOnSchema = s.oneOf(['mobile', null]);
+export const hideOnSchema = s.oneOf(['mobile', 'desktop', null]);
 
 export const layoutSchema = s.oneOf(ROW_LAYOUT_NAMES);
 

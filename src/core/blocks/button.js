@@ -2,6 +2,7 @@ import { s } from '../model/schema.js';
 import { escapeAttr, escapeText } from '../richtext/entities.js';
 import { estimateTextWidth } from '../text/width.js';
 import { paddingDecl, styleAttr } from '../render-html/styles.js';
+import { classAttr, mobileFontClass } from '../render-html/mobile.js';
 
 /** @type {import('./types.js').CoreBlockDef} */
 export const buttonBlock = {
@@ -12,6 +13,7 @@ export const buttonBlock = {
     backgroundColor: '#0066cc',
     color: '#ffffff',
     fontSize: 16,
+    mobileFontSize: null,
     fontWeight: 'bold',
     borderRadius: 4,
     innerPadding: { top: 12, right: 24, bottom: 12, left: 24 },
@@ -24,6 +26,7 @@ export const buttonBlock = {
     backgroundColor: s.color(),
     color: s.color(),
     fontSize: s.number({ min: 8, max: 72 }),
+    mobileFontSize: s.number({ min: 8, max: 72, nullable: true }),
     fontWeight: s.oneOf(['normal', 'bold']),
     borderRadius: s.number({ min: 0, max: 100, integer: true }),
     innerPadding: s.spacing(),
@@ -58,7 +61,7 @@ export const buttonBlock = {
       '</v:roundrect>',
       '<![endif]-->',
       '<!--[if !mso]><!-->',
-      `<a${href} target="_blank"${styleAttr(
+      `<a${href} target="_blank"${classAttr(mobileFontClass(ctx, v.fontSize, v.mobileFontSize, 1.25))}${styleAttr(
         full ? 'display:block' : 'display:inline-block',
         `background-color:${v.backgroundColor}`,
         `color:${v.color}`,

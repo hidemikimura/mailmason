@@ -20,7 +20,9 @@
         "uploadData": null
       },
       "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "webFonts": [],
       "fontSize": 16,
+      "mobileFontSize": null,
       "lineHeight": 1.6,
       "textColor": "#333333",
       "linkColor": "#0066cc",
@@ -78,6 +80,7 @@
                   "html": "<h1 style=\"text-align:center\"><span style=\"color:#ffffff\">秋の新作が入荷しました</span></h1><p style=\"text-align:center\"><span style=\"color:#ffffff\">{{name}} 様に、今季のおすすめをお届けします。</span></p>",
                   "fontFamily": null,
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -101,6 +104,7 @@
                   "backgroundColor": "#ffffff",
                   "color": "#3b2a4a",
                   "fontSize": 16,
+                  "mobileFontSize": null,
                   "fontWeight": "bold",
                   "borderRadius": 4,
                   "innerPadding": {
@@ -177,6 +181,7 @@
                   "html": "<h2>会員限定セール</h2><p>ポイント 2 倍のキャンペーンを 10 月 31 日まで開催しています。</p>",
                   "fontFamily": null,
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -220,6 +225,7 @@
                   "html": "<h2 style=\"text-align:center\"><span style=\"color:#ffffff\">POINT ×2</span></h2><p style=\"text-align:center\"><span style=\"color:#ffffff\">10 月 31 日まで</span></p>",
                   "fontFamily": null,
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -315,6 +321,7 @@
                   "html": "<p style=\"text-align:center\">配信停止は<a href=\"{{unsubscribe_url}}\">こちら</a></p>",
                   "fontFamily": null,
                   "fontSize": 12,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },

@@ -7,7 +7,7 @@ Lit ベースのノーコード HTML メールエディタです。行×カラ�
 
 **ドキュメントとデモ: https://hidemikimura.github.io/mailmason/**
 
-> v0.5（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
+> v0.6（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
 
 ## インストール
 
@@ -21,10 +21,10 @@ Lit（3.3 以上）は peer dependency です。バンドラーを使わない�
 <!-- ES モジュール版 -->
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.5/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.6/dist/mailmason.bundle.js"
 ></script>
 <!-- 従来の script タグ版（グローバル変数 Mailmason） -->
-<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.5/dist/mailmason.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.6/dist/mailmason.iife.js"></script>
 ```
 
 動作環境: Chrome・Edge・Firefox・Safari の最新版。画面幅は 1024px 以上を想定しています（それより狭いと、パレットと設定パネルはツールバーのボタンで開閉する重ね表示になります）。
@@ -68,6 +68,7 @@ const { html, text } = editor.export({ html: { minify: true } }); // 配信用�
 | `mergeTagTrigger`                  | 区切り開始文字を入力したときに差し込み変数の候補を出す（既定 `true`）                              |
 | `onImageSelect`                    | 画像の「選択…」ボタンで呼ぶ関数。URL（または `{ src, alt }`）を返す                                |
 | `onImageUpload`                    | ローカルの画像ファイル（`File`）を受け取ってアップロードし、URL（または `{ src, alt }`）を返す関数 |
+| `webFontOptions`                   | 全体設定の「Web フォントを追加」に出す候補（既定は Google Fonts。空の配列で URL の指定だけ）       |
 | `max-image-size`                   | アップロードできる画像の上限（バイト、既定 5MB。0 で無制限）                                       |
 | `social-icon-base-url`             | SNS アイコン PNG の置き場所（未指定ならテキストリンク）                                            |
 | `outlook-font-family`              | Outlook（Windows）用のフォント                                                                     |
@@ -105,7 +106,11 @@ const { html, text } = editor.export({ html: { minify: true } }); // 配信用�
 
 背景画像: メール全体（外側）・本文・行・カラムに背景画像を敷けます（サイズ・位置・繰り返し）。Outlook（Windows）では VML で表示します。
 
-表・メニュー・ボタンの並び・画像ギャラリー・動画: 表はセルをキャンバス上で直接編集でき（太字・リンク・文字色・改行・差し込み変数、Tab で次のセル）、行と列は表の下のボタンで増減します。動画はサムネイルに再生ボタンを重ねて動画のページにリンクします（メールの中では再生できません。YouTube の URL ならサムネイルを自動で入れます）。
+スマホ向けの表示: 行とブロックは「表示する画面」で PC だけ・スマホだけに出せます。全体とブロックに「スマホの文字サイズ」を設定できます（Outlook（Windows）とメディアクエリに対応しないメールソフトでは PC と同じ表示）。
+
+Web フォント: 全体設定の「Web フォント」で Google Fonts の候補か URL を指定して追加し、「フォント」で選びます。Apple Mail・iOS メールなどで表示され、Gmail・Outlook などでは後ろに並べた端末のフォントになります。
+
+表・メニュー・ボタンの並び・画像ギャラリー・動画: 表はセルをキャンバス上で直接編集でき（太字・リンク・文字色・改行・差し込み変数、Tab で次のセル）、行と列は表の下のボタンで増減・移動します（端のつまみのドラッグでも移動できます）。Shift+クリックで選んだ範囲のセルを結合でき、スマホでは 1 行ずつ「見出し：値」の縦並びにもできます。動画はサムネイルに再生ボタンを重ねて動画のページにリンクします（メールの中では再生できません。YouTube の URL ならサムネイルを自動で入れます）。
 
 QR コード: `onImageUpload` を設定すると QR コードのブロックが使えます。内容（URL など）を入れて「QR コードを作成」を押すと、エディタが PNG を作ってフックでアップロードし、返った URL を画像にします。作成後に内容や色を変えると作り直しを促します（書き出し時は `mm-warning` の `qr-stale`）。
 

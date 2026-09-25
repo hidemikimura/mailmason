@@ -4,6 +4,7 @@
 // - iframe はスクリプト不可。高さを測るために same-origin だけ許可し、リンクは新しいタブで開く
 import { LitElement, css, html, nothing } from 'lit';
 import { HTML_SIZE_WARNING_BYTES, renderHtml } from '../../core/render-html/index.js';
+import { usedWebFonts } from '../../core/render-html/web-fonts.js';
 import { renderText } from '../../core/render-text/index.js';
 import { escapeText } from '../../core/richtext/entities.js';
 import { textSourceHash } from '../../core/text-part.js';
@@ -50,6 +51,7 @@ export class MmPreview extends LitElement {
     device: { type: String, reflect: true },
     _tab: { state: true },
     _useSamples: { state: true },
+    _useWebFonts: { state: true },
     _output: { state: true },
   };
 
@@ -211,6 +213,8 @@ export class MmPreview extends LitElement {
     this._tab = 'html';
     /** サンプル値を差し込んで表示するか */
     this._useSamples = true;
+    /** Web フォントを読み込むか（オフで Gmail などでの見え方を確かめる） */
+    this._useWebFonts = true;
     /** @type {PreviewOutput | null} */
     this._output = null;
     /** @type {ReturnType<typeof setTimeout> | null} */
@@ -245,7 +249,7 @@ export class MmPreview extends LitElement {
     const { htmlOptions, locale, delimiters } = this.ctx;
     // カスタムブロックの定義は関数を含むので type だけを比べる
     const options = { ...htmlOptions, blocks: htmlOptions.blocks?.map((def) => def.type) ?? null };
-    return JSON.stringify([options, locale, delimiters, this._values()]);
+    return JSON.stringify([options, locale, delimiters, this._values(), this._useWebFonts]);
   }
 
   /** 出力を作る */
@@ -260,7 +264,11 @@ export class MmPreview extends LitElement {
     };
     let output;
     try {
-      output = renderHtml(template, { ...ctx.htmlOptions, mergeValues: values });
+      output = renderHtml(template, {
+        ...ctx.htmlOptions,
+        mergeValues: values,
+        webFonts: this._useWebFonts,
+      });
     } catch (error) {
       // カスタムブロックの renderHtml の例外などでプレビューを止めない
       console.error('[mailmason] プレビューを作れませんでした', error);
@@ -469,6 +477,7 @@ ${output.text || t('preview.empty')}</pre>`
     const { t } = ctx;
     const output = this._output;
     const hasSamples = Object.keys(mergeTagValues(ctx.mergeTags, 'sample')).length > 0;
+    const hasWebFonts = usedWebFonts(this.template).length > 0;
     const tooBig = output.bytes > HTML_SIZE_WARNING_BYTES;
     const tab = (/** @type {'html' | 'text'} */ name) =>
       html`<button
@@ -497,6 +506,20 @@ ${output.text || t('preview.empty')}</pre>`
                     (this._useSamples = /** @type {HTMLInputElement} */ (e.target).checked)}
                 />
                 ${t('preview.samples')}
+              </label>`
+            : nothing
+        }
+        ${
+          hasWebFonts
+            ? html`<label class="check" title=${t('preview.webFontsHelp')}>
+                <input
+                  type="checkbox"
+                  data-action="web-fonts"
+                  .checked=${this._useWebFonts}
+                  @change=${(/** @type {Event} */ e) =>
+                    (this._useWebFonts = /** @type {HTMLInputElement} */ (e.target).checked)}
+                />
+                ${t('preview.webFonts')}
               </label>`
             : nothing
         }

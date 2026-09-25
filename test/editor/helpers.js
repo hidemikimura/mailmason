@@ -3,6 +3,7 @@ import basicJson from '../fixtures/templates/basic.json';
 import kitchenSinkJson from '../fixtures/templates/kitchen-sink.json';
 import contentBlocksJson from '../fixtures/templates/content-blocks.json';
 import backgroundsJson from '../fixtures/templates/backgrounds.json';
+import tablesJson from '../fixtures/templates/tables.json';
 
 /** @typedef {import('../../src/index.js').MailmasonEditor} MailmasonEditor */
 
@@ -49,6 +50,7 @@ export const fixtures = {
   kitchenSink: withLocalImages(kitchenSinkJson),
   contentBlocks: withLocalImages(contentBlocksJson),
   backgrounds: withLocalImages(backgroundsJson),
+  tables: withLocalImages(tablesJson),
 };
 
 /** 次のフレームまで待つ（子コンポーネントの更新と mm-change の通知を待つため） */

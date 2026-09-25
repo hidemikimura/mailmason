@@ -17,7 +17,7 @@ function assertEmailRules(html) {
   // テーブルはすべてレイアウト用
   // （表ブロックのデータの表 class="mm-table" は除く）
   for (const table of html.match(/<table\b[^>]*>/g) ?? []) {
-    if (table.includes('class="mm-table"')) continue;
+    if (/class="mm-table( [^"]*)?"/.test(table)) continue;
     expect(table).toContain('role="presentation"');
   }
   // <style> の中の .mm- クラスはメディアクエリの中だけ
@@ -54,6 +54,12 @@ describe('renderHtml', () => {
   it('backgrounds フィクスチャ（外側・行・カラムの背景画像）', async () => {
     const html = renderHtml(loadFixture('backgrounds'));
     await expect(html).toMatchFileSnapshot('./__snapshots__/backgrounds.html');
+    assertEmailRules(html);
+  });
+
+  it('tables フィクスチャ（セルの結合・スマホの縦並び）', async () => {
+    const html = renderHtml(loadFixture('tables'));
+    await expect(html).toMatchFileSnapshot('./__snapshots__/tables.html');
     assertEmailRules(html);
   });
 

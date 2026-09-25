@@ -48,6 +48,13 @@ const defs = [
         options: { min: 8, max: 72, unit: 'px', nullable: true },
       },
       {
+        key: 'mobileFontSize',
+        kind: 'number',
+        labelKey: 'field.mobileFontSize',
+        helpKey: 'field.mobileFontSizeHelp',
+        options: { min: 8, max: 72, unit: 'px', nullable: true },
+      },
+      {
         key: 'lineHeight',
         kind: 'number',
         labelKey: 'field.lineHeight',
@@ -56,9 +63,9 @@ const defs = [
       { key: 'color', kind: 'color', labelKey: 'field.textColor', options: { nullable: true } },
       {
         key: 'fontFamily',
-        kind: 'text',
+        kind: 'fontFamily',
         labelKey: 'field.fontFamily',
-        options: { placeholderKey: 'value.inherit' },
+        options: { nullable: true },
       },
     ],
   },
@@ -91,6 +98,13 @@ const defs = [
         kind: 'number',
         labelKey: 'field.fontSize',
         options: { min: 8, max: 72, unit: 'px' },
+      },
+      {
+        key: 'mobileFontSize',
+        kind: 'number',
+        labelKey: 'field.mobileFontSize',
+        helpKey: 'field.mobileFontSizeFixedHelp',
+        options: { min: 8, max: 72, unit: 'px', nullable: true },
       },
       {
         key: 'fontWeight',
@@ -327,6 +341,13 @@ const defs = [
         options: { min: 8, max: 72, unit: 'px' },
       },
       {
+        key: 'mobileFontSize',
+        kind: 'number',
+        labelKey: 'field.mobileFontSize',
+        helpKey: 'field.mobileFontSizeFixedHelp',
+        options: { min: 8, max: 72, unit: 'px', nullable: true },
+      },
+      {
         key: 'fontWeight',
         kind: 'select',
         labelKey: 'field.fontWeight',
@@ -383,6 +404,13 @@ const defs = [
         kind: 'number',
         labelKey: 'field.fontSize',
         options: { min: 8, max: 72, unit: 'px' },
+      },
+      {
+        key: 'mobileFontSize',
+        kind: 'number',
+        labelKey: 'field.mobileFontSize',
+        helpKey: 'field.mobileFontSizeFixedHelp',
+        options: { min: 8, max: 72, unit: 'px', nullable: true },
       },
       {
         key: 'fontWeight',
@@ -456,7 +484,26 @@ const defs = [
         labelKey: 'field.fontSize',
         options: { min: 8, max: 72, unit: 'px', nullable: true },
       },
+      {
+        key: 'mobileFontSize',
+        kind: 'number',
+        labelKey: 'field.mobileFontSize',
+        helpKey: 'field.mobileFontSizeHelp',
+        options: { min: 8, max: 72, unit: 'px', nullable: true },
+      },
       { key: 'color', kind: 'color', labelKey: 'field.textColor', options: { nullable: true } },
+      {
+        key: 'mobileLayout',
+        kind: 'align',
+        labelKey: 'field.tableMobileLayout',
+        helpKey: 'field.tableMobileLayoutHelp',
+        options: {
+          choices: [
+            { value: 'table', labelKey: 'tableMobileLayout.table' },
+            { value: 'stack', labelKey: 'tableMobileLayout.stack' },
+          ],
+        },
+      },
     ],
   },
   {

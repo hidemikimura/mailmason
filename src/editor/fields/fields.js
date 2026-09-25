@@ -6,6 +6,8 @@ import { sanitizeHtml } from '../../core/richtext/sanitize.js';
 import { getIn, measureImage, setIn } from '../util.js';
 import { UPLOAD_TYPES, hasFiles, pickImage } from '../upload.js';
 import '../components/mm-text-input.js';
+import '../components/mm-web-fonts.js';
+import '../components/mm-font-select.js';
 import { qrSignature } from '../../core/blocks/qr.js';
 import { labelText } from '../../core/blocks/custom.js';
 import { youtubeThumbnail } from '../../core/blocks/video.js';
@@ -24,7 +26,7 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
 /**
  * @typedef {Object} FieldSpec
  * @property {string} key values 内のパス（ドット区切り可）
- * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout' | 'qrcode' | 'list' | 'action' | 'element' | 'videoUrl' | 'tableColumns' | 'tableInfo' | 'backgroundImage'} kind
+ * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout' | 'qrcode' | 'list' | 'action' | 'element' | 'videoUrl' | 'tableColumns' | 'tableInfo' | 'backgroundImage' | 'webFonts' | 'fontFamily'} kind
  * @property {string} labelKey 辞書のキー（label があればそちらを使う）
  * @property {import('../../core/blocks/custom.js').Label} [label] そのまま表示する名前（カスタムブロック）
  * @property {string} [helpKey]
@@ -36,6 +38,7 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
  * @property {(context: { values: Record<string, unknown>, blockId: string, locale: string }) => unknown} [run] action: 押したときの処理
  * @property {string} [tagName] element: カスタム要素のタグ名
  * @property {(values: any) => boolean} [visible] 条件付きで表示する
+ * @property {(values: any) => boolean} [helpVisible] 補足を条件付きで表示する
  */
 
 /**
@@ -65,6 +68,8 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
  * @property {string} [blockId] 編集対象のブロック ID
  * @property {((spec: FieldSpec) => void) | null} [runAction] action の処理を実行する
  * @property {ReadonlyMap<string, { busy: boolean, error: string | null }>} [actionState] action の状態（spec.key ごと）
+ * @property {readonly import('../../core/model/types.js').WebFont[]} [webFonts] 登録した Web フォント（全体設定）
+ * @property {readonly import('../web-fonts.js').WebFontOption[]} [webFontOptions] Web フォントの候補
  */
 
 /**
@@ -251,6 +256,28 @@ function control(spec, value, ctx, id) {
         </div>
       </div>`;
     }
+
+    case 'webFonts':
+      return html`<mm-web-fonts
+        .value=${Array.isArray(value) ? value : []}
+        .options=${ctx.webFontOptions ?? []}
+        .inputId=${id}
+        .t=${t}
+        .locale=${ctx.locale}
+        @mm-web-fonts-change=${(/** @type {CustomEvent} */ e) => change(spec.key, e.detail)}
+      ></mm-web-fonts>`;
+
+    case 'fontFamily':
+      return html`<mm-font-select
+        .value=${typeof value === 'string' ? value : null}
+        ?nullable=${Boolean(o.nullable)}
+        .webFonts=${ctx.webFonts ?? []}
+        .options=${ctx.webFontOptions ?? []}
+        .inputId=${id}
+        .t=${t}
+        @mm-font-change=${(/** @type {CustomEvent} */ e) =>
+          change(spec.key, e.detail, { merge: true })}
+      ></mm-font-select>`;
 
     case 'tableInfo':
       // セルはキャンバス上で直接編集する。ここでは行と列の数と操作の案内だけ出す
@@ -894,7 +921,8 @@ export function renderField(spec, value, ctx) {
   if (spec.visible && !spec.visible(ctx.values)) return nothing;
   const id = `${ctx.idPrefix}-${spec.key.replace(/\./g, '-')}`;
   const inline = spec.kind === 'toggle';
-  const help = text(ctx, spec.helpKey, spec.help);
+  const help =
+    !spec.helpVisible || spec.helpVisible(ctx.values) ? text(ctx, spec.helpKey, spec.help) : '';
   return html`<div class="field ${inline ? 'inline' : ''}" data-key=${spec.key}>
     ${spec.kind === 'action' ? nothing : html`<label for=${id}>${text(ctx, spec.labelKey, spec.label)}</label>`}
     ${control(spec, value, ctx, id)} ${help ? html`<p class="help">${help}</p>` : nothing}

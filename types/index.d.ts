@@ -5,6 +5,7 @@ import type {
   BodySettings,
   Component,
   CustomBlock,
+  Label,
   MergeTagDelimiters,
   RenderHtmlOptions,
   RenderTextOptions,
@@ -43,6 +44,18 @@ export type ImageResult =
   | { src: string; data?: Record<string, unknown> | null; alt?: string }
   | null
   | undefined;
+
+/** 全体設定の「Web フォントを追加」に出す候補 */
+export interface WebFontOption {
+  /** フォント名（font-family に書く名前） */
+  family: string;
+  /** CSS の URL（https のみ） */
+  url: string;
+  /** 読み込めないメールソフトで使う端末のフォント（font-family の後ろに付ける。無ければ日本語のゴシック体） */
+  fallback?: string;
+  /** 候補の一覧での見出し（文字列か { ja, en }。無い候補は「その他」） */
+  group?: Label;
+}
 
 /** 画像欄の「選択…」ボタンで呼ぶ（自前の画像ライブラリの画面などを開く） */
 export type ImageSelectHook = (context: { current: string }) => Promise<ImageResult>;
@@ -155,6 +168,11 @@ export declare class MailmasonEditor extends LitElement {
   onImageSelect: ImageSelectHook | null;
   /** ローカルの画像ファイル（と QR コードの PNG）をアップロードする。無ければ QR コードのブロックは出ない */
   onImageUpload: ImageUploadHook | null;
+  /**
+   * 全体設定の「Web フォントを追加」に出す候補（既定は Google Fonts の日本語・欧文フォント）。
+   * 自社のフォントを足すときは `[...editor.webFontOptions, { family, url, fallback }]`、空の配列で URL の指定だけになる
+   */
+  webFontOptions: readonly WebFontOption[];
   /** カスタムブロックの定義（defineBlock() の戻り値）。loadJson より前に設定する */
   blocks: readonly CustomBlock[];
   /** 保存済みのコンポーネント。パレットの「保存済み」に出す */

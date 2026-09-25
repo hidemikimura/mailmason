@@ -62,10 +62,20 @@ export interface BodySettings {
   contentBackgroundColor: Color;
   /** 本文の背景画像 */
   contentBackgroundImage: BackgroundImage;
-  /** 基本のフォント */
+  /** 基本のフォント（CSS の font-family。Web フォントは名前を先頭に書き、後ろに端末のフォントを並べる） */
   fontFamily: string;
+  /**
+   * 読み込む Web フォント。fontFamily（ボディ・テキストブロック）で名前を使ったものだけ head で読み込む。
+   * Apple Mail・iOS メール・Outlook for Mac などで表示され、Gmail・Outlook（Windows）などでは fontFamily の後ろのフォントになる
+   */
+  webFonts: WebFont[];
   /** 基本の文字サイズ（px、8〜72） */
   fontSize: number;
+  /**
+   * スマホの基本の文字サイズ（px、8〜72。null なら PC と同じ）。
+   * 文字サイズを指定していないテキスト・表・画像＋テキストなどに効く（Outlook（Windows）とメディアクエリに対応しないメールソフトでは PC と同じ）
+   */
+  mobileFontSize: number | null;
   /** 行の高さ（倍率、0.8〜3） */
   lineHeight: number;
   /** 文字色 */
@@ -78,6 +88,17 @@ export interface BodySettings {
   title: string;
 }
 
+/** Web フォント（Google Fonts などの CSS） */
+export interface WebFont {
+  /** フォント名（fontFamily に書く名前。例: 'Noto Sans JP'） */
+  family: string;
+  /** CSS の URL（https のみ） */
+  url: string;
+}
+
+/** 表示する画面（'mobile' はスマホで隠す、'desktop' は PC で隠す＝スマホだけに出す） */
+export type HideOn = 'mobile' | 'desktop' | null;
+
 /** 行の設定 */
 export interface RowSettings {
   backgroundColor: Color | null;
@@ -87,7 +108,11 @@ export interface RowSettings {
   columnGap: number;
   /** スマホではカラムを縦に並べる */
   stackOnMobile: boolean;
-  hideOn: 'mobile' | null;
+  /**
+   * 'mobile' でスマホでは表示しない。'desktop' で PC では表示しない（スマホだけに出す。
+   * Outlook（Windows）とメディアクエリに対応しないメールソフトでは表示されない）
+   */
+  hideOn: HideOn;
 }
 
 /** カラムの設定 */
@@ -118,6 +143,8 @@ export interface TextValues {
   fontFamily: string | null;
   /** 8〜72 */
   fontSize: number | null;
+  /** スマホの文字サイズ（8〜72）。null なら、fontSize が null のときはボディの mobileFontSize、それ以外は PC と同じ */
+  mobileFontSize: number | null;
   /** 0.8〜3 */
   lineHeight: number | null;
   color: Color | null;
@@ -152,6 +179,8 @@ export interface ButtonValues {
   color: Color;
   /** 8〜72 */
   fontSize: number;
+  /** スマホの文字サイズ（8〜72、null なら PC と同じ） */
+  mobileFontSize: number | null;
   fontWeight: 'normal' | 'bold';
   /** 0〜100 の整数 */
   borderRadius: number;
@@ -251,6 +280,8 @@ export interface ButtonsValues {
   /** label が空の項目は出力しない */
   items: ButtonsItem[];
   fontSize: number;
+  /** スマホの文字サイズ（8〜72、null なら PC と同じ） */
+  mobileFontSize: number | null;
   fontWeight: 'normal' | 'bold';
   borderRadius: number;
   innerPadding: Spacing;
@@ -278,6 +309,8 @@ export interface MenuValues {
   /** 項目の間隔（px、0〜60 の整数） */
   spacing: number;
   fontSize: number;
+  /** スマホの文字サイズ（8〜72、null なら PC と同じ） */
+  mobileFontSize: number | null;
   fontWeight: 'normal' | 'bold';
   /** null ならボディの文字色 */
   color: Color | null;
@@ -293,6 +326,18 @@ export interface TableColumn {
   align: Align;
 }
 
+/** 表の結合したセル（左上のセルの位置と、縦・横に結合する数） */
+export interface TableMerge {
+  /** 左上のセルの行（0 から） */
+  row: number;
+  /** 左上のセルの列（0 から） */
+  column: number;
+  /** 縦に結合する行の数（1 以上） */
+  rowSpan: number;
+  /** 横に結合する列の数（1 以上） */
+  colSpan: number;
+}
+
 /** 表 */
 export interface TableValues {
   /**
@@ -301,6 +346,11 @@ export interface TableValues {
    */
   cells: string[][];
   columns: TableColumn[];
+  /**
+   * 結合したセル。覆われたセルの値は出力しない。
+   * 重なる結合・表からはみ出す結合・1 セルだけの結合は読み込み時に直す
+   */
+  merges: TableMerge[];
   /** 1 行目を見出し（th）にする */
   headerRow: boolean;
   headerBackgroundColor: Color;
@@ -314,7 +364,14 @@ export interface TableValues {
   striped: boolean;
   stripeColor: Color;
   fontSize: number | null;
+  /** スマホの文字サイズ（8〜72）。null なら、fontSize が null のときはボディの mobileFontSize、それ以外は PC と同じ */
+  mobileFontSize: number | null;
   color: Color | null;
+  /**
+   * スマホでの表示。'stack' は 1 行ずつ「見出し：値」の縦並びにする
+   * （メディアクエリに対応しないメーラーと Outlook では表のまま）
+   */
+  mobileLayout: 'table' | 'stack';
 }
 
 /** SNS のサービス */
@@ -393,7 +450,11 @@ export interface BlockBase<T extends string = string, V = Record<string, unknown
   type: T;
   values: V;
   style: BlockStyle;
-  hideOn: 'mobile' | null;
+  /**
+   * 'mobile' でスマホでは表示しない。'desktop' で PC では表示しない（スマホだけに出す。
+   * Outlook（Windows）とメディアクエリに対応しないメールソフトでは表示されない）
+   */
+  hideOn: HideOn;
 }
 
 /** 標準ブロック。`BlockOf<'table'>` のように type を指定して使う */
@@ -959,7 +1020,7 @@ export interface UpdateBlockStyleCommand {
 export interface SetBlockHideOnCommand {
   type: 'setBlockHideOn';
   blockId: string;
-  hideOn: 'mobile' | null;
+  hideOn: HideOn;
 }
 export interface SetTextPartCommand {
   type: 'setTextPart';
@@ -1074,6 +1135,8 @@ export interface RenderHtmlOptions extends BlocksOption {
   lang?: string;
   /** Outlook（Windows）用のフォント（既定 'Arial, sans-serif'） */
   outlookFontFamily?: string;
+  /** false で Web フォントを読み込まない（Gmail などでの見え方の確認用。既定 true） */
+  webFonts?: boolean;
 }
 
 /** Gmail が省略する大きさより少し小さい、警告を出す HTML の大きさ（バイト） */

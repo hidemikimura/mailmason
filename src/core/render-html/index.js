@@ -7,6 +7,8 @@ import { escapeAttr } from '../richtext/entities.js';
 import { TABLE_OPEN, paddingDecl, styleAttr } from './styles.js';
 import { renderLines, wrap } from './lines.js';
 import { skeleton } from './skeleton.js';
+import { createMobileStyles } from './mobile.js';
+import { usedWebFonts } from './web-fonts.js';
 import {
   backgroundAttr,
   backgroundDecls,
@@ -30,6 +32,7 @@ import {
  * @property {string} [lang] html 要素の lang（既定は locale）
  * @property {string} [outlookFontFamily] Outlook（Windows）で使うフォント（既定 'Arial, sans-serif'）
  * @property {readonly import('../blocks/types.js').CoreBlockDef[] | null} [blocks] カスタムブロックの定義（defineBlock() の戻り値の配列）
+ * @property {boolean} [webFonts] false で Web フォントを読み込まない（Gmail などでの見え方の確認用。既定 true）
  */
 
 /** Gmail が本文を途中で切る目安（約 102KB）に対する警告のしきい値（バイト） */
@@ -50,6 +53,8 @@ export function resolveHtmlOptions(options) {
     lang: options.lang ?? locale,
     outlookFontFamily: options.outlookFontFamily ?? 'Arial, sans-serif',
     blocks: options.blocks ?? null,
+    webFonts: options.webFonts ?? true,
+    mobileStyles: createMobileStyles(),
   };
 }
 
@@ -74,18 +79,31 @@ function renderBlock(block, width, template, options) {
   if (content.length === 0) return [];
   const hide = block.hideOn === 'mobile' ? ' class="mm-hide-mobile"' : '';
   const align = def.cellAlign ? ` align="${def.cellAlign(block)}"` : '';
+  const cell = wrap(
+    `<td${align}${styleAttr(paddingDecl(padding), backgroundColor && `background-color:${backgroundColor}`)}>`,
+    content,
+    '</td>',
+  );
+  return block.hideOn === 'desktop'
+    ? mobileOnlyRow([cell])
+    : [wrap(`<tr${hide}>`, [cell], '</tr>')];
+}
+
+/**
+ * スマホだけに出す行（hideOn: 'desktop'）。PC では隠し、メディアクエリで表示する。
+ * Outlook（Windows）には出さない。メディアクエリに対応しないメールソフトでは表示されない
+ * @param {Lines} cells
+ * @returns {Lines}
+ */
+function mobileOnlyRow(cells) {
   return [
+    '<!--[if !mso]><!-->',
     wrap(
-      `<tr${hide}>`,
-      [
-        wrap(
-          `<td${align}${styleAttr(paddingDecl(padding), backgroundColor && `background-color:${backgroundColor}`)}>`,
-          content,
-          '</td>',
-        ),
-      ],
+      `<tr class="mm-hide-desktop"${styleAttr('display:none', 'mso-hide:all')}>`,
+      cells,
       '</tr>',
     ),
+    '<!--<![endif]-->',
   ];
 }
 
@@ -182,7 +200,9 @@ function renderRow(row, box, template, options) {
           children,
           '</td>',
         );
-    return [wrap('<tr>', [cell], '</tr>')];
+    return row.settings.hideOn === 'desktop'
+      ? mobileOnlyRow([cell])
+      : [wrap('<tr>', [cell], '</tr>')];
   };
   const insideVml = insideContentVml || rowHasImage;
 
@@ -276,7 +296,11 @@ export function renderHtml(input, options = {}) {
   const rows = template.body.rows.map((row) =>
     renderRow(row, /** @type {RowBox} */ (layout.get(row.id)), template, resolved),
   );
-  const html = renderLines(skeleton(template.body.settings, resolved, rows), !resolved.minify);
+  const fonts = resolved.webFonts ? usedWebFonts(template) : [];
+  const html = renderLines(
+    skeleton(template.body.settings, resolved, rows, fonts),
+    !resolved.minify,
+  );
   return resolved.mergeValues
     ? replaceMergeTags(html, resolved.mergeValues, {
         delimiters: resolved.mergeTagDelimiters,

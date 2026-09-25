@@ -20,7 +20,9 @@
         "uploadData": null
       },
       "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+      "webFonts": [],
       "fontSize": 16,
+      "mobileFontSize": null,
       "lineHeight": 1.6,
       "textColor": "#333333",
       "linkColor": "#0066cc",
@@ -152,6 +154,7 @@
                   "html": "<h1>{{name}} 様</h1><p>いつもご利用ありがとうございます。<br>秋の新作が入荷しました。</p>",
                   "fontFamily": null,
                   "fontSize": null,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": null
                 },
@@ -175,6 +178,7 @@
                   "backgroundColor": "#e8590c",
                   "color": "#ffffff",
                   "fontSize": 16,
+                  "mobileFontSize": null,
                   "fontWeight": "bold",
                   "borderRadius": 6,
                   "innerPadding": {
@@ -441,6 +445,7 @@
                   "html": "<p style=\"text-align:center\">配信停止は<a href=\"{{unsubscribe_url}}\">こちら</a></p>",
                   "fontFamily": null,
                   "fontSize": 12,
+                  "mobileFontSize": null,
                   "lineHeight": null,
                   "color": "#888888"
                 },

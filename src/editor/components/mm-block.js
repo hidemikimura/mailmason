@@ -5,10 +5,12 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { getBlockDef } from '../../core/blocks/registry.js';
 import { renderBlockContent } from '../../core/render-html/index.js';
 import { qrStatus } from '../../core/blocks/qr.js';
+import { tableOps } from '../../core/blocks/table.js';
+import { isCovered } from '../../core/blocks/table-layout.js';
 import { resolveTextStyle } from '../../core/render-html/styles.js';
 import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
-import { chromeStyles, renderChrome } from './chrome.js';
+import { chromeStyles, hideBadge, renderChrome } from './chrome.js';
 import { define } from '../context.js';
 import './mm-text-editor.js';
 import './mm-table-editor.js';
@@ -19,14 +21,24 @@ export const EDITABLE_TYPES = new Set(['text', 'imageText', 'table']);
 /**
  * クリックした位置が表ブロックのどのセルか（出力 HTML の table.mm-table の中）
  * @param {Event} event
+ * @param {import('../../core/model/types.js').Block} block
  * @returns {{ row: number, column: number } | null}
  */
-function tableCellOf(event) {
+function tableCellOf(event, block) {
   for (const node of event.composedPath()) {
     if (!(node instanceof HTMLTableCellElement)) continue;
     const table = node.closest('table');
     const row = /** @type {HTMLTableRowElement | null} */ (node.parentElement);
     if (table?.classList.contains('mm-table') && row) {
+      // 結合に覆われたセルは出力に無いので、表示しているセルを数えて列の位置に直す
+      const merges = tableOps(block).merges;
+      const count = /** @type {any} */ (block.values).columns?.length ?? 0;
+      let index = -1;
+      for (let column = 0; column < count; column += 1) {
+        if (isCovered(merges, row.rowIndex, column)) continue;
+        index += 1;
+        if (index === node.cellIndex) return { row: row.rowIndex, column };
+      }
       return { row: row.rowIndex, column: node.cellIndex };
     }
   }
@@ -194,14 +206,14 @@ export class MmBlock extends LitElement {
       if (this.editing) return;
       // 選択中のテキストをもう一度クリックすると直接編集に入る
       if (this.selected && EDITABLE_TYPES.has(this.block.type)) {
-        this._editCell = tableCellOf(event);
+        this._editCell = tableCellOf(event, this.block);
         this.ctx.edit(this.block.id);
       } else this.ctx.store.select(this.block.id);
     });
     this.addEventListener('dblclick', (event) => {
       event.stopPropagation();
       if (!this.editing && EDITABLE_TYPES.has(this.block.type)) {
-        this._editCell = tableCellOf(event);
+        this._editCell = tableCellOf(event, this.block);
         this.ctx.store.select(this.block.id);
         this.ctx.edit(this.block.id);
       }
@@ -360,7 +372,7 @@ export class MmBlock extends LitElement {
     };
 
     return html`<div class="content" style=${styleMap(style)}>${inner}</div>
-      ${block.hideOn === 'mobile' ? html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>` : nothing}
+      ${hideBadge(block.hideOn, ctx)}
       ${
         block.type === 'qr' && !uploading && qrStatus(block) === 'stale'
           ? html`<span class="badge warn">${ctx.t('badge.qrStale')}</span>`

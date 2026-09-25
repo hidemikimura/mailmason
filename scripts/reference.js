@@ -83,7 +83,14 @@ const DESCRIPTIONS = {
   'body.contentBackgroundImage.uploadData':
     'アップロード時に `onImageUpload` が返した `data`（出力には使わない）',
   'body.fontFamily': '基本のフォント',
+  'body.webFonts':
+    '読み込む Web フォント（Google Fonts などの CSS）。`fontFamily`（ボディ・テキストブロック）で名前を使ったものだけ、head で読み込む。Apple Mail・iOS メール・Outlook for Mac などで表示され、Gmail・Outlook（Windows）・Yahoo!メールなどでは `fontFamily` の後ろのフォントになる。名前か URL の無い項目は読み込み時に除く',
+  'body.webFonts[].family': 'フォント名（`fontFamily` に書く名前。例: `Noto Sans JP`）',
+  'body.webFonts[].url':
+    'フォントの CSS の URL（`https://` のみ。例: `https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap`）',
   'body.fontSize': '基本の文字サイズ（px）',
+  'body.mobileFontSize':
+    'スマホの基本の文字サイズ（px、`null` なら PC と同じ）。文字サイズを指定していないテキスト・表・画像＋テキストなどに効く。Outlook（Windows）とメディアクエリに対応しないメールソフトでは PC と同じ',
   'body.lineHeight': '行の高さ（文字サイズに対する倍率）',
   'body.textColor': '基本の文字色',
   'body.linkColor': 'リンクの色',
@@ -101,7 +108,8 @@ const DESCRIPTIONS = {
   'row.padding': '行の内側の余白（px）',
   'row.columnGap': 'カラムの間隔（px）',
   'row.stackOnMobile': 'スマホでカラムを縦に並べるか',
-  'row.hideOn': '`"mobile"` でスマホでは表示しない',
+  'row.hideOn':
+    '`"mobile"` でスマホでは表示しない。`"desktop"` で PC では表示しない（スマホだけに出す。Outlook（Windows）とメディアクエリに対応しないメールソフトでは表示されない）',
   'column.backgroundColor': 'カラムの背景色',
   'column.backgroundImage':
     'カラムの背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる）',
@@ -121,6 +129,8 @@ const DESCRIPTIONS = {
   'text.html': '本文（許可タグだけの HTML）',
   'text.fontFamily': 'フォント（`null` でボディ設定）',
   'text.fontSize': '文字サイズ（px、`null` でボディ設定）',
+  'text.mobileFontSize':
+    'スマホの文字サイズ（px）。`null` なら、`fontSize` が `null` のときはボディの `mobileFontSize`、それ以外は PC と同じ',
   'text.lineHeight': '行の高さ（倍率、`null` でボディ設定）',
   'text.color': '文字色（`null` でボディ設定）',
   'image.src': '画像の URL（受信者が読める公開 URL）',
@@ -139,6 +149,7 @@ const DESCRIPTIONS = {
   'button.backgroundColor': 'ボタンの色',
   'button.color': '文字色',
   'button.fontSize': '文字サイズ（px）',
+  'button.mobileFontSize': 'スマホの文字サイズ（px、`null` なら PC と同じ）',
   'button.fontWeight': '文字の太さ',
   'button.borderRadius': '角丸（px）',
   'button.innerPadding': 'ボタンの内側の余白（px）',
@@ -200,6 +211,7 @@ const DESCRIPTIONS = {
   'buttons.items[].backgroundColor': 'ボタンの色',
   'buttons.items[].color': '文字色',
   'buttons.fontSize': '文字サイズ（px）',
+  'buttons.mobileFontSize': 'スマホの文字サイズ（px、`null` なら PC と同じ）',
   'buttons.fontWeight': '文字の太さ',
   'buttons.borderRadius': '角丸（px）',
   'buttons.innerPadding': 'ボタンの内側の余白（px）',
@@ -213,6 +225,7 @@ const DESCRIPTIONS = {
   'menu.separator': '区切り文字（空なら空白）',
   'menu.spacing': '項目の間隔（px）',
   'menu.fontSize': '文字サイズ（px）',
+  'menu.mobileFontSize': 'スマホの文字サイズ（px、`null` なら PC と同じ）',
   'menu.fontWeight': '文字の太さ',
   'menu.color': '文字色（`null` ならボディの文字色）',
   'menu.separatorColor': '区切り文字の色',
@@ -223,6 +236,12 @@ const DESCRIPTIONS = {
   'table.columns[].width':
     '列の幅（表の幅に対する %）。`null` の列は残りを等分する。合計が 100 を超えたら縮める',
   'table.columns[].align': '文字の揃え',
+  'table.merges':
+    '結合したセル。左上のセルの位置と、縦・横に結合する数。覆われたセルの値は出力しない。重なる結合・表からはみ出す結合は読み込み時に直す',
+  'table.merges[].row': '左上のセルの行（0 から）',
+  'table.merges[].column': '左上のセルの列（0 から）',
+  'table.merges[].rowSpan': '縦に結合する行の数',
+  'table.merges[].colSpan': '横に結合する列の数',
   'table.headerRow': '1 行目を見出し（`th`）にする',
   'table.headerBackgroundColor': '見出しの背景色',
   'table.headerColor': '見出しの文字色（`null` なら本文と同じ）',
@@ -232,7 +251,11 @@ const DESCRIPTIONS = {
   'table.striped': '1 行おきに背景色を付ける',
   'table.stripeColor': 'しま模様の色',
   'table.fontSize': '文字サイズ（px、`null` ならボディ設定）',
+  'table.mobileFontSize':
+    'スマホの文字サイズ（px）。`null` なら、`fontSize` が `null` のときはボディの `mobileFontSize`、それ以外は PC と同じ',
   'table.color': '文字色（`null` ならボディ設定）',
+  'table.mobileLayout':
+    'スマホでの表示。`stack` は 1 行ずつ「見出し：値」の縦並びにする（メディアクエリに対応しないメーラーと Outlook では表のまま）',
   'qr.content': 'QR にする文字列（URL など。差し込み変数は使えない）',
   'qr.size': '表示サイズ（px、正方形）',
   'qr.ecLevel': '誤り訂正レベル（L 約 7% / M 約 15% / Q 約 25% / H 約 30% の汚れ・欠けまで読める）',
@@ -489,7 +512,7 @@ ${table(columnSettingsSchema, /** @type {any} */ (defaultColumnSettings()), 'col
 | \`type\` | 文字列 | ブロックの種類（${BLOCK_TYPES.map((t) => `\`${t}\``).join(' / ')}）。未知の種類はデータを残したまま出力しない |
 | \`values\` | オブジェクト | 種類ごとの値（下記）。省略した項目は既定値 |
 | \`style\` | オブジェクト | 背景と余白（下記） |
-| \`hideOn\` | \`"mobile"\` \\| \`null\` | \`"mobile"\` でスマホでは表示しない |
+| \`hideOn\` | \`"mobile"\` \\| \`"desktop"\` \\| \`null\` | \`"mobile"\` でスマホでは表示しない。\`"desktop"\` で PC では表示しない（スマホだけに出す。Outlook（Windows）とメディアクエリに対応しないメールソフトでは表示されない） |
 
 ### 共通のスタイル（\`style\`）
 

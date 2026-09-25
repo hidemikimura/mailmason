@@ -5,6 +5,7 @@ import basic from '../test/fixtures/templates/basic.json';
 import kitchenSink from '../test/fixtures/templates/kitchen-sink.json';
 import contentBlocks from '../test/fixtures/templates/content-blocks.json';
 import backgrounds from '../test/fixtures/templates/backgrounds.json';
+import tables from '../test/fixtures/templates/tables.json';
 
 /** @type {Record<string, unknown>} */
 const fixtures = {
@@ -12,6 +13,7 @@ const fixtures = {
   'kitchen-sink': kitchenSink,
   'content-blocks': contentBlocks,
   backgrounds,
+  tables,
 };
 
 const editor = /** @type {import('../src/index.js').MailmasonEditor} */ (

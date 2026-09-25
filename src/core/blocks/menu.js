@@ -2,6 +2,7 @@
 import { s } from '../model/schema.js';
 import { escapeAttr, escapeText } from '../richtext/entities.js';
 import { fontDecls, resolveTextStyle, styleAttr } from '../render-html/styles.js';
+import { classAttr, mobileFontClass } from '../render-html/mobile.js';
 
 /**
  * @typedef {{ label: string, href: string }} MenuItem
@@ -18,6 +19,7 @@ export const menuBlock = {
     separator: '|',
     spacing: 12,
     fontSize: 14,
+    mobileFontSize: null,
     fontWeight: 'normal',
     color: null,
     separatorColor: '#c5cad1',
@@ -29,6 +31,7 @@ export const menuBlock = {
     separator: s.string(),
     spacing: s.number({ min: 0, max: 60, integer: true }),
     fontSize: s.number({ min: 8, max: 72 }),
+    mobileFontSize: s.number({ min: 8, max: 72, nullable: true }),
     fontWeight: s.oneOf(['normal', 'bold']),
     color: s.color({ nullable: true }),
     separatorColor: s.color(),
@@ -61,7 +64,7 @@ export const menuBlock = {
       ? `${msoSpace}<span${styleAttr(`padding:0 ${half}px`, `color:${v.separatorColor}`)}>${escapeText(v.separator)}</span>${msoSpace}`
       : `<span${styleAttr(`padding:0 ${half}px`)}>&nbsp;</span>`;
     return [
-      `<p${styleAttr('margin:0', ...fontDecls(style), `text-align:${v.align}`)}>${items.map(link).join(separator)}</p>`,
+      `<p${classAttr(mobileFontClass(ctx, v.fontSize, v.mobileFontSize, style.lineHeight))}${styleAttr('margin:0', ...fontDecls(style), `text-align:${v.align}`)}>${items.map(link).join(separator)}</p>`,
     ];
   },
 
