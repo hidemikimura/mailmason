@@ -42,6 +42,7 @@ template
    - 行動してほしいリンクは `button` にする（`label` と `href`）。
    - 表は `table`。`cells` は行ごとのセルの配列で、各セルは段落を持たないリッチテキスト（`strong` `em` `u` `s` `a` `span` `br`。`p` 見出し リストは使わない）。`columns` は列ごとの `width`（%、`null` なら残りを等分）と `align`。1 行目は `headerRow` で見出しになる。レイアウトには使わず、スペック・料金・日程などのデータに使う。
    - 複数のリンクを横に並べるときは `menu`（文字のリンク）か `buttons`（ボタン）、画像を格子に並べるときは `gallery` を使う（`items` の配列）。
+   - 背景画像は `body.settings.backgroundImage`（外側）・`contentBackgroundImage`（本文）と、行・カラムの `settings.backgroundImage`（`{ src, size, position, repeat }`）。上に文字を載せるときは、画像が表示されない場合に備えて文字が読める背景色（`backgroundColor`）も指定する。Outlook（Windows）では、背景画像のある要素の中の背景画像は背景色になるので、本文と行など入れ子で使わない
    - `video` はサムネイル画像（`thumbnail`）に再生ボタンを重ね、`url` の動画ページにリンクする。メールの中では再生できない。YouTube なら `https://i.ytimg.com/vi/<動画ID>/hqdefault.jpg`（480×360）をサムネイルに使える。
    - `type` にハイフンを含むブロック（例: `acme-coupon`）はアプリのカスタムブロック。値の形はアプリの定義で決まるので、既存のテンプレートにあるものを真似て書き、検査には `--blocks` で定義を渡す。
    - `qr` の画像はエディタが作ってアップロードするもの。JSON だけで作るときは `content` を書き、`src` は空のままにして、エディタで「QR コードを作成」してもらう（`src` が空の QR は出力されない）。

@@ -23,14 +23,45 @@ export type Align = 'left' | 'center' | 'right';
 /** 色（`#rrggbb`） */
 export type Color = string;
 
+/** 背景画像の位置（横 縦） */
+export type BackgroundPosition =
+  | 'left top'
+  | 'center top'
+  | 'right top'
+  | 'left center'
+  | 'center center'
+  | 'right center'
+  | 'left bottom'
+  | 'center bottom'
+  | 'right bottom';
+
+/**
+ * 背景画像（src が空なら背景画像なし）。Outlook（Windows）では VML で敷く。
+ * 背景画像のある要素の中の背景画像は、Outlook では表示せず背景色になる
+ */
+export interface BackgroundImage {
+  /** 画像の URL */
+  src: string;
+  /** cover: 全面を覆う / contain: 全体が入る / auto: 原寸 */
+  size: 'cover' | 'contain' | 'auto';
+  position: BackgroundPosition;
+  repeat: 'no-repeat' | 'repeat';
+  /** アップロード時にアプリが返した任意のデータ（出力には使わない） */
+  uploadData: Record<string, unknown> | null;
+}
+
 /** メール全体の設定（`body.settings`） */
 export interface BodySettings {
   /** 本文の幅（px、320〜1200 の整数） */
   width: number;
   /** 外側の背景色 */
   backgroundColor: Color;
+  /** 外側の背景画像 */
+  backgroundImage: BackgroundImage;
   /** 本文の背景色 */
   contentBackgroundColor: Color;
+  /** 本文の背景画像 */
+  contentBackgroundImage: BackgroundImage;
   /** 基本のフォント */
   fontFamily: string;
   /** 基本の文字サイズ（px、8〜72） */
@@ -50,6 +81,7 @@ export interface BodySettings {
 /** 行の設定 */
 export interface RowSettings {
   backgroundColor: Color | null;
+  backgroundImage: BackgroundImage;
   padding: Spacing;
   /** カラムの間隔（px、0〜100 の整数） */
   columnGap: number;
@@ -61,6 +93,7 @@ export interface RowSettings {
 /** カラムの設定 */
 export interface ColumnSettings {
   backgroundColor: Color | null;
+  backgroundImage: BackgroundImage;
   padding: Spacing;
   verticalAlign: 'top' | 'middle' | 'bottom';
 }

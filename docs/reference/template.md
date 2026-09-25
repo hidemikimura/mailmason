@@ -13,7 +13,21 @@ Mailmason のテンプレートは 1 つの JSON で、HTML とテキストパ�
     "settings": {
       "width": 600,
       "backgroundColor": "#f4f4f4",
+      "backgroundImage": {
+        "src": "",
+        "size": "cover",
+        "position": "center center",
+        "repeat": "no-repeat",
+        "uploadData": null
+      },
       "contentBackgroundColor": "#ffffff",
+      "contentBackgroundImage": {
+        "src": "",
+        "size": "cover",
+        "position": "center center",
+        "repeat": "no-repeat",
+        "uploadData": null
+      },
       "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
       "fontSize": 16,
       "lineHeight": 1.6,
@@ -28,6 +42,13 @@ Mailmason のテンプレートは 1 つの JSON で、HTML とテキストパ�
         "layout": "1",
         "settings": {
           "backgroundColor": null,
+          "backgroundImage": {
+            "src": "",
+            "size": "cover",
+            "position": "center center",
+            "repeat": "no-repeat",
+            "uploadData": null
+          },
           "padding": {
             "top": 24,
             "right": 24,
@@ -43,6 +64,13 @@ Mailmason のテンプレートは 1 つの JSON で、HTML とテキストパ�
             "id": "c_intro",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -111,18 +139,30 @@ Mailmason のテンプレートは 1 つの JSON で、HTML とテキストパ�
 
 ## ボディ設定（`body.settings`）
 
-| キー                     | 型              | 既定値                                                                       | 説明                                             |
-| ------------------------ | --------------- | ---------------------------------------------------------------------------- | ------------------------------------------------ |
-| `width`                  | 整数 320〜1200  | `600`                                                                        | 本文の幅（px）                                   |
-| `backgroundColor`        | 色（`#rrggbb`） | `"#f4f4f4"`                                                                  | 本文の外側の背景色                               |
-| `contentBackgroundColor` | 色（`#rrggbb`） | `"#ffffff"`                                                                  | 本文の背景色                                     |
-| `fontFamily`             | 文字列          | `"'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif"` | 基本のフォント                                   |
-| `fontSize`               | 数値 8〜72      | `16`                                                                         | 基本の文字サイズ（px）                           |
-| `lineHeight`             | 数値 0.8〜3     | `1.6`                                                                        | 行の高さ（文字サイズに対する倍率）               |
-| `textColor`              | 色（`#rrggbb`） | `"#333333"`                                                                  | 基本の文字色                                     |
-| `linkColor`              | 色（`#rrggbb`） | `"#0066cc"`                                                                  | リンクの色                                       |
-| `preheader`              | 文字列          | `""`                                                                         | プリヘッダー（受信一覧で件名の後ろに出る短い文） |
-| `title`                  | 文字列          | `""`                                                                         | HTML の `<title>`                                |
+| キー                                | 型                                                                                                                                                                      | 既定値                                                                       | 説明                                                                                                          |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `width`                             | 整数 320〜1200                                                                                                                                                          | `600`                                                                        | 本文の幅（px）                                                                                                |
+| `backgroundColor`                   | 色（`#rrggbb`）                                                                                                                                                         | `"#f4f4f4"`                                                                  | 本文の外側の背景色                                                                                            |
+| `backgroundImage`                   | オブジェクト                                                                                                                                                            |                                                                              | 外側の背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる） |
+| `backgroundImage.src`               | 文字列                                                                                                                                                                  | `""`                                                                         | 画像の URL                                                                                                    |
+| `backgroundImage.size`              | `"cover"` \| `"contain"` \| `"auto"`                                                                                                                                    | `"cover"`                                                                    | `"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸                                                 |
+| `backgroundImage.position`          | `"left top"` \| `"center top"` \| `"right top"` \| `"left center"` \| `"center center"` \| `"right center"` \| `"left bottom"` \| `"center bottom"` \| `"right bottom"` | `"center center"`                                                            | 位置（横 縦）                                                                                                 |
+| `backgroundImage.repeat`            | `"no-repeat"` \| `"repeat"`                                                                                                                                             | `"no-repeat"`                                                                | 繰り返し                                                                                                      |
+| `backgroundImage.uploadData`        | 任意のオブジェクト \| `null`                                                                                                                                            | `null`                                                                       | アップロード時に `onImageUpload` が返した `data`（出力には使わない）                                          |
+| `contentBackgroundColor`            | 色（`#rrggbb`）                                                                                                                                                         | `"#ffffff"`                                                                  | 本文の背景色                                                                                                  |
+| `contentBackgroundImage`            | オブジェクト                                                                                                                                                            |                                                                              | 本文の背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる） |
+| `contentBackgroundImage.src`        | 文字列                                                                                                                                                                  | `""`                                                                         | 画像の URL                                                                                                    |
+| `contentBackgroundImage.size`       | `"cover"` \| `"contain"` \| `"auto"`                                                                                                                                    | `"cover"`                                                                    | `"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸                                                 |
+| `contentBackgroundImage.position`   | `"left top"` \| `"center top"` \| `"right top"` \| `"left center"` \| `"center center"` \| `"right center"` \| `"left bottom"` \| `"center bottom"` \| `"right bottom"` | `"center center"`                                                            | 位置（横 縦）                                                                                                 |
+| `contentBackgroundImage.repeat`     | `"no-repeat"` \| `"repeat"`                                                                                                                                             | `"no-repeat"`                                                                | 繰り返し                                                                                                      |
+| `contentBackgroundImage.uploadData` | 任意のオブジェクト \| `null`                                                                                                                                            | `null`                                                                       | アップロード時に `onImageUpload` が返した `data`（出力には使わない）                                          |
+| `fontFamily`                        | 文字列                                                                                                                                                                  | `"'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif"` | 基本のフォント                                                                                                |
+| `fontSize`                          | 数値 8〜72                                                                                                                                                              | `16`                                                                         | 基本の文字サイズ（px）                                                                                        |
+| `lineHeight`                        | 数値 0.8〜3                                                                                                                                                             | `1.6`                                                                        | 行の高さ（文字サイズに対する倍率）                                                                            |
+| `textColor`                         | 色（`#rrggbb`）                                                                                                                                                         | `"#333333"`                                                                  | 基本の文字色                                                                                                  |
+| `linkColor`                         | 色（`#rrggbb`）                                                                                                                                                         | `"#0066cc"`                                                                  | リンクの色                                                                                                    |
+| `preheader`                         | 文字列                                                                                                                                                                  | `""`                                                                         | プリヘッダー（受信一覧で件名の後ろに出る短い文）                                                              |
+| `title`                             | 文字列                                                                                                                                                                  | `""`                                                                         | HTML の `<title>`                                                                                             |
 
 ## 行（`body.rows[]`）
 
@@ -148,13 +188,19 @@ Mailmason のテンプレートは 1 つの JSON で、HTML とテキストパ�
 
 ### 行の設定（`settings`）
 
-| キー              | 型                                             | 既定値                                    | 説明                                |
-| ----------------- | ---------------------------------------------- | ----------------------------------------- | ----------------------------------- |
-| `backgroundColor` | 色（`#rrggbb`） \| `null`                      | `null`                                    | 行の背景色（`null` で本文の背景色） |
-| `padding`         | 余白 `{ top, right, bottom, left }`（0〜1000） | `{"top":0,"right":0,"bottom":0,"left":0}` | 行の内側の余白（px）                |
-| `columnGap`       | 整数 0〜200                                    | `16`                                      | カラムの間隔（px）                  |
-| `stackOnMobile`   | 真偽値                                         | `true`                                    | スマホでカラムを縦に並べるか        |
-| `hideOn`          | `"mobile"` \| `null`                           | `null`                                    | `"mobile"` でスマホでは表示しない   |
+| キー                         | 型                                                                                                                                                                      | 既定値                                    | 説明                                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `backgroundColor`            | 色（`#rrggbb`） \| `null`                                                                                                                                               | `null`                                    | 行の背景色（`null` で本文の背景色）                                                                         |
+| `backgroundImage`            | オブジェクト                                                                                                                                                            |                                           | 行の背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる） |
+| `backgroundImage.src`        | 文字列                                                                                                                                                                  | `""`                                      | 画像の URL                                                                                                  |
+| `backgroundImage.size`       | `"cover"` \| `"contain"` \| `"auto"`                                                                                                                                    | `"cover"`                                 | `"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸                                               |
+| `backgroundImage.position`   | `"left top"` \| `"center top"` \| `"right top"` \| `"left center"` \| `"center center"` \| `"right center"` \| `"left bottom"` \| `"center bottom"` \| `"right bottom"` | `"center center"`                         | 位置（横 縦）                                                                                               |
+| `backgroundImage.repeat`     | `"no-repeat"` \| `"repeat"`                                                                                                                                             | `"no-repeat"`                             | 繰り返し                                                                                                    |
+| `backgroundImage.uploadData` | 任意のオブジェクト \| `null`                                                                                                                                            | `null`                                    | アップロード時に `onImageUpload` が返した `data`（出力には使わない）                                        |
+| `padding`                    | 余白 `{ top, right, bottom, left }`（0〜1000）                                                                                                                          | `{"top":0,"right":0,"bottom":0,"left":0}` | 行の内側の余白（px）                                                                                        |
+| `columnGap`                  | 整数 0〜200                                                                                                                                                             | `16`                                      | カラムの間隔（px）                                                                                          |
+| `stackOnMobile`              | 真偽値                                                                                                                                                                  | `true`                                    | スマホでカラムを縦に並べるか                                                                                |
+| `hideOn`                     | `"mobile"` \| `null`                                                                                                                                                    | `null`                                    | `"mobile"` でスマホでは表示しない                                                                           |
 
 ## カラム（`columns[]`）
 
@@ -164,11 +210,17 @@ Mailmason のテンプレートは 1 つの JSON で、HTML とテキストパ�
 | `settings` | オブジェクト | カラムの設定（下記）                |
 | `blocks`   | 配列         | ブロックの並び（上から順）          |
 
-| キー              | 型                                             | 既定値                                    | 説明                     |
-| ----------------- | ---------------------------------------------- | ----------------------------------------- | ------------------------ |
-| `backgroundColor` | 色（`#rrggbb`） \| `null`                      | `null`                                    | カラムの背景色           |
-| `padding`         | 余白 `{ top, right, bottom, left }`（0〜1000） | `{"top":0,"right":0,"bottom":0,"left":0}` | カラムの内側の余白（px） |
-| `verticalAlign`   | `"top"` \| `"middle"` \| `"bottom"`            | `"top"`                                   | カラム内の縦位置         |
+| キー                         | 型                                                                                                                                                                      | 既定値                                    | 説明                                                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `backgroundColor`            | 色（`#rrggbb`） \| `null`                                                                                                                                               | `null`                                    | カラムの背景色                                                                                                  |
+| `backgroundImage`            | オブジェクト                                                                                                                                                            |                                           | カラムの背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる） |
+| `backgroundImage.src`        | 文字列                                                                                                                                                                  | `""`                                      | 画像の URL                                                                                                      |
+| `backgroundImage.size`       | `"cover"` \| `"contain"` \| `"auto"`                                                                                                                                    | `"cover"`                                 | `"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸                                                   |
+| `backgroundImage.position`   | `"left top"` \| `"center top"` \| `"right top"` \| `"left center"` \| `"center center"` \| `"right center"` \| `"left bottom"` \| `"center bottom"` \| `"right bottom"` | `"center center"`                         | 位置（横 縦）                                                                                                   |
+| `backgroundImage.repeat`     | `"no-repeat"` \| `"repeat"`                                                                                                                                             | `"no-repeat"`                             | 繰り返し                                                                                                        |
+| `backgroundImage.uploadData` | 任意のオブジェクト \| `null`                                                                                                                                            | `null`                                    | アップロード時に `onImageUpload` が返した `data`（出力には使わない）                                            |
+| `padding`                    | 余白 `{ top, right, bottom, left }`（0〜1000）                                                                                                                          | `{"top":0,"right":0,"bottom":0,"left":0}` | カラムの内側の余白（px）                                                                                        |
+| `verticalAlign`              | `"top"` \| `"middle"` \| `"bottom"`                                                                                                                                     | `"top"`                                   | カラム内の縦位置                                                                                                |
 
 ## ブロック（`blocks[]`）
 

@@ -4,9 +4,15 @@ import { useDemoComponentStore } from './component-store.js';
 import basic from '../test/fixtures/templates/basic.json';
 import kitchenSink from '../test/fixtures/templates/kitchen-sink.json';
 import contentBlocks from '../test/fixtures/templates/content-blocks.json';
+import backgrounds from '../test/fixtures/templates/backgrounds.json';
 
 /** @type {Record<string, unknown>} */
-const fixtures = { basic, 'kitchen-sink': kitchenSink, 'content-blocks': contentBlocks };
+const fixtures = {
+  basic,
+  'kitchen-sink': kitchenSink,
+  'content-blocks': contentBlocks,
+  backgrounds,
+};
 
 const editor = /** @type {import('../src/index.js').MailmasonEditor} */ (
   document.querySelector('mailmason-editor')
@@ -14,9 +20,19 @@ const editor = /** @type {import('../src/index.js').MailmasonEditor} */ (
 const select = /** @type {HTMLSelectElement} */ (document.querySelector('#fixture'));
 
 editor.mergeTags = [
-  { key: 'name', label: '氏名', sample: '山田 太郎' },
-  { key: 'unsubscribe_url', label: '配信停止 URL', sample: 'https://example.com/unsubscribe' },
-  { key: 'coupon', label: 'クーポンコード', sample: 'AUTUMN2026' },
+  { key: 'name', label: '氏名', group: '会員', sample: '山田 太郎', fallback: 'お客様' },
+  { key: 'member_rank', label: '会員ランク', group: '会員', sample: 'ゴールド' },
+  { key: 'points', label: '保有ポイント', group: '会員', sample: '1,250' },
+  { key: 'coupon', label: 'クーポンコード', group: 'クーポン', sample: 'AUTUMN2026' },
+  { key: 'coupon_expiry', label: 'クーポンの有効期限', group: 'クーポン', sample: '10 月 31 日' },
+  { key: 'shop_name', label: 'ショップ名', group: 'ショップ', sample: 'Mailmason Store' },
+  {
+    key: 'unsubscribe_url',
+    label: '配信停止 URL',
+    group: '配信',
+    sample: 'https://example.com/unsubscribe',
+  },
+  { key: 'uid', label: '会員 ID（計測用）', group: '配信', sample: 'U0001' },
 ];
 // カスタムブロック（クーポン・商品リスト）
 editor.blocks = createDemoBlocks(`${location.origin}/docs/public/demo/`);

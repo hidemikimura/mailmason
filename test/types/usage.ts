@@ -123,9 +123,13 @@ if (editor) {
   // @ts-expect-error 配色にない値
   editor.colorMode = 'sepia';
   editor.blocks = [productBlock];
-  editor.mergeTags = [{ key: 'name', label: '氏名', sample: '山田 太郎' }] satisfies MergeTag[];
+  editor.mergeTags = [
+    { key: 'name', label: '氏名', group: '会員', sample: '山田 太郎' },
+  ] satisfies MergeTag[];
+  editor.mergeTagTrigger = false;
 
-  const upload: ImageUploadHook = async (file, { blockId }) => ({
+  const upload: ImageUploadHook = async (file, { blockId, target }) => ({
+    alt: target === 'block' ? file.name : undefined,
     url: `https://cdn.example.com/${blockId}/${file.name}`,
     data: { id: 1 },
   });

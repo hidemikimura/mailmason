@@ -23,7 +23,39 @@ export type Checks = [
       {
         width: number;
         backgroundColor: string;
+        backgroundImage: {
+          src: string;
+          size: 'cover' | 'contain' | 'auto';
+          position:
+            | 'left top'
+            | 'center top'
+            | 'right top'
+            | 'left center'
+            | 'center center'
+            | 'right center'
+            | 'left bottom'
+            | 'center bottom'
+            | 'right bottom';
+          repeat: 'no-repeat' | 'repeat';
+          uploadData: Record<string, unknown> | null;
+        };
         contentBackgroundColor: string;
+        contentBackgroundImage: {
+          src: string;
+          size: 'cover' | 'contain' | 'auto';
+          position:
+            | 'left top'
+            | 'center top'
+            | 'right top'
+            | 'left center'
+            | 'center center'
+            | 'right center'
+            | 'left bottom'
+            | 'center bottom'
+            | 'right bottom';
+          repeat: 'no-repeat' | 'repeat';
+          uploadData: Record<string, unknown> | null;
+        };
         fontFamily: string;
         fontSize: number;
         lineHeight: number;
@@ -39,6 +71,22 @@ export type Checks = [
       RowSettings,
       {
         backgroundColor: string | null;
+        backgroundImage: {
+          src: string;
+          size: 'cover' | 'contain' | 'auto';
+          position:
+            | 'left top'
+            | 'center top'
+            | 'right top'
+            | 'left center'
+            | 'center center'
+            | 'right center'
+            | 'left bottom'
+            | 'center bottom'
+            | 'right bottom';
+          repeat: 'no-repeat' | 'repeat';
+          uploadData: Record<string, unknown> | null;
+        };
         padding: { top: number; right: number; bottom: number; left: number };
         columnGap: number;
         stackOnMobile: boolean;
@@ -51,6 +99,22 @@ export type Checks = [
       ColumnSettings,
       {
         backgroundColor: string | null;
+        backgroundImage: {
+          src: string;
+          size: 'cover' | 'contain' | 'auto';
+          position:
+            | 'left top'
+            | 'center top'
+            | 'right top'
+            | 'left center'
+            | 'center center'
+            | 'right center'
+            | 'left bottom'
+            | 'center bottom'
+            | 'right bottom';
+          repeat: 'no-repeat' | 'repeat';
+          uploadData: Record<string, unknown> | null;
+        };
         padding: { top: number; right: number; bottom: number; left: number };
         verticalAlign: 'top' | 'middle' | 'bottom';
       }

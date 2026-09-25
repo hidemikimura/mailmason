@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { chromeStyles, renderChrome } from './chrome.js';
 import { define } from '../context.js';
+import { backgroundStyles } from '../util.js';
 import './mm-block.js';
 
 /** @import { Row, BodySettings, Spacing } from '../../core/model/types.js' */
@@ -157,6 +158,7 @@ export class MmRow extends LitElement {
           style=${styleMap({
             padding: pad(column.settings.padding),
             'background-color': column.settings.backgroundColor ?? '',
+            ...backgroundStyles(column.settings.backgroundImage),
             'justify-content': valign,
           })}
           @click=${(/** @type {Event} */ e) => {
@@ -194,6 +196,7 @@ export class MmRow extends LitElement {
         style=${styleMap({
           padding: pad(settings.padding),
           'background-color': settings.backgroundColor ?? '',
+          ...backgroundStyles(settings.backgroundImage),
         })}
       >
         <div class="columns">${columns}</div>

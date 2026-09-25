@@ -3,12 +3,12 @@
   "body": {
     "settings": {
       "width": 600,
-      "backgroundColor": "#f4f4f4",
+      "backgroundColor": "#efe7dd",
       "backgroundImage": {
-        "src": "",
-        "size": "cover",
-        "position": "center center",
-        "repeat": "no-repeat",
+        "src": "https://example.com/images/pattern.jpg",
+        "size": "auto",
+        "position": "center top",
+        "repeat": "repeat",
         "uploadData": null
       },
       "contentBackgroundColor": "#ffffff",
@@ -24,27 +24,27 @@
       "lineHeight": 1.6,
       "textColor": "#333333",
       "linkColor": "#0066cc",
-      "preheader": "秋の新作アイテムのご案内です",
-      "title": "秋の新作のお知らせ"
+      "preheader": "行・カラム・外側に背景画像を敷いたメールです",
+      "title": "背景画像のサンプル"
     },
     "rows": [
       {
-        "id": "r_header01",
+        "id": "r_bg000001",
         "layout": "1",
         "settings": {
-          "backgroundColor": null,
+          "backgroundColor": "#5a3a3a",
           "backgroundImage": {
-            "src": "",
+            "src": "https://example.com/images/hero-bg.jpg",
             "size": "cover",
             "position": "center center",
             "repeat": "no-repeat",
             "uploadData": null
           },
           "padding": {
-            "top": 0,
-            "right": 0,
-            "bottom": 0,
-            "left": 0
+            "top": 56,
+            "right": 32,
+            "bottom": 48,
+            "left": 32
           },
           "columnGap": 16,
           "stackOnMobile": true,
@@ -52,7 +52,7 @@
         },
         "columns": [
           {
-            "id": "c_header01",
+            "id": "c_bg000002",
             "settings": {
               "backgroundColor": null,
               "backgroundImage": {
@@ -72,84 +72,10 @@
             },
             "blocks": [
               {
-                "id": "b_banner01",
-                "type": "image",
-                "values": {
-                  "src": "https://example.com/images/banner.png",
-                  "alt": "秋の新作",
-                  "href": "https://example.com/?utm_source=mail",
-                  "width": {
-                    "unit": "%",
-                    "value": 100
-                  },
-                  "align": "center",
-                  "naturalWidth": 1200,
-                  "naturalHeight": 600,
-                  "uploadData": null
-                },
-                "style": {
-                  "backgroundColor": null,
-                  "padding": {
-                    "top": 0,
-                    "right": 0,
-                    "bottom": 0,
-                    "left": 0
-                  }
-                },
-                "hideOn": null
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "r_body0001",
-        "layout": "1",
-        "settings": {
-          "backgroundColor": null,
-          "backgroundImage": {
-            "src": "",
-            "size": "cover",
-            "position": "center center",
-            "repeat": "no-repeat",
-            "uploadData": null
-          },
-          "padding": {
-            "top": 24,
-            "right": 24,
-            "bottom": 8,
-            "left": 24
-          },
-          "columnGap": 16,
-          "stackOnMobile": true,
-          "hideOn": null
-        },
-        "columns": [
-          {
-            "id": "c_body0001",
-            "settings": {
-              "backgroundColor": null,
-              "backgroundImage": {
-                "src": "",
-                "size": "cover",
-                "position": "center center",
-                "repeat": "no-repeat",
-                "uploadData": null
-              },
-              "padding": {
-                "top": 0,
-                "right": 0,
-                "bottom": 0,
-                "left": 0
-              },
-              "verticalAlign": "top"
-            },
-            "blocks": [
-              {
-                "id": "b_text0001",
+                "id": "b_bg000003",
                 "type": "text",
                 "values": {
-                  "html": "<h1>{{name}} 様</h1><p>いつもご利用ありがとうございます。<br>秋の新作が入荷しました。</p>",
+                  "html": "<h1 style=\"text-align:center\"><span style=\"color:#ffffff\">秋の新作が入荷しました</span></h1><p style=\"text-align:center\"><span style=\"color:#ffffff\">{{name}} 様に、今季のおすすめをお届けします。</span></p>",
                   "fontFamily": null,
                   "fontSize": null,
                   "lineHeight": null,
@@ -167,21 +93,21 @@
                 "hideOn": null
               },
               {
-                "id": "b_button01",
+                "id": "b_bg000004",
                 "type": "button",
                 "values": {
                   "label": "新作を見る",
                   "href": "https://example.com/new",
-                  "backgroundColor": "#e8590c",
-                  "color": "#ffffff",
+                  "backgroundColor": "#ffffff",
+                  "color": "#3b2a4a",
                   "fontSize": 16,
                   "fontWeight": "bold",
-                  "borderRadius": 6,
+                  "borderRadius": 4,
                   "innerPadding": {
-                    "top": 14,
-                    "right": 32,
-                    "bottom": 14,
-                    "left": 32
+                    "top": 12,
+                    "right": 24,
+                    "bottom": 12,
+                    "left": 24
                   },
                   "width": "auto",
                   "align": "center"
@@ -202,10 +128,10 @@
         ]
       },
       {
-        "id": "r_items001",
+        "id": "r_bg000005",
         "layout": "1:1",
         "settings": {
-          "backgroundColor": "#fafafa",
+          "backgroundColor": null,
           "backgroundImage": {
             "src": "",
             "size": "cover",
@@ -214,9 +140,9 @@
             "uploadData": null
           },
           "padding": {
-            "top": 16,
+            "top": 24,
             "right": 24,
-            "bottom": 16,
+            "bottom": 24,
             "left": 24
           },
           "columnGap": 16,
@@ -225,7 +151,7 @@
         },
         "columns": [
           {
-            "id": "c_items001",
+            "id": "c_bg000006",
             "settings": {
               "backgroundColor": null,
               "backgroundImage": {
@@ -245,20 +171,14 @@
             },
             "blocks": [
               {
-                "id": "b_item0001",
-                "type": "imageText",
+                "id": "b_bg000007",
+                "type": "text",
                 "values": {
-                  "image": {
-                    "src": "https://example.com/images/item1.png",
-                    "alt": "ニットカーディガン",
-                    "href": "https://example.com/items/1",
-                    "naturalWidth": 400,
-                    "naturalHeight": 400,
-                    "uploadData": null
-                  },
-                  "imagePosition": "left",
-                  "imageWidthPercent": 40,
-                  "html": "<p><strong>ニットカーディガン</strong><br>¥8,900</p>"
+                  "html": "<h2>会員限定セール</h2><p>ポイント 2 倍のキャンペーンを 10 月 31 日まで開催しています。</p>",
+                  "fontFamily": null,
+                  "fontSize": null,
+                  "lineHeight": null,
+                  "color": null
                 },
                 "style": {
                   "backgroundColor": null,
@@ -274,40 +194,34 @@
             ]
           },
           {
-            "id": "c_items002",
+            "id": "c_bg000008",
             "settings": {
-              "backgroundColor": null,
+              "backgroundColor": "#3b2a4a",
               "backgroundImage": {
-                "src": "",
+                "src": "https://example.com/images/hero-bg.jpg",
                 "size": "cover",
-                "position": "center center",
+                "position": "right center",
                 "repeat": "no-repeat",
                 "uploadData": null
               },
               "padding": {
-                "top": 0,
-                "right": 0,
-                "bottom": 0,
-                "left": 0
+                "top": 24,
+                "right": 16,
+                "bottom": 24,
+                "left": 16
               },
-              "verticalAlign": "top"
+              "verticalAlign": "middle"
             },
             "blocks": [
               {
-                "id": "b_item0002",
-                "type": "imageText",
+                "id": "b_bg000009",
+                "type": "text",
                 "values": {
-                  "image": {
-                    "src": "https://example.com/images/item2.png",
-                    "alt": "ウールコート",
-                    "href": "https://example.com/items/2",
-                    "naturalWidth": 400,
-                    "naturalHeight": 400,
-                    "uploadData": null
-                  },
-                  "imagePosition": "left",
-                  "imageWidthPercent": 40,
-                  "html": "<p><strong>ウールコート</strong><br>¥24,000</p>"
+                  "html": "<h2 style=\"text-align:center\"><span style=\"color:#ffffff\">POINT ×2</span></h2><p style=\"text-align:center\"><span style=\"color:#ffffff\">10 月 31 日まで</span></p>",
+                  "fontFamily": null,
+                  "fontSize": null,
+                  "lineHeight": null,
+                  "color": null
                 },
                 "style": {
                   "backgroundColor": null,
@@ -325,7 +239,7 @@
         ]
       },
       {
-        "id": "r_footer01",
+        "id": "r_bg000010",
         "layout": "1",
         "settings": {
           "backgroundColor": null,
@@ -337,7 +251,7 @@
             "uploadData": null
           },
           "padding": {
-            "top": 8,
+            "top": 16,
             "right": 24,
             "bottom": 24,
             "left": 24
@@ -348,7 +262,7 @@
         },
         "columns": [
           {
-            "id": "c_footer01",
+            "id": "c_bg000011",
             "settings": {
               "backgroundColor": null,
               "backgroundImage": {
@@ -368,43 +282,20 @@
             },
             "blocks": [
               {
-                "id": "b_divide01",
-                "type": "divider",
+                "id": "b_bg000012",
+                "type": "image",
                 "values": {
-                  "thickness": 1,
-                  "color": "#dddddd",
-                  "lineStyle": "solid",
-                  "widthPercent": 100,
-                  "align": "center"
-                },
-                "style": {
-                  "backgroundColor": null,
-                  "padding": {
-                    "top": 10,
-                    "right": 10,
-                    "bottom": 10,
-                    "left": 10
-                  }
-                },
-                "hideOn": null
-              },
-              {
-                "id": "b_social01",
-                "type": "social",
-                "values": {
-                  "items": [
-                    {
-                      "service": "x",
-                      "url": "https://x.com/example"
-                    },
-                    {
-                      "service": "instagram",
-                      "url": "https://instagram.com/example"
-                    }
-                  ],
-                  "iconSize": 32,
+                  "src": "https://example.com/images/logo.png",
+                  "alt": "Mailmason Store",
+                  "href": "",
+                  "width": {
+                    "unit": "px",
+                    "value": 120
+                  },
                   "align": "center",
-                  "iconStyle": "color"
+                  "naturalWidth": 240,
+                  "naturalHeight": 80,
+                  "uploadData": null
                 },
                 "style": {
                   "backgroundColor": null,
@@ -418,31 +309,14 @@
                 "hideOn": null
               },
               {
-                "id": "b_space001",
-                "type": "spacer",
-                "values": {
-                  "height": 16
-                },
-                "style": {
-                  "backgroundColor": null,
-                  "padding": {
-                    "top": 0,
-                    "right": 0,
-                    "bottom": 0,
-                    "left": 0
-                  }
-                },
-                "hideOn": null
-              },
-              {
-                "id": "b_text0002",
+                "id": "b_bg000013",
                 "type": "text",
                 "values": {
                   "html": "<p style=\"text-align:center\">配信停止は<a href=\"{{unsubscribe_url}}\">こちら</a></p>",
                   "fontFamily": null,
                   "fontSize": 12,
                   "lineHeight": null,
-                  "color": "#888888"
+                  "color": null
                 },
                 "style": {
                   "backgroundColor": null,

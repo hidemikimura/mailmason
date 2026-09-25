@@ -1,4 +1,5 @@
 // エディタ内の小さな汎用関数
+import { cssUrl } from '../core/render-html/background.js';
 
 /**
  * ドット区切りのパスで値を取り出す
@@ -87,4 +88,28 @@ export function mergeTagValues(mergeTags, use) {
     if (value != null) values[tag.key] = value;
   }
   return values;
+}
+
+/**
+ * 日本語入力（IME）の変換中のキー操作か。変換を確定する Enter などをショートカットとして扱わないために使う。
+ * Safari は確定の Enter を compositionend の後に isComposing: false で送るが、keyCode は 229 になる
+ * @param {KeyboardEvent} event
+ */
+export function isComposing(event) {
+  return event.isComposing || event.keyCode === 229;
+}
+
+/**
+ * 背景画像の CSS（styleMap 用。画像が無ければ空）
+ * @param {import('../core/model/types.js').BackgroundImage | null | undefined} bg
+ * @returns {Record<string, string>}
+ */
+export function backgroundStyles(bg) {
+  if (!bg?.src) return {};
+  return {
+    'background-image': `url('${cssUrl(bg.src)}')`,
+    'background-position': bg.position,
+    'background-size': bg.size,
+    'background-repeat': bg.repeat,
+  };
 }

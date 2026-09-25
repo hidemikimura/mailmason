@@ -5,9 +5,11 @@ import { SOCIAL_SERVICES, socialLabel } from '../../core/blocks/social.js';
 import { sanitizeHtml } from '../../core/richtext/sanitize.js';
 import { getIn, measureImage, setIn } from '../util.js';
 import { UPLOAD_TYPES, hasFiles, pickImage } from '../upload.js';
+import '../components/mm-text-input.js';
 import { qrSignature } from '../../core/blocks/qr.js';
 import { labelText } from '../../core/blocks/custom.js';
 import { youtubeThumbnail } from '../../core/blocks/video.js';
+import { BACKGROUND_POSITIONS } from '../../core/model/settings.js';
 import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
 
 /** @import { TemplateResult } from 'lit' */
@@ -22,12 +24,12 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
 /**
  * @typedef {Object} FieldSpec
  * @property {string} key values 内のパス（ドット区切り可）
- * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout' | 'qrcode' | 'list' | 'action' | 'element' | 'videoUrl' | 'tableColumns' | 'tableInfo'} kind
+ * @property {'text' | 'textarea' | 'richtext' | 'rawhtml' | 'url' | 'number' | 'color' | 'select' | 'align' | 'spacing' | 'toggle' | 'image' | 'imageWidth' | 'socialItems' | 'layout' | 'qrcode' | 'list' | 'action' | 'element' | 'videoUrl' | 'tableColumns' | 'tableInfo' | 'backgroundImage'} kind
  * @property {string} labelKey 辞書のキー（label があればそちらを使う）
  * @property {import('../../core/blocks/custom.js').Label} [label] そのまま表示する名前（カスタムブロック）
  * @property {string} [helpKey]
  * @property {import('../../core/blocks/custom.js').Label} [help] そのまま表示する説明（カスタムブロック）
- * @property {{ min?: number, max?: number, step?: number, unit?: string, nullable?: boolean, choices?: Choice[], mergeTags?: boolean, on?: unknown, off?: unknown, placeholderKey?: string, placeholder?: import('../../core/blocks/custom.js').Label }} [options]
+ * @property {{ min?: number, max?: number, step?: number, unit?: string, nullable?: boolean, choices?: Choice[], mergeTags?: boolean, on?: unknown, off?: unknown, plain?: boolean, placeholderKey?: string, placeholder?: import('../../core/blocks/custom.js').Label }} [options]
  * @property {FieldSpec[]} [fields] list: 1 件分の項目
  * @property {() => Record<string, unknown>} [itemDefault] list: 追加する項目の初期値
  * @property {import('../../core/blocks/custom.js').Label | ((item: Record<string, unknown>, index: number, t?: Translate) => string)} [itemLabel] list: 各項目の見出し（標準ブロックには t も渡す）
@@ -37,7 +39,8 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
  */
 
 /**
- * @typedef {{ key: string, label: string, sample?: string, fallback?: string }} MergeTag
+ * 差し込み変数の候補。group があると候補の一覧でグループごとにまとめる
+ * @typedef {{ key: string, label: string, group?: string, sample?: string, fallback?: string }} MergeTag
  */
 
 /**
@@ -54,6 +57,7 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
  * @property {Record<string, unknown>} values 編集対象の values 全体
  * @property {MergeTag[]} mergeTags
  * @property {MergeTagDelimiters} delimiters
+ * @property {boolean} [mergeTagTrigger] 区切り開始文字の入力で候補を出す（既定 true）
  * @property {ImageSelectHook | null} onImageSelect
  * @property {((key: string, file: File) => void) | null} [upload] 画像ファイルをアップロードする（フックが無ければ null）
  * @property {UploadState | null} [uploadState] 編集対象のアップロードの状態
@@ -92,35 +96,35 @@ function sibling(key, name) {
 const inputValue = (event) => /** @type {HTMLInputElement} */ (event.target).value;
 
 /**
- * マージタグの挿入メニュー。選ぶと入力欄のカーソル位置に `{{key}}` を入れる
- * @param {string} inputId
+ * 差し込み変数を使える入力欄か（項目が mergeTags で、候補があるとき）
  * @param {FieldSpec} spec
  * @param {FieldContext} ctx
  */
-function mergeTagMenu(inputId, spec, ctx) {
-  if (!spec.options?.mergeTags || ctx.mergeTags.length === 0) return nothing;
-  /** @param {Event} event */
-  const onChange = (event) => {
-    const select = /** @type {HTMLSelectElement} */ (event.target);
-    const key = select.value;
-    select.value = '';
-    if (!key) return;
-    const root = /** @type {ShadowRoot} */ (select.getRootNode());
-    const input = /** @type {HTMLInputElement | null} */ (root.getElementById(inputId));
-    if (!input) return;
-    const tag = `${ctx.delimiters.open}${key}${ctx.delimiters.close}`;
-    const start = input.selectionStart ?? input.value.length;
-    const end = input.selectionEnd ?? start;
-    const next = input.value.slice(0, start) + tag + input.value.slice(end);
-    input.value = next;
-    ctx.change(spec.key, next);
-    input.focus();
-    input.setSelectionRange(start + tag.length, start + tag.length);
-  };
-  return html`<select class="merge-tags" aria-label=${ctx.t('mergeTag.insert')} @change=${onChange}>
-    <option value="">${ctx.t('mergeTag.insert')}</option>
-    ${ctx.mergeTags.map((tag) => html`<option value=${tag.key}>${tag.label}</option>`)}
-  </select>`;
+const acceptsMergeTags = (spec, ctx) =>
+  Boolean(spec.options?.mergeTags) && ctx.mergeTags.length > 0;
+
+/**
+ * 差し込み変数を入れられる入力欄（候補の絞り込みボタン、区切り開始文字の入力で候補を出す）
+ * @param {FieldSpec} spec
+ * @param {unknown} value
+ * @param {FieldContext} ctx
+ * @param {string} id
+ * @param {{ inputmode?: string, placeholder?: string, multiline?: boolean, onChange?: (value: string) => void }} [options]
+ */
+function mergeTagInput(spec, value, ctx, id, options = {}) {
+  return html`<mm-text-input
+    .inputId=${id}
+    .value=${String(value ?? '')}
+    .inputmode=${options.inputmode ?? 'text'}
+    .placeholder=${options.placeholder ?? ''}
+    ?multiline=${options.multiline ?? false}
+    .tags=${ctx.mergeTags}
+    .delimiters=${ctx.delimiters}
+    .trigger=${ctx.mergeTagTrigger ?? true}
+    .t=${ctx.t}
+    @input=${(/** @type {Event} */ e) => ctx.change(spec.key, inputValue(e), { merge: true })}
+    @change=${(/** @type {Event} */ e) => options.onChange?.(inputValue(e))}
+  ></mm-text-input>`;
 }
 
 /**
@@ -136,18 +140,21 @@ function control(spec, value, ctx, id) {
 
   switch (spec.kind) {
     case 'text':
-    case 'url':
-      return html`<div class="with-menu">
-        <input
-          id=${id}
-          type="text"
-          inputmode=${spec.kind === 'url' ? 'url' : 'text'}
-          .value=${String(value ?? '')}
-          placeholder=${text(ctx, o.placeholderKey, o.placeholder)}
-          @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
-        />
-        ${mergeTagMenu(id, spec, ctx)}
-      </div>`;
+    case 'url': {
+      const inputmode = spec.kind === 'url' ? 'url' : 'text';
+      const placeholder = text(ctx, o.placeholderKey, o.placeholder);
+      if (acceptsMergeTags(spec, ctx)) {
+        return mergeTagInput(spec, value, ctx, id, { inputmode, placeholder });
+      }
+      return html`<input
+        id=${id}
+        type="text"
+        inputmode=${inputmode}
+        .value=${String(value ?? '')}
+        placeholder=${placeholder}
+        @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
+      />`;
+    }
 
     case 'videoUrl': {
       // 動画の URL。YouTube の URL なら、サムネイルが空（または前に自動で入れた YouTube の画像）のときに入れる
@@ -159,17 +166,89 @@ function control(spec, value, ctx, id) {
         if (thumb.src && !/^https:\/\/i\.ytimg\.com\//.test(thumb.src)) return;
         change(sibling(spec.key, 'thumbnail'), { ...thumb, ...found, uploadData: null });
       };
-      return html`<div class="with-menu">
-        <input
-          id=${id}
-          type="text"
-          inputmode="url"
-          placeholder="https://www.youtube.com/watch?v=…"
-          .value=${String(value ?? '')}
-          @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
-          @change=${(/** @type {Event} */ e) => fillThumbnail(inputValue(e))}
-        />
-        ${mergeTagMenu(id, spec, ctx)}
+      const placeholder = 'https://www.youtube.com/watch?v=…';
+      if (acceptsMergeTags(spec, ctx)) {
+        return mergeTagInput(spec, value, ctx, id, {
+          inputmode: 'url',
+          placeholder,
+          onChange: fillThumbnail,
+        });
+      }
+      return html`<input
+        id=${id}
+        type="text"
+        inputmode="url"
+        placeholder=${placeholder}
+        .value=${String(value ?? '')}
+        @input=${(/** @type {Event} */ e) => change(spec.key, inputValue(e), { merge: true })}
+        @change=${(/** @type {Event} */ e) => fillThumbnail(inputValue(e))}
+      />`;
+    }
+
+    case 'backgroundImage': {
+      // 背景画像: 画像の入力欄と、画像があるときだけサイズ・位置・繰り返し
+      const bg = /** @type {import('../../core/model/types.js').BackgroundImage | undefined} */ (
+        value
+      );
+      /** @type {FieldSpec} */
+      const srcSpec = {
+        key: `${spec.key}.src`,
+        kind: 'image',
+        labelKey: spec.labelKey,
+        options: { plain: true },
+      };
+      const image = control(srcSpec, bg?.src ?? '', ctx, id);
+      if (!bg?.src) return image;
+      const sub = (/** @type {string} */ name) => `${spec.key}.${name}`;
+      return html`<div class="background-image">
+        ${image}
+        <div class="background-options">
+          <label class="background-option">
+            <span>${t('background.size')}</span>
+            <select
+              data-option="size"
+              @change=${(/** @type {Event} */ e) =>
+                change(sub('size'), /** @type {HTMLSelectElement} */ (e.target).value)}
+            >
+              ${['cover', 'contain', 'auto'].map(
+                (size) =>
+                  html`<option value=${size} ?selected=${bg.size === size}>
+                    ${t(`background.size.${size}`)}
+                  </option>`,
+              )}
+            </select>
+          </label>
+          <div class="background-option">
+            <span>${t('background.position')}</span>
+            <div class="position-grid" role="group" aria-label=${t('background.position')}>
+              ${BACKGROUND_POSITIONS.map(
+                (position) =>
+                  html`<button
+                    type="button"
+                    data-position=${position}
+                    title=${t(`background.position.${position}`)}
+                    aria-label=${t(`background.position.${position}`)}
+                    aria-pressed=${bg.position === position ? 'true' : 'false'}
+                    @click=${() => change(sub('position'), position)}
+                  ></button>`,
+              )}
+            </div>
+          </div>
+          <label class="background-option inline">
+            <input
+              type="checkbox"
+              class="toggle"
+              data-option="repeat"
+              .checked=${bg.repeat === 'repeat'}
+              @change=${(/** @type {Event} */ e) =>
+                change(
+                  sub('repeat'),
+                  /** @type {HTMLInputElement} */ (e.target).checked ? 'repeat' : 'no-repeat',
+                )}
+            />
+            <span>${t('background.repeat')}</span>
+          </label>
+        </div>
       </div>`;
     }
 
@@ -250,6 +329,9 @@ function control(spec, value, ctx, id) {
 
     case 'textarea':
     case 'rawhtml':
+      if (spec.kind === 'textarea' && acceptsMergeTags(spec, ctx)) {
+        return mergeTagInput(spec, value, ctx, id, { multiline: true });
+      }
       return html`<textarea
         id=${id}
         rows=${spec.kind === 'rawhtml' ? 8 : 4}
@@ -455,6 +537,7 @@ function control(spec, value, ctx, id) {
       const uploading = state?.status === 'uploading';
       /** @param {string} next */
       const measure = async (next) => {
+        if (o.plain) return; // 背景画像などは実寸を持たない
         const size = await measureImage(next);
         if (size) {
           change(sibling(spec.key, 'naturalWidth'), size.width, { merge: true });
@@ -469,7 +552,7 @@ function control(spec, value, ctx, id) {
         const dataKey = sibling(spec.key, 'uploadData');
         if (picked.data || getIn(ctx.values, dataKey)) change(dataKey, picked.data);
         const altKey = sibling(spec.key, 'alt');
-        if (picked.alt && !getIn(ctx.values, altKey)) change(altKey, picked.alt);
+        if (!o.plain && picked.alt && !getIn(ctx.values, altKey)) change(altKey, picked.alt);
         void measure(picked.src);
       };
       const upload = ctx.upload;

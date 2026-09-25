@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { computeLayout } from '../../core/model/layout.js';
 import { define } from '../context.js';
+import { backgroundStyles } from '../util.js';
 import './mm-row.js';
 
 /** @import { Template, Row } from '../../core/model/types.js' */
@@ -175,7 +176,10 @@ export class MmCanvas extends LitElement {
 
     return html`<div
       class="surface"
-      style=${styleMap({ 'background-color': settings.backgroundColor })}
+      style=${styleMap({
+        'background-color': settings.backgroundColor,
+        ...backgroundStyles(settings.backgroundImage),
+      })}
       @click=${() => ctx.store.select(null)}
     >
       <div
@@ -183,6 +187,7 @@ export class MmCanvas extends LitElement {
         style=${styleMap({
           width: `${settings.width}px`,
           'background-color': settings.contentBackgroundColor,
+          ...backgroundStyles(settings.contentBackgroundImage),
         })}
       >
         ${

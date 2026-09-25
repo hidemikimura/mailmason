@@ -69,6 +69,7 @@ export default defineConfig({
             { text: 'エディタの操作', link: '/guide/editing' },
             { text: 'ブロック', link: '/guide/blocks' },
             { text: '画像', link: '/guide/images' },
+            { text: '背景画像', link: '/guide/backgrounds' },
             { text: 'コンポーネント', link: '/guide/components' },
             { text: 'カスタムブロック', link: '/guide/custom-blocks' },
             { text: '差し込み変数', link: '/guide/merge-tags' },

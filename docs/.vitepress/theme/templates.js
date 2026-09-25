@@ -5,12 +5,14 @@ import kitchenSink from '../../../test/fixtures/templates/kitchen-sink.json';
 import newsletter from '../../../skills/mailmason-templates/examples/newsletter.json';
 import announcement from '../../../skills/mailmason-templates/examples/announcement.json';
 import contentBlocks from '../../../test/fixtures/templates/content-blocks.json';
+import backgrounds from '../../../test/fixtures/templates/backgrounds.json';
 
 export const DEMO_TEMPLATES = [
   { id: 'newsletter', label: 'メールマガジン', template: newsletter },
   { id: 'basic', label: '新作のお知らせ', template: basic },
   { id: 'announcement', label: 'メンテナンスのお知らせ', template: announcement },
   { id: 'content-blocks', label: '表・動画・ギャラリー', template: contentBlocks },
+  { id: 'backgrounds', label: '背景画像', template: backgrounds },
   { id: 'kitchen-sink', label: '全ブロック', template: kitchenSink },
   { id: 'empty', label: '白紙', template: null },
 ];
@@ -29,7 +31,17 @@ export function withDemoImages(template, base) {
 }
 
 export const DEMO_MERGE_TAGS = [
-  { key: 'name', label: '氏名', sample: '山田 太郎', fallback: 'お客様' },
-  { key: 'unsubscribe_url', label: '配信停止 URL', sample: 'https://example.com/unsubscribe' },
-  { key: 'coupon', label: 'クーポンコード', sample: 'AUTUMN2026' },
+  { key: 'name', label: '氏名', group: '会員', sample: '山田 太郎', fallback: 'お客様' },
+  { key: 'member_rank', label: '会員ランク', group: '会員', sample: 'ゴールド' },
+  { key: 'points', label: '保有ポイント', group: '会員', sample: '1,250' },
+  { key: 'coupon', label: 'クーポンコード', group: 'クーポン', sample: 'AUTUMN2026' },
+  { key: 'coupon_expiry', label: 'クーポンの有効期限', group: 'クーポン', sample: '10 月 31 日' },
+  { key: 'shop_name', label: 'ショップ名', group: 'ショップ', sample: 'Mailmason Store' },
+  {
+    key: 'unsubscribe_url',
+    label: '配信停止 URL',
+    group: '配信',
+    sample: 'https://example.com/unsubscribe',
+  },
+  { key: 'uid', label: '会員 ID（計測用）', group: '配信', sample: 'U0001' },
 ];

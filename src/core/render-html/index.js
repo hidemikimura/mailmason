@@ -7,6 +7,12 @@ import { escapeAttr } from '../richtext/entities.js';
 import { TABLE_OPEN, paddingDecl, styleAttr } from './styles.js';
 import { renderLines, wrap } from './lines.js';
 import { skeleton } from './skeleton.js';
+import {
+  backgroundAttr,
+  backgroundDecls,
+  hasBackgroundImage,
+  withVmlBackground,
+} from './background.js';
 
 /** @import { Lines } from './lines.js' */
 /** @import { ResolvedHtmlOptions } from '../blocks/types.js' */
@@ -127,9 +133,27 @@ function addPadding(a, b) {
 const hasPadding = (p) => p.top > 0 || p.right > 0 || p.bottom > 0 || p.left > 0;
 
 /**
+ * 余白を中の表のセルに付ける（背景画像のあるセルは余白を持たず、VML が余白まで覆うようにするため）
+ * @param {{ top: number, right: number, bottom: number, left: number }} padding
+ * @param {Lines} children
+ * @returns {Lines}
+ */
+function padded(padding, children) {
+  if (!hasPadding(padding)) return children;
+  return [
+    wrap(
+      `${TABLE_OPEN}>`,
+      [wrap('<tr>', [wrap(`<td${styleAttr(paddingDecl(padding))}>`, children, '</td>')], '</tr>')],
+      '</table>',
+    ),
+  ];
+}
+
+/**
  * 行を出力する。入れ子のテーブルは必要なときだけ作る:
  * - 1 カラムで、カラムに余白・背景・縦位置の指定が無ければ、行のセルに直接ブロックを並べる
  * - カラムの余白・背景は、カラム間の余白（gap）と混ざらないときはカラムのセルに直接付ける
+ * - 背景画像があるセルは余白を中の表に移し、Outlook 用に VML で背景を敷く（VML の中の VML は出さない）
  * @param {Row} row
  * @param {RowBox} box
  * @param {Template} template
@@ -137,23 +161,30 @@ const hasPadding = (p) => p.top > 0 || p.right > 0 || p.bottom > 0 || p.left > 0
  * @returns {Lines}
  */
 function renderRow(row, box, template, options) {
+  const body = template.body.settings;
   const stack = row.settings.stackOnMobile && row.columns.length > 1;
+  const insideContentVml = hasBackgroundImage(body.contentBackgroundImage);
+  const rowImage = row.settings.backgroundImage;
+  const rowHasImage = hasBackgroundImage(rowImage);
   const rowCell = (/** @type {Lines} */ children) => {
     const hide = row.settings.hideOn === 'mobile' ? ' class="mm-hide-mobile"' : '';
-    return [
-      wrap(
-        '<tr>',
-        [
-          wrap(
-            `<td${hide}${styleAttr(paddingDecl(row.settings.padding), row.settings.backgroundColor && `background-color:${row.settings.backgroundColor}`)}>`,
-            children,
-            '</td>',
-          ),
-        ],
-        '</tr>',
-      ),
-    ];
+    const { padding, backgroundColor } = row.settings;
+    const cell = rowHasImage
+      ? wrap(
+          `<td${hide}${backgroundAttr(rowImage)}${styleAttr(backgroundColor && `background-color:${backgroundColor}`, ...backgroundDecls(rowImage))}>`,
+          withVmlBackground(rowImage, backgroundColor, body.width, padded(padding, children), {
+            insideVml: insideContentVml,
+          }),
+          '</td>',
+        )
+      : wrap(
+          `<td${hide}${styleAttr(paddingDecl(padding), backgroundColor && `background-color:${backgroundColor}`)}>`,
+          children,
+          '</td>',
+        );
+    return [wrap('<tr>', [cell], '</tr>')];
   };
+  const insideVml = insideContentVml || rowHasImage;
 
   if (row.columns.length === 1) {
     const [column] = row.columns;
@@ -161,6 +192,7 @@ function renderRow(row, box, template, options) {
     const plain =
       !hasPadding(settings.padding) &&
       !settings.backgroundColor &&
+      !hasBackgroundImage(settings.backgroundImage) &&
       settings.verticalAlign === 'top';
     if (plain) {
       return rowCell(renderBlocks(column.blocks, box.columns[0].contentWidth, template, options));
@@ -175,9 +207,11 @@ function renderRow(row, box, template, options) {
     const hasGap = size.gapLeft > 0 || size.gapRight > 0;
     const blocks = renderBlocks(column.blocks, size.contentWidth, template, options);
     const col = stack ? ' class="mm-col"' : '';
+    const image = settings.backgroundImage;
+    const hasImage = hasBackgroundImage(image);
     // スマホで縦に並べるとき .mm-col は左右の余白を 0 にするので、カラム自身の左右の余白は分けて持つ
     const sidePadding = settings.padding.left > 0 || settings.padding.right > 0;
-    const merge = !hasGap || (!settings.backgroundColor && !(stack && sidePadding));
+    const merge = !hasImage && (!hasGap || (!settings.backgroundColor && !(stack && sidePadding)));
     if (merge) {
       return wrap(
         `<td${col} width="${size.outerWidth}" valign="${valign}"${styleAttr(
@@ -191,31 +225,31 @@ function renderRow(row, box, template, options) {
         '</td>',
       );
     }
+    const innerWidth = size.contentWidth + settings.padding.left + settings.padding.right;
+    const inner = hasImage
+      ? wrap(
+          `<td valign="${valign}"${backgroundAttr(image)}${styleAttr(settings.backgroundColor && `background-color:${settings.backgroundColor}`, ...backgroundDecls(image), `vertical-align:${valign}`)}>`,
+          withVmlBackground(
+            image,
+            settings.backgroundColor,
+            innerWidth,
+            padded(settings.padding, blocks),
+            { insideVml },
+          ),
+          '</td>',
+        )
+      : wrap(
+          `<td valign="${valign}"${styleAttr(paddingDecl(settings.padding), settings.backgroundColor && `background-color:${settings.backgroundColor}`)}>`,
+          blocks,
+          '</td>',
+        );
     return wrap(
       `<td${col} width="${size.outerWidth}" valign="${valign}"${styleAttr(
         `width:${size.outerWidth}px`,
         hasGap && paddingDecl(gap),
         `vertical-align:${valign}`,
       )}>`,
-      [
-        wrap(
-          `${TABLE_OPEN}>`,
-          [
-            wrap(
-              '<tr>',
-              [
-                wrap(
-                  `<td valign="${valign}"${styleAttr(paddingDecl(settings.padding), settings.backgroundColor && `background-color:${settings.backgroundColor}`)}>`,
-                  blocks,
-                  '</td>',
-                ),
-              ],
-              '</tr>',
-            ),
-          ],
-          '</table>',
-        ),
-      ],
+      [wrap(`${TABLE_OPEN}>`, [wrap('<tr>', [inner], '</tr>')], '</table>')],
       '</td>',
     );
   });

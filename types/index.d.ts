@@ -22,8 +22,10 @@ export * from './core/index.js';
 export interface MergeTag {
   /** `{{key}}` の key */
   key: string;
-  /** メニューに出す名前 */
+  /** 候補の一覧に出す名前 */
   label: string;
+  /** グループ名。候補の一覧でグループごとにまとめる（無い候補は「その他」） */
+  group?: string;
   /** プレビューで使う値 */
   sample?: string;
   /** 書き出しで値が無いときに使う値（mergeValues を渡したときだけ） */
@@ -49,7 +51,15 @@ export type ImageSelectHook = (context: { current: string }) => Promise<ImageRes
  * ローカルの画像ファイル（PNG・JPEG・GIF）と、エディタが作った QR コードの PNG を受け取ってアップロードする。
  * 例外を投げると失敗として表示する。data URL は Gmail や Outlook で表示されないので返さない
  */
-export type ImageUploadHook = (file: File, context: { blockId: string }) => Promise<ImageResult>;
+export type ImageUploadHook = (
+  file: File,
+  context: {
+    /** 画像を入れるブロックの ID。背景画像では行・カラムの ID（メール全体の背景は 'body'） */
+    blockId: string;
+    /** 画像の置き場所（ブロック、または背景画像の行・カラム・メール全体） */
+    target: 'block' | 'row' | 'column' | 'body';
+  },
+) => Promise<ImageResult>;
 
 /** 「コンポーネントとして保存」で呼ぶ。id を付けたコンポーネントを返すと一覧に加える */
 export type SaveComponentHook = (
@@ -136,6 +146,11 @@ export declare class MailmasonEditor extends LitElement {
   mergeTags: MergeTag[];
   /** 差し込み変数の区切り（既定 `{{` `}}`） */
   mergeTagDelimiters: MergeTagDelimiters;
+  /**
+   * 区切り開始文字（`{{` など）を入力したときに、差し込み変数の候補を出す
+   * （属性 merge-tag-trigger、既定 true。属性で消すときは merge-tag-trigger="false"）
+   */
+  mergeTagTrigger: boolean;
   /** 画像欄の「選択…」ボタンで呼ぶ */
   onImageSelect: ImageSelectHook | null;
   /** ローカルの画像ファイル（と QR コードの PNG）をアップロードする。無ければ QR コードのブロックは出ない */

@@ -286,11 +286,12 @@ describe('テキストの直接編集', () => {
       mergeTags: [{ key: 'coupon', label: 'クーポン' }],
     });
     editable.focus();
-    const menu = /** @type {HTMLSelectElement} */ (
-      [...editor.shadowRoot.querySelectorAll('select')].pop()
-    );
-    menu.value = 'coupon';
-    menu.dispatchEvent(new Event('change'));
+    const picker = editor.shadowRoot.querySelector('mm-merge-tag-picker');
+    picker.shadowRoot.querySelector('.toggle').click();
+    await picker.updateComplete;
+    const list = picker.shadowRoot.querySelector('mm-merge-tag-list');
+    await list.updateComplete;
+    list.shadowRoot.querySelector('[data-key="coupon"]').click();
     await frame();
     expect(textHtml(el)).toContain('{{coupon}}');
   });

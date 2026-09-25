@@ -5,6 +5,7 @@ import { s } from '../model/schema.js';
 import { escapeAttr } from '../richtext/entities.js';
 import { styleAttr, TABLE_OPEN } from '../render-html/styles.js';
 import { wrap } from '../render-html/lines.js';
+import { cssUrl } from '../render-html/background.js';
 import { imageHtml, imageWidthSchema, pixelWidth } from './image.js';
 
 /**
@@ -61,13 +62,6 @@ export function youtubeThumbnail(url) {
     ? { src: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`, naturalWidth: 480, naturalHeight: 360 }
     : null;
 }
-
-/** CSS の url() に入れられるよう、引用符と括弧・改行をエスケープする */
-const cssUrl = (/** @type {string} */ url) =>
-  url.replace(
-    /[\\'"()\s]/g,
-    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`,
-  );
 
 /** @type {import('./types.js').CoreBlockDef} */
 export const videoBlock = {

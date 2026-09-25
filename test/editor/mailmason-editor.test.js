@@ -208,11 +208,14 @@ describe('選択と設定パネル', () => {
       deep(el, 'mm-settings-panel', '[data-key="label"] input')
     );
     input.setSelectionRange(0, 0);
-    const menu = /** @type {HTMLSelectElement} */ (
-      deep(el, 'mm-settings-panel', '[data-key="label"] select')
+    const picker = /** @type {any} */ (
+      deep(el, 'mm-settings-panel', '[data-key="label"] mm-merge-tag-picker')
     );
-    menu.value = 'name';
-    menu.dispatchEvent(new Event('change'));
+    picker.shadowRoot.querySelector('.toggle').click();
+    await picker.updateComplete;
+    const list = picker.shadowRoot.querySelector('mm-merge-tag-list');
+    await list.updateComplete;
+    list.shadowRoot.querySelector('[data-key="name"]').click();
     await frame();
     expect(el.getJson().body.rows[1].columns[0].blocks[1].values.label).toBe('{{name}}新作を見る');
   });

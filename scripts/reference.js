@@ -65,6 +65,23 @@ const DESCRIPTIONS = {
   'body.width': '本文の幅（px）',
   'body.backgroundColor': '本文の外側の背景色',
   'body.contentBackgroundColor': '本文の背景色',
+  'body.backgroundImage':
+    '外側の背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる）',
+  'body.backgroundImage.src': '画像の URL',
+  'body.backgroundImage.size': '`"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸',
+  'body.backgroundImage.position': '位置（横 縦）',
+  'body.backgroundImage.repeat': '繰り返し',
+  'body.backgroundImage.uploadData':
+    'アップロード時に `onImageUpload` が返した `data`（出力には使わない）',
+  'body.contentBackgroundImage':
+    '本文の背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる）',
+  'body.contentBackgroundImage.src': '画像の URL',
+  'body.contentBackgroundImage.size':
+    '`"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸',
+  'body.contentBackgroundImage.position': '位置（横 縦）',
+  'body.contentBackgroundImage.repeat': '繰り返し',
+  'body.contentBackgroundImage.uploadData':
+    'アップロード時に `onImageUpload` が返した `data`（出力には使わない）',
   'body.fontFamily': '基本のフォント',
   'body.fontSize': '基本の文字サイズ（px）',
   'body.lineHeight': '行の高さ（文字サイズに対する倍率）',
@@ -73,11 +90,27 @@ const DESCRIPTIONS = {
   'body.preheader': 'プリヘッダー（受信一覧で件名の後ろに出る短い文）',
   'body.title': 'HTML の `<title>`',
   'row.backgroundColor': '行の背景色（`null` で本文の背景色）',
+  'row.backgroundImage':
+    '行の背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる）',
+  'row.backgroundImage.src': '画像の URL',
+  'row.backgroundImage.size': '`"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸',
+  'row.backgroundImage.position': '位置（横 縦）',
+  'row.backgroundImage.repeat': '繰り返し',
+  'row.backgroundImage.uploadData':
+    'アップロード時に `onImageUpload` が返した `data`（出力には使わない）',
   'row.padding': '行の内側の余白（px）',
   'row.columnGap': 'カラムの間隔（px）',
   'row.stackOnMobile': 'スマホでカラムを縦に並べるか',
   'row.hideOn': '`"mobile"` でスマホでは表示しない',
   'column.backgroundColor': 'カラムの背景色',
+  'column.backgroundImage':
+    'カラムの背景画像（`src` が空なら無し。Outlook（Windows）は VML で敷き、背景画像のある要素の中では背景色になる）',
+  'column.backgroundImage.src': '画像の URL',
+  'column.backgroundImage.size': '`"cover"` 全面を覆う / `"contain"` 全体が入る / `"auto"` 原寸',
+  'column.backgroundImage.position': '位置（横 縦）',
+  'column.backgroundImage.repeat': '繰り返し',
+  'column.backgroundImage.uploadData':
+    'アップロード時に `onImageUpload` が返した `data`（出力には使わない）',
   'column.padding': 'カラムの内側の余白（px）',
   'column.verticalAlign': 'カラム内の縦位置',
   'style.backgroundColor': 'ブロックの背景色',

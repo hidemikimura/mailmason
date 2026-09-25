@@ -94,7 +94,7 @@ describe('QR コード', () => {
     await settle();
 
     expect(hook).toHaveBeenCalledTimes(1);
-    expect(hook.mock.calls[0][1]).toEqual({ blockId });
+    expect(hook.mock.calls[0][1]).toEqual({ blockId, target: 'block' });
     const [file] = files;
     expect(file.type).toBe('image/png');
     expect(await decode(file)).toBe(content); // 日本語を含む URL も UTF-8 で読める

@@ -2,7 +2,7 @@
 // エディタは画像を保存しない。受け取ったファイルを利用者のフック（onImageUpload）に渡し、
 // 返ってきた URL をブロックに設定する（メールの画像は受信者が読める URL に置く必要があるため）。
 // アップロード中はファイルの内容を object URL で仮表示する（テンプレートには入れない）
-import { locateBlock } from '../core/model/tree.js';
+import { findRowIndex, locateBlock, locateColumn } from '../core/model/tree.js';
 import { getIn, measureImage, patchAt, setIn } from './util.js';
 
 /** @import { Template } from '../core/model/types.js' */
@@ -20,7 +20,8 @@ import { getIn, measureImage, patchAt, setIn } from './util.js';
 
 /**
  * 画像のアップロード処理
- * @typedef {(file: File, context: { blockId: string }) => Promise<ImageResult>} ImageUploadHook
+ * blockId: 画像を入れるブロックの ID。背景画像では行・カラムの ID（メール全体は 'body'）で、target で区別する
+ * @typedef {(file: File, context: { blockId: string, target: 'block' | 'row' | 'column' | 'body' }) => Promise<ImageResult>} ImageUploadHook
  */
 
 /**
@@ -43,7 +44,8 @@ export function pickImage(result) {
 
 /**
  * アップロード先。field は画像の URL を持つ values 内のパス（'src' や 'image.src'）
- * @typedef {{ blockId: string, field: string }} UploadTarget
+ * アップロード先。scope が block 以外（背景画像）のとき、blockId は行・カラムの ID（ボディは 'body'）
+ * @typedef {{ blockId: string, field: string, scope?: 'block' | 'row' | 'column' | 'body' }} UploadTarget
  */
 
 /**
@@ -171,12 +173,14 @@ export class ImageUploader {
     const hook = this.host.hook();
     if (!hook) return false;
     const { blockId, field } = target;
+    const scope = target.scope ?? 'block';
+    const path = targetPath(target);
     const problem = this.check(file);
     if (problem) {
       this._set(blockId, { status: 'error', field, message: problem.message });
       this.host.warn({
         ...problem,
-        path: `block(${blockId}).values.${field}`,
+        path,
         blockId,
         fileName: file.name,
       });
@@ -187,13 +191,13 @@ export class ImageUploader {
     this._tokens.set(blockId, token);
     const preview = URL.createObjectURL(file);
     this._set(blockId, { status: 'uploading', field, preview });
-    const measure = options.measure ?? true;
+    const measure = scope === 'block' && (options.measure ?? true);
     const size = measure ? await measureImage(preview) : null;
 
     /** @type {Awaited<ReturnType<ImageUploadHook>>} */
     let result;
     try {
-      result = await hook(file, { blockId });
+      result = await hook(file, { blockId, target: scope });
     } catch (error) {
       if (this._tokens.get(blockId) !== token) return false;
       const t = this.host.t();
@@ -201,7 +205,7 @@ export class ImageUploader {
       this._set(blockId, { status: 'error', field, message: `${t('image.errorFailed')}${detail}` });
       this.host.warn({
         code: 'image-upload-failed',
-        path: `block(${blockId}).values.${field}`,
+        path,
         message: `Image upload failed${detail}`,
         blockId,
         fileName: file.name,
@@ -211,10 +215,37 @@ export class ImageUploader {
     }
     if (this._tokens.get(blockId) !== token) return false; // 後から別の画像が選ばれた
     this._tokens.delete(blockId);
-    const done = this._apply(blockId, field, result, size, options.patch);
+    const done =
+      scope === 'block'
+        ? this._apply(blockId, field, result, size, options.patch)
+        : this._applyBackground(target, result);
     // 仮表示は設定した後に消す（先に消すと一瞬空になる）
     this._set(blockId, null);
     return done;
+  }
+
+  /**
+   * フックの結果を背景画像（ボディ・行・カラムの設定）に設定する
+   * @param {UploadTarget} target field は 'backgroundImage.src' など
+   * @param {Awaited<ReturnType<ImageUploadHook>>} result
+   */
+  _applyBackground(target, result) {
+    const picked = pickImage(result);
+    if (!picked) return false;
+    const store = this.host.store();
+    const { template } = store.getState();
+    const base = target.field.slice(0, target.field.lastIndexOf('.'));
+    const patch = patchAt(base, { src: picked.src, uploadData: picked.data });
+    if (target.scope === 'body') {
+      store.dispatch({ type: 'updateBodySettings', patch });
+    } else if (target.scope === 'row') {
+      if (findRowIndex(template, target.blockId) === -1) return false;
+      store.dispatch({ type: 'updateRowSettings', rowId: target.blockId, patch });
+    } else {
+      if (!locateColumn(template, target.blockId)) return false;
+      store.dispatch({ type: 'updateColumnSettings', columnId: target.blockId, patch });
+    }
+    return true;
   }
 
   /**
@@ -256,6 +287,17 @@ export class ImageUploader {
     store.dispatch({ type: 'updateBlockValues', blockId, patch });
     return true;
   }
+}
+
+/**
+ * 警告の path（どの項目のアップロードか）
+ * @param {UploadTarget} target
+ */
+function targetPath({ blockId, field, scope = 'block' }) {
+  if (scope === 'body') return `body.settings.${field}`;
+  if (scope === 'row') return `row(${blockId}).settings.${field}`;
+  if (scope === 'column') return `column(${blockId}).settings.${field}`;
+  return `block(${blockId}).values.${field}`;
 }
 
 /**

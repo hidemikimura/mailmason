@@ -51,6 +51,12 @@ describe('renderHtml', () => {
     assertEmailRules(html);
   });
 
+  it('backgrounds フィクスチャ（外側・行・カラムの背景画像）', async () => {
+    const html = renderHtml(loadFixture('backgrounds'));
+    await expect(html).toMatchFileSnapshot('./__snapshots__/backgrounds.html');
+    assertEmailRules(html);
+  });
+
   it('同じ入力からは常に同じ出力になる', () => {
     const input = loadFixture('kitchen-sink');
     expect(renderHtml(input)).toBe(renderHtml(structuredClone(input)));

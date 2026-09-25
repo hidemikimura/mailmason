@@ -25,6 +25,7 @@
  *   行・ブロックにする（入れられなければ null）
  * @property {MergeTag[]} mergeTags
  * @property {MergeTagDelimiters} delimiters
+ * @property {boolean} mergeTagTrigger 区切り開始文字を入力したときに差し込み変数の候補を出す
  * @property {ImageSelectHook | null} onImageSelect
  * @property {import('./upload.js').ImageUploadHook | null} onImageUpload
  * @property {(file: File, target: import('./upload.js').UploadTarget) => void} upload

@@ -10,8 +10,9 @@
 | `theme`              | —                      | `Partial<BodySettings>`       | `{}`                          | 新規テンプレートの既定デザイン（幅・色・フォントなど）。読み込んだ JSON には適用しない                                     |
 | `locale`             | `locale`               | `'ja' \| 'en'`                | `'ja'`                        | UI の言語。テキストパートの SNS 名などにも使う                                                                             |
 | `messages`           | —                      | `Record<string, string>`      | `{}`                          | UI 文言の部分上書き（例: `{ 'toolbar.preview': '確認' }`）                                                                 |
-| `mergeTags`          | —                      | `MergeTag[]`                  | `[]`                          | 差し込み変数の候補                                                                                                         |
+| `mergeTags`          | —                      | `MergeTag[]`                  | `[]`                          | 差し込み変数の候補（`group` でグループ分け）                                                                               |
 | `mergeTagDelimiters` | —                      | `{ open, close }`             | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                                                       |
+| `mergeTagTrigger`    | `merge-tag-trigger`    | `boolean`                     | `true`                        | 区切り開始文字（`{{`）を入力したときに差し込み変数の候補を出す。属性で消すときは `merge-tag-trigger="false"`               |
 | `onImageSelect`      | —                      | `ImageSelectHook \| null`     | `null`                        | 画像欄の「選択…」ボタンで呼ぶ。自前の画像ライブラリ画面などを開いて URL を返す                                             |
 | `onImageUpload`      | —                      | `ImageUploadHook \| null`     | `null`                        | ローカルの画像ファイル（と QR コードの PNG）を受け取ってアップロードし、URL を返す。無ければ QR コードのブロックは使えない |
 | `blocks`             | —                      | `CustomBlock[]`               | `[]`                          | カスタムブロックの定義（`defineBlock()` の戻り値）。`loadJson` より前に設定する。書き出し・プレビューにも使う              |
@@ -29,7 +30,8 @@
 ### 型
 
 ```ts
-type MergeTag = { key: string; label: string; sample?: string; fallback?: string };
+// group があると候補の一覧でグループごとにまとめる。一覧はグループ名・label・key で絞り込める
+type MergeTag = { key: string; label: string; group?: string; sample?: string; fallback?: string };
 
 // フックの戻り値。data はブロックの uploadData に保存する任意のオブジェクト（JSON で表せる値）
 type ImageResult =
@@ -43,7 +45,11 @@ type ImageResult =
 type ImageSelectHook = (context: { current: string }) => Promise<ImageResult>;
 
 // ローカルの画像ファイル（PNG・JPEG・GIF）と QR コードの PNG。例外は失敗として表示
-type ImageUploadHook = (file: File, context: { blockId: string }) => Promise<ImageResult>;
+// 背景画像では blockId が行・カラムの ID（メール全体は 'body'）になり、target で区別する
+type ImageUploadHook = (
+  file: File,
+  context: { blockId: string; target: 'block' | 'row' | 'column' | 'body' },
+) => Promise<ImageResult>;
 
 // 保存した行・ブロック。id はアプリが付ける。入れるときは複製（元とは連動しない）
 type Component = {

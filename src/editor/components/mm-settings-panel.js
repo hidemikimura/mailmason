@@ -5,7 +5,7 @@ import { getBlockDef } from '../../core/blocks/registry.js';
 import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { renderField } from '../fields/fields.js';
 import { controls } from '../styles.js';
-import { getIn, patchAt } from '../util.js';
+import { getIn, isComposing, patchAt } from '../util.js';
 import { define } from '../context.js';
 
 /** @import { Template, Block, Row, Column } from '../../core/model/types.js' */
@@ -21,7 +21,14 @@ const BODY_FIELDS = [
     options: { min: 320, max: 1200, unit: 'px' },
   },
   { key: 'backgroundColor', kind: 'color', labelKey: 'field.outerBackgroundColor' },
+  { key: 'backgroundImage', kind: 'backgroundImage', labelKey: 'field.outerBackgroundImage' },
   { key: 'contentBackgroundColor', kind: 'color', labelKey: 'field.contentBackgroundColor' },
+  {
+    key: 'contentBackgroundImage',
+    kind: 'backgroundImage',
+    labelKey: 'field.contentBackgroundImage',
+    helpKey: 'field.backgroundImageNestHelp',
+  },
   { key: 'fontFamily', kind: 'text', labelKey: 'field.fontFamily' },
   {
     key: 'fontSize',
@@ -56,6 +63,7 @@ const ROW_FIELDS = [
     labelKey: 'field.backgroundColor',
     options: { nullable: true },
   },
+  { key: 'backgroundImage', kind: 'backgroundImage', labelKey: 'field.backgroundImage' },
   { key: 'padding', kind: 'spacing', labelKey: 'field.padding' },
   {
     key: 'columnGap',
@@ -86,6 +94,7 @@ const COLUMN_FIELDS = [
     labelKey: 'field.backgroundColor',
     options: { nullable: true },
   },
+  { key: 'backgroundImage', kind: 'backgroundImage', labelKey: 'field.backgroundImage' },
   { key: 'padding', kind: 'spacing', labelKey: 'field.padding' },
   {
     key: 'verticalAlign',
@@ -235,12 +244,9 @@ export class MmSettingsPanel extends LitElement {
         display: flex;
         gap: 4px;
       }
-      .with-menu input {
+      .with-menu input,
+      .with-menu textarea {
         flex: 1;
-      }
-      .merge-tags {
-        width: auto !important;
-        max-width: 96px;
       }
       .number {
         display: flex;
@@ -409,6 +415,50 @@ export class MmSettingsPanel extends LitElement {
         display: grid;
         gap: 6px;
       }
+      .background-image {
+        display: grid;
+        gap: 8px;
+      }
+      .background-options {
+        display: grid;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid var(--mm-color-border);
+        border-radius: var(--mm-radius);
+        background: var(--mm-color-surface-2);
+      }
+      .background-option {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--mm-color-muted);
+      }
+      .background-option.inline {
+        grid-template-columns: auto 1fr;
+      }
+      .position-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 22px);
+        gap: 3px;
+      }
+      .position-grid button {
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        position: relative;
+      }
+      .position-grid button::after {
+        content: '';
+        position: absolute;
+        inset: 8px;
+        border-radius: 50%;
+        background: var(--mm-color-border);
+      }
+      .position-grid button[aria-pressed='true']::after {
+        background: var(--mm-color-accent);
+      }
       .table-columns {
         display: grid;
         gap: 6px;
@@ -522,7 +572,7 @@ export class MmSettingsPanel extends LitElement {
               message: '',
             })}
           @keydown=${(/** @type {KeyboardEvent} */ e) => {
-            if (e.key === 'Enter' && !e.isComposing) {
+            if (e.key === 'Enter' && !isComposing(e)) {
               e.preventDefault();
               void save();
             }
@@ -617,8 +667,25 @@ export class MmSettingsPanel extends LitElement {
       values,
       mergeTags: ctx.mergeTags,
       delimiters: ctx.delimiters,
+      mergeTagTrigger: ctx.mergeTagTrigger,
       onImageSelect: ctx.onImageSelect,
       change: (key, value, options = {}) => onChange(key, value, options.merge ?? false),
+    };
+  }
+
+  /**
+   * 背景画像のアップロード（ボディ・行・カラム）
+   * @param {string} id 行・カラムの ID（ボディは 'body'）
+   * @param {'body' | 'row' | 'column'} scope
+   * @returns {Pick<FieldContext, 'upload' | 'uploadState'>}
+   */
+  _backgroundUpload(id, scope) {
+    const { ctx } = this;
+    return {
+      upload: ctx.onImageUpload
+        ? (key, file) => ctx.upload(file, { blockId: id, field: key, scope })
+        : null,
+      uploadState: this.uploads.get(id) ?? null,
     };
   }
 
@@ -672,13 +739,16 @@ export class MmSettingsPanel extends LitElement {
 
     let body;
     if (target.kind === 'body') {
-      const fieldCtx = this._fieldContext('mm-body', template.body.settings, (key, value, merge) =>
-        store.dispatch({
-          type: 'updateBodySettings',
-          patch: patchAt(key, value),
-          mergeKey: merge ? mergeKey('body', key) : undefined,
-        }),
-      );
+      const fieldCtx = {
+        ...this._fieldContext('mm-body', template.body.settings, (key, value, merge) =>
+          store.dispatch({
+            type: 'updateBodySettings',
+            patch: patchAt(key, value),
+            mergeKey: merge ? mergeKey('body', key) : undefined,
+          }),
+        ),
+        ...this._backgroundUpload('body', 'body'),
+      };
       body = html`<section>
         <h3>${t('section.body')}</h3>
         ${this._fields(BODY_FIELDS, fieldCtx)}
@@ -686,7 +756,7 @@ export class MmSettingsPanel extends LitElement {
     } else if (target.kind === 'row') {
       const { row } = target;
       const values = { ...row.settings, layout: row.layout };
-      const fieldCtx = this._fieldContext(`mm-${row.id}`, values, (key, value, merge) => {
+      const rowCtx = this._fieldContext(`mm-${row.id}`, values, (key, value, merge) => {
         if (key === 'layout') {
           store.dispatch({
             type: 'setRowLayout',
@@ -702,6 +772,7 @@ export class MmSettingsPanel extends LitElement {
           });
         }
       });
+      const fieldCtx = { ...rowCtx, ...this._backgroundUpload(row.id, 'row') };
       body = html`<section>
           <h3>${t('section.layout')}</h3>
           ${this._fields(ROW_FIELDS, fieldCtx)}
@@ -709,14 +780,17 @@ export class MmSettingsPanel extends LitElement {
         ${this._renderSaveComponent(row.id, t('crumb.row'))}`;
     } else if (target.kind === 'column') {
       const { column } = target;
-      const fieldCtx = this._fieldContext(`mm-${column.id}`, column.settings, (key, value, merge) =>
-        store.dispatch({
-          type: 'updateColumnSettings',
-          columnId: column.id,
-          patch: patchAt(key, value),
-          mergeKey: merge ? mergeKey(column.id, key) : undefined,
-        }),
-      );
+      const fieldCtx = {
+        ...this._fieldContext(`mm-${column.id}`, column.settings, (key, value, merge) =>
+          store.dispatch({
+            type: 'updateColumnSettings',
+            columnId: column.id,
+            patch: patchAt(key, value),
+            mergeKey: merge ? mergeKey(column.id, key) : undefined,
+          }),
+        ),
+        ...this._backgroundUpload(column.id, 'column'),
+      };
       body = html`<section>
         <h3>${t('section.style')}</h3>
         ${this._fields(COLUMN_FIELDS, fieldCtx)}

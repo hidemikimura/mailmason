@@ -78,6 +78,12 @@ export class MailmasonEditor extends LitElement {
     messages: { attribute: false },
     mergeTags: { attribute: false },
     mergeTagDelimiters: { attribute: false },
+    mergeTagTrigger: {
+      type: Boolean,
+      attribute: 'merge-tag-trigger',
+      // 既定が true なので、属性は "false" のときだけオフにする
+      converter: { fromAttribute: (/** @type {string | null} */ value) => value !== 'false' },
+    },
     onImageSelect: { attribute: false },
     onImageUpload: { attribute: false },
     blocks: { attribute: false },
@@ -204,6 +210,8 @@ export class MailmasonEditor extends LitElement {
     this.mergeTags = [];
     /** @type {MergeTagDelimiters} */
     this.mergeTagDelimiters = DEFAULT_DELIMITERS;
+    /** 区切り開始文字（`{{` など）を入力したときに差し込み変数の候補を出す */
+    this.mergeTagTrigger = true;
     /** @type {ImageSelectHook | null} 画像の「選択…」ボタンで呼ぶフック。URL を返す */
     this.onImageSelect = null;
     /** @type {ImageUploadHook | null} ローカルの画像ファイルを受け取ってアップロードし、URL を返すフック */
@@ -877,6 +885,7 @@ export class MailmasonEditor extends LitElement {
       this.messages,
       this.mergeTags,
       this.mergeTagDelimiters,
+      this.mergeTagTrigger,
       this.socialIconBaseUrl,
       this.outlookFontFamily,
     ]);
@@ -907,6 +916,7 @@ export class MailmasonEditor extends LitElement {
       instantiateComponent: (component) => this._instantiate(component),
       mergeTags: this.mergeTags,
       delimiters: this.mergeTagDelimiters,
+      mergeTagTrigger: this.mergeTagTrigger !== false,
       onImageSelect: this.onImageSelect,
       onImageUpload: this.onImageUpload,
       upload: (file, target) => void this._uploader.upload(file, target),

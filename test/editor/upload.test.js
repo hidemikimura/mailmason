@@ -159,7 +159,7 @@ describe('画像のアップロード', () => {
     input.files = transfer([file]).files;
     input.dispatchEvent(new Event('change'));
     await vi.waitFor(() => expect(onImageUpload).toHaveBeenCalled());
-    expect(onImageUpload).toHaveBeenCalledWith(file, { blockId: 'b_banner01' });
+    expect(onImageUpload).toHaveBeenCalledWith(file, { blockId: 'b_banner01', target: 'block' });
 
     // アップロード中: 設定パネルとキャンバスに表示し、手元のファイルを仮表示する
     await settle(el);
@@ -354,7 +354,7 @@ describe('画像のアップロード', () => {
     canvas.dispatchEvent(dragEvent('drop', data, x, y));
     expect(el.shadowRoot?.querySelector('.mm-drop-indicator')).toBeNull();
     await vi.waitFor(() => expect(onImageUpload).toHaveBeenCalled());
-    expect(onImageUpload.mock.calls[0][1]).toEqual({ blockId: 'b_banner01' });
+    expect(onImageUpload.mock.calls[0][1]).toEqual({ blockId: 'b_banner01', target: 'block' });
     expect(el.getJson().body.rows).toHaveLength(4); // ブロックは増やさない
     calls[0].resolve('https://cdn.example.com/new-banner.png');
     await vi.waitFor(() =>

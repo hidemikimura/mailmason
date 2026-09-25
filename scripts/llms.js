@@ -53,6 +53,13 @@ const PAGES = [
   },
   {
     section: 'ガイド',
+    title: '背景画像',
+    path: '/guide/backgrounds',
+    source: 'docs/guide/backgrounds.md',
+    summary: 'メール全体・本文・行・カラムの背景画像、Outlook（VML）での表示と制限',
+  },
+  {
+    section: 'ガイド',
     title: '差し込み変数',
     path: '/guide/merge-tags',
     source: 'docs/guide/merge-tags.md',

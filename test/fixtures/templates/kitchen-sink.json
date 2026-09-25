@@ -4,7 +4,21 @@
     "settings": {
       "width": 600,
       "backgroundColor": "#f4f4f4",
+      "backgroundImage": {
+        "src": "",
+        "size": "cover",
+        "position": "center center",
+        "repeat": "no-repeat",
+        "uploadData": null
+      },
       "contentBackgroundColor": "#ffffff",
+      "contentBackgroundImage": {
+        "src": "",
+        "size": "cover",
+        "position": "center center",
+        "repeat": "no-repeat",
+        "uploadData": null
+      },
       "fontFamily": "'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
       "fontSize": 16,
       "lineHeight": 1.6,
@@ -19,6 +33,13 @@
         "layout": "1",
         "settings": {
           "backgroundColor": null,
+          "backgroundImage": {
+            "src": "",
+            "size": "cover",
+            "position": "center center",
+            "repeat": "no-repeat",
+            "uploadData": null
+          },
           "padding": {
             "top": 16,
             "right": 24,
@@ -34,6 +55,13 @@
             "id": "c_ks000003",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -73,6 +101,13 @@
         "layout": "1:1:1",
         "settings": {
           "backgroundColor": null,
+          "backgroundImage": {
+            "src": "",
+            "size": "cover",
+            "position": "center center",
+            "repeat": "no-repeat",
+            "uploadData": null
+          },
           "padding": {
             "top": 0,
             "right": 24,
@@ -88,6 +123,13 @@
             "id": "c_ks000008",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -124,6 +166,13 @@
             "id": "c_ks000009",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -160,6 +209,13 @@
             "id": "c_ks000010",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -199,6 +255,13 @@
         "layout": "2:1",
         "settings": {
           "backgroundColor": null,
+          "backgroundImage": {
+            "src": "",
+            "size": "cover",
+            "position": "center center",
+            "repeat": "no-repeat",
+            "uploadData": null
+          },
           "padding": {
             "top": 0,
             "right": 0,
@@ -214,6 +277,13 @@
             "id": "c_ks000014",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -256,6 +326,13 @@
             "id": "c_ks000015",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -305,6 +382,13 @@
         "layout": "1",
         "settings": {
           "backgroundColor": "#f0f4ff",
+          "backgroundImage": {
+            "src": "",
+            "size": "cover",
+            "position": "center center",
+            "repeat": "no-repeat",
+            "uploadData": null
+          },
           "padding": {
             "top": 0,
             "right": 0,
@@ -320,6 +404,13 @@
             "id": "c_ks000023",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,
@@ -526,6 +617,13 @@
         "layout": "1",
         "settings": {
           "backgroundColor": null,
+          "backgroundImage": {
+            "src": "",
+            "size": "cover",
+            "position": "center center",
+            "repeat": "no-repeat",
+            "uploadData": null
+          },
           "padding": {
             "top": 0,
             "right": 0,
@@ -541,6 +639,13 @@
             "id": "c_ks000025",
             "settings": {
               "backgroundColor": null,
+              "backgroundImage": {
+                "src": "",
+                "size": "cover",
+                "position": "center center",
+                "repeat": "no-repeat",
+                "uploadData": null
+              },
               "padding": {
                 "top": 0,
                 "right": 0,

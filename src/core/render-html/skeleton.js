@@ -2,6 +2,14 @@
 import { escapeText } from '../richtext/entities.js';
 import { styleAttr } from './styles.js';
 import { wrap } from './lines.js';
+import {
+  backgroundAttr,
+  backgroundDecls,
+  hasBackgroundImage,
+  vmlPageBackground,
+  withVmlBackground,
+} from './background.js';
+import { TABLE_OPEN } from './styles.js';
 
 /** @import { Lines, Wrapped } from './lines.js' */
 /** @import { BodySettings } from '../model/types.js' */
@@ -74,6 +82,28 @@ export function skeleton(body, options, rows) {
       ]
     : [];
   const container = `<table role="presentation" class="mm-container" width="${body.width}" cellpadding="0" cellspacing="0" border="0"${styleAttr('width:100%', `max-width:${body.width}px`, `background-color:${body.contentBackgroundColor}`)}>`;
+  // 本文の背景画像: 行をまとめて 1 つのセルに入れ、そのセルに背景を敷く（Outlook は VML）
+  const content = hasBackgroundImage(body.contentBackgroundImage)
+    ? [
+        wrap(
+          '<tr>',
+          [
+            wrap(
+              `<td${backgroundAttr(body.contentBackgroundImage)}${styleAttr(`background-color:${body.contentBackgroundColor}`, ...backgroundDecls(body.contentBackgroundImage))}>`,
+              withVmlBackground(
+                body.contentBackgroundImage,
+                body.contentBackgroundColor,
+                body.width,
+                [wrap(`${TABLE_OPEN}>`, rows, '</table>')],
+              ),
+              '</td>',
+            ),
+          ],
+          '</tr>',
+        ),
+      ]
+    : rows;
+  const outerImage = body.backgroundImage;
 
   return [
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
@@ -84,18 +114,19 @@ export function skeleton(body, options, rows) {
         wrap(
           `<body${styleAttr('margin:0', 'padding:0', 'word-spacing:normal', `background-color:${body.backgroundColor}`)}>`,
           [
+            ...vmlPageBackground(outerImage, body.backgroundColor),
             ...preheader,
             wrap(
-              `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"${styleAttr(`background-color:${body.backgroundColor}`)}>`,
+              `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"${styleAttr(`background-color:${body.backgroundColor}`, ...backgroundDecls(outerImage))}>`,
               [
                 wrap(
                   '<tr>',
                   [
                     wrap(
-                      '<td align="center">',
+                      `<td align="center"${backgroundAttr(outerImage)}>`,
                       [
                         `<!--[if mso]><table role="presentation" width="${body.width}" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->`,
-                        wrap(container, rows, '</table>'),
+                        wrap(container, content, '</table>'),
                         '<!--[if mso]></td></tr></table><![endif]-->',
                       ],
                       '</td>',

@@ -30,7 +30,7 @@ function parseArgs(argv) {
     else args.files.push(resolve(argv[i]));
   }
   if (args.files.length === 0) {
-    args.files = ['basic', 'kitchen-sink', 'content-blocks'].map((name) =>
+    args.files = ['basic', 'kitchen-sink', 'content-blocks', 'backgrounds'].map((name) =>
       join(root, 'test/fixtures/templates', `${name}.json`),
     );
   }

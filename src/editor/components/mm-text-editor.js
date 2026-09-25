@@ -3,14 +3,18 @@
 // - 書式は document.execCommand で付け、結果の揺れは正規化器（sanitizeHtml）で吸収する
 // - 自分が出した値以外（Undo など）が来たときだけ中身を置き換え、入力中のキャレットを動かさない
 // - inline モード（表のセル）: 段落・見出し・リスト・揃えを使わず、Enter は改行、Tab はセルの移動
+// - 区切り開始文字（`{{` など）を入力すると差し込み変数の候補を出す（ctx.mergeTagTrigger）
 import { LitElement, css, html, nothing } from 'lit';
 import { styleMap } from 'lit/directives/style-map.js';
 import { sanitizeHtml, sanitizeInlineHtml } from '../../core/richtext/sanitize.js';
 import { escapeText } from '../../core/richtext/entities.js';
-import { patchAt } from '../util.js';
+import { isComposing, patchAt } from '../util.js';
 import { findLink, getRangeIn, placeCaretAtEnd, restoreRange } from '../richtext/selection.js';
 import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
 import { controls } from '../styles.js';
+import { findMergeTagTrigger, mergeTagText } from '../merge-tag-search.js';
+import './mm-merge-tag-list.js';
+import './mm-merge-tag-picker.js';
 import { define } from '../context.js';
 
 /** @import { EditorContext } from '../context.js' */
@@ -54,6 +58,7 @@ export class MmTextEditor extends LitElement {
     _linkOpen: { state: true },
     _linkValue: { state: true },
     _colorOpen: { state: true },
+    _suggest: { state: true },
   };
 
   static styles = [
@@ -117,6 +122,19 @@ export class MmTextEditor extends LitElement {
         border: 1px solid var(--mm-color-border);
         border-radius: var(--mm-radius);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .suggest {
+        position: absolute;
+        z-index: 6;
+        width: 260px;
+        background: var(--mm-color-surface);
+        border: 1px solid var(--mm-color-border);
+        border-radius: var(--mm-radius);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        font-family: var(--mm-font-family);
+        font-size: var(--mm-font-size);
+        line-height: normal;
+        text-align: left;
       }
       .popover input {
         width: 240px;
@@ -205,6 +223,11 @@ export class MmTextEditor extends LitElement {
     /** @type {HTMLAnchorElement | null} 入力欄を開いたときに選択範囲にかかっていたリンク */
     this._linkTarget = null;
     this._colorOpen = false;
+    /**
+     * 入力中の差し込み変数（区切り開始文字の位置から、キャレットまで）と候補の表示位置
+     * @type {{ node: Text, start: number, end: number, query: string, top: number, left: number } | null}
+     */
+    this._suggest = null;
     /** 最後にストアへ送った値（外部からの変更と区別するため） */
     this._lastHtml = /** @type {string | null} */ (null);
     /** @type {Range | null} ツールバー操作のために保存した選択範囲 */
@@ -271,6 +294,74 @@ export class MmTextEditor extends LitElement {
     if (range && this.editable?.contains(range.commonAncestorContainer)) {
       this._savedRange = range;
     }
+    // 候補を出している間にキャレットが動いたら、入力中の範囲から出たか確かめる
+    if (this._suggest) this._detectSuggest();
+  }
+
+  /** キャレットの前を見て、入力中の差し込み変数の候補を出す・閉じる */
+  _detectSuggest() {
+    const { ctx } = this;
+    const range = getRangeIn(/** @type {ShadowRoot} */ (this.renderRoot));
+    const node = range?.startContainer;
+    if (
+      !ctx.mergeTagTrigger ||
+      ctx.mergeTags.length === 0 ||
+      !range ||
+      !range.collapsed ||
+      !(node instanceof Text) ||
+      !this.editable.contains(node)
+    ) {
+      this._suggest = null;
+      return;
+    }
+    const found = findMergeTagTrigger(node.data.slice(0, range.startOffset), ctx.delimiters);
+    if (!found) {
+      this._suggest = null;
+      return;
+    }
+    // 候補は区切り開始文字の下に出す
+    const marker = document.createRange();
+    marker.setStart(node, found.start);
+    marker.setEnd(node, Math.min(node.length, found.start + ctx.delimiters.open.length));
+    const rect = marker.getBoundingClientRect();
+    const host = this.getBoundingClientRect();
+    this._suggest = {
+      node,
+      start: found.start,
+      end: range.startOffset,
+      query: found.query,
+      top: rect.bottom - host.top + 4,
+      left: Math.max(0, rect.left - host.left),
+    };
+  }
+
+  /**
+   * 入力中の差し込み変数を、選んだマージタグに置き換える
+   * @param {string} key
+   */
+  _insertSuggestion(key) {
+    const suggest = this._suggest;
+    this._suggest = null;
+    if (!suggest || !suggest.node.isConnected) return;
+    const range = document.createRange();
+    range.setStart(suggest.node, suggest.start);
+    range.setEnd(suggest.node, Math.min(suggest.node.length, suggest.end));
+    this.editable.focus();
+    restoreRange(range);
+    document.execCommand('insertText', false, mergeTagText(key, this.ctx.delimiters));
+    this._suggest = null;
+    this._captureSelection();
+    this._commit();
+  }
+
+  /** @returns {import('./mm-merge-tag-list.js').MmMergeTagList | null} */
+  get suggestList() {
+    return this.renderRoot.querySelector('.suggest mm-merge-tag-list');
+  }
+
+  _onInput() {
+    this._commit();
+    this._detectSuggest();
   }
 
   /** @param {string} html */
@@ -313,8 +404,36 @@ export class MmTextEditor extends LitElement {
 
   /** @param {KeyboardEvent} event */
   _onKeydown(event) {
+    // 日本語入力の変換中（確定の Enter・取り消しの Esc を含む）は、ショートカットや候補の操作をしない
+    if (isComposing(event)) {
+      event.stopPropagation();
+      return;
+    }
     const mod = event.metaKey || event.ctrlKey;
     const key = event.key.toLowerCase();
+    // 差し込み変数の候補を出しているときは、上下キー・Enter・Tab・Esc で候補を操作する
+    if (this._suggest && !mod) {
+      const list = this.suggestList;
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        event.stopPropagation();
+        list?.moveActive(event.key === 'ArrowDown' ? 1 : -1);
+        return;
+      }
+      if (event.key === 'Enter' || event.key === 'Tab') {
+        if (list?.pickActive()) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        this._suggest = null;
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        this._suggest = null;
+        return;
+      }
+    }
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
@@ -401,6 +520,7 @@ export class MmTextEditor extends LitElement {
     const next = /** @type {Node | null} */ (event.relatedTarget);
     // ツールバー（同じ Shadow DOM 内）へ移るときは編集を続ける
     if (next && (this.renderRoot.contains(next) || this.contains(next))) return;
+    this._suggest = null;
     this._commit();
     // 別の要素をクリックした場合は、選択の変化でも終了する。ここではフォーカスが外れたことだけで終える
     requestAnimationFrame(() => {
@@ -532,19 +652,21 @@ export class MmTextEditor extends LitElement {
         ${this._button('⌫', t('text.clear'), () => this.exec('removeFormat'), 'clear')}
         ${
           ctx.mergeTags.length > 0
-            ? html`<select
-                aria-label=${t('mergeTag.insert')}
-                @change=${(/** @type {Event} */ e) => {
-                  const select = /** @type {HTMLSelectElement} */ (e.target);
-                  const key = select.value;
-                  select.value = '';
-                  if (key)
-                    this.exec('insertText', `${ctx.delimiters.open}${key}${ctx.delimiters.close}`);
+            ? html`<mm-merge-tag-picker
+                align="right"
+                .tags=${ctx.mergeTags}
+                .delimiters=${ctx.delimiters}
+                .t=${t}
+                @mm-merge-tag-open=${() => {
+                  this._linkOpen = false;
+                  this._colorOpen = false;
+                  this._suggest = null;
                 }}
-              >
-                <option value="">${t('mergeTag.insert')}</option>
-                ${ctx.mergeTags.map((tag) => html`<option value=${tag.key}>${tag.label}</option>`)}
-              </select>`
+                @mm-merge-tag-pick=${(/** @type {CustomEvent<{ key: string }>} */ e) => {
+                  e.stopPropagation();
+                  this.exec('insertText', mergeTagText(e.detail.key, ctx.delimiters));
+                }}
+              ></mm-merge-tag-picker>`
             : nothing
         }
         ${
@@ -584,7 +706,7 @@ export class MmTextEditor extends LitElement {
         aria-multiline="true"
         data-placeholder=${this.placeholder ?? t('placeholder.text')}
         style=${styleMap(style)}
-        @input=${() => this._commit()}
+        @input=${this._onInput}
         @keydown=${this._onKeydown}
         @beforeinput=${this._onBeforeInput}
         @paste=${this._onPaste}
@@ -593,7 +715,26 @@ export class MmTextEditor extends LitElement {
           e.stopPropagation();
           if (e.composedPath().some((n) => n instanceof HTMLAnchorElement)) e.preventDefault();
         }}
-      ></div>`;
+      ></div>
+      ${
+        this._suggest
+          ? html`<div
+              class="suggest"
+              style=${styleMap({ top: `${this._suggest.top}px`, left: `${this._suggest.left}px` })}
+              @mm-merge-tag-pick=${(/** @type {CustomEvent<{ key: string }>} */ e) => {
+                e.stopPropagation();
+                this._insertSuggestion(e.detail.key);
+              }}
+            >
+              <mm-merge-tag-list
+                .tags=${ctx.mergeTags}
+                .query=${this._suggest.query}
+                .delimiters=${ctx.delimiters}
+                .t=${t}
+              ></mm-merge-tag-list>
+            </div>`
+          : nothing
+      }`;
   }
 }
 
