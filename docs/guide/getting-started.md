@@ -12,10 +12,10 @@ Lit（3.3 以上）は peer dependency です。バンドラーを使わない�
 <!-- ES モジュール版 -->
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.8/dist/mailmason.bundle.js"
 ></script>
 <!-- 従来の script タグ版（グローバル変数 Mailmason） -->
-<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.8/dist/mailmason.iife.js"></script>
 ```
 
 ### 読み込む量

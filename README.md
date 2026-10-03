@@ -7,7 +7,7 @@ Lit ベースのノーコード HTML メールエディタです。行×カラ�
 
 **ドキュメントとデモ: https://hidemikimura.github.io/mailmason/**
 
-> v0.7（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
+> v0.8（試用版）です。1.0 までは API が変わることがあります。変更点は [CHANGELOG.md](CHANGELOG.md) に記録します。
 
 ## インストール
 
@@ -21,10 +21,10 @@ Lit（3.3 以上）は peer dependency です。バンドラーを使わない�
 <!-- ES モジュール版 -->
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.bundle.js"
+  src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.8/dist/mailmason.bundle.js"
 ></script>
 <!-- 従来の script タグ版（グローバル変数 Mailmason） -->
-<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.7/dist/mailmason.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hidemikimura/mailmason@0.8/dist/mailmason.iife.js"></script>
 ```
 
 プレビュー・表の直接編集・QR コードの作成・英語の UI 文言は、使うときに読み込みます。ES モジュール版は最初に約 80KB（gzip）を読み込み、残りを `dist/chunks/` から読み込みます（自分のサーバーに置くときは `chunks/` も同じ場所に置いてください）。script タグ版はすべて 1 ファイル（約 97KB）です。
