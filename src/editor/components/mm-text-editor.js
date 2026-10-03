@@ -12,7 +12,7 @@ import { isComposing, patchAt } from '../util.js';
 import { findLink, getRangeIn, placeCaretAtEnd, restoreRange } from '../richtext/selection.js';
 import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
 import { controls } from '../styles.js';
-import { findMergeTagTrigger, mergeTagText } from '../merge-tag-search.js';
+import { findMergeTagTrigger } from '../merge-tag-search.js';
 import './mm-merge-tag-list.js';
 import './mm-merge-tag-picker.js';
 import { define } from '../context.js';
@@ -283,9 +283,9 @@ export class MmTextEditor extends LitElement {
   _setContent(value) {
     const el = this.editable;
     if (!el) return;
-    el.innerHTML = value;
+    el.innerHTML = this.ctx.mergeTagDisplay.toLabels(value, { html: true });
     this._lastHtml = value;
-    highlightMergeTags(this, el, this.ctx.delimiters);
+    highlightMergeTags(this, el, this.ctx.mergeTagDisplay);
   }
 
   _captureSelection() {
@@ -348,7 +348,7 @@ export class MmTextEditor extends LitElement {
     range.setEnd(suggest.node, Math.min(suggest.node.length, suggest.end));
     this.editable.focus();
     restoreRange(range);
-    document.execCommand('insertText', false, mergeTagText(key, this.ctx.delimiters));
+    document.execCommand('insertText', false, this.ctx.mergeTagDisplay.text(key));
     this._suggest = null;
     this._captureSelection();
     this._commit();
@@ -372,8 +372,11 @@ export class MmTextEditor extends LitElement {
 
   /** 入力内容を整えてストアに送る */
   _commit() {
-    const clean = this._sanitize(this.editable.innerHTML);
-    highlightMergeTags(this, this.editable, this.ctx.delimiters);
+    // 表示名で書かれた差し込み変数はキーに戻して保存する
+    const clean = this.ctx.mergeTagDisplay.toKeys(this._sanitize(this.editable.innerHTML), {
+      html: true,
+    });
+    highlightMergeTags(this, this.editable, this.ctx.mergeTagDisplay);
     if (clean === this._lastHtml) return;
     this._lastHtml = clean;
     this.ctx.store.dispatch({
@@ -664,7 +667,7 @@ export class MmTextEditor extends LitElement {
                 }}
                 @mm-merge-tag-pick=${(/** @type {CustomEvent<{ key: string }>} */ e) => {
                   e.stopPropagation();
-                  this.exec('insertText', mergeTagText(e.detail.key, ctx.delimiters));
+                  this.exec('insertText', ctx.mergeTagDisplay.text(e.detail.key));
                 }}
               ></mm-merge-tag-picker>`
             : nothing

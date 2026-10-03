@@ -61,6 +61,8 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
  * @property {Record<string, unknown>} values 編集対象の values 全体
  * @property {MergeTag[]} mergeTags
  * @property {MergeTagDelimiters} delimiters
+ * @property {import('../merge-tag-display.js').MergeTagDisplay | null} [mergeTagDisplay]
+ *   差し込み変数を表示名で見せる（無ければキーのまま）
  * @property {boolean} [mergeTagTrigger] 区切り開始文字の入力で候補を出す（既定 true）
  * @property {ImageSelectHook | null} onImageSelect
  * @property {((key: string, file: File) => void) | null} [upload] 画像ファイルをアップロードする（フックが無ければ null）
@@ -118,6 +120,10 @@ const acceptsMergeTags = (spec, ctx) =>
  * @param {{ inputmode?: string, placeholder?: string, multiline?: boolean, onChange?: (value: string) => void }} [options]
  */
 function mergeTagInput(spec, value, ctx, id, options = {}) {
+  // 入力欄には表示名で出し、入力された表示名はキーに戻して保存する
+  const display = ctx.mergeTagDisplay ?? null;
+  /** @param {Event} event */
+  const read = (event) => (display ? display.toKeys(inputValue(event)) : inputValue(event));
   return html`<mm-text-input
     .inputId=${id}
     .value=${String(value ?? '')}
@@ -126,10 +132,11 @@ function mergeTagInput(spec, value, ctx, id, options = {}) {
     ?multiline=${options.multiline ?? false}
     .tags=${ctx.mergeTags}
     .delimiters=${ctx.delimiters}
+    .display=${display}
     .trigger=${ctx.mergeTagTrigger ?? true}
     .t=${ctx.t}
-    @input=${(/** @type {Event} */ e) => ctx.change(spec.key, inputValue(e), { merge: true })}
-    @change=${(/** @type {Event} */ e) => options.onChange?.(inputValue(e))}
+    @input=${(/** @type {Event} */ e) => ctx.change(spec.key, read(e), { merge: true })}
+    @change=${(/** @type {Event} */ e) => options.onChange?.(read(e))}
   ></mm-text-input>`;
 }
 

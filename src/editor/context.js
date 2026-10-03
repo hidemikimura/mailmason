@@ -5,6 +5,7 @@
 /** @import { ResolvedHtmlOptions } from '../core/blocks/types.js' */
 /** @import { MergeTag, ImageSelectHook } from './fields/fields.js' */
 /** @import { MergeTagDelimiters } from '../core/merge-tags.js' */
+/** @import { MergeTagDisplay } from './merge-tag-display.js' */
 
 /**
  * @typedef {Object} EditorContext
@@ -25,6 +26,7 @@
  *   行・ブロックにする（入れられなければ null）
  * @property {MergeTag[]} mergeTags
  * @property {MergeTagDelimiters} delimiters
+ * @property {MergeTagDisplay} mergeTagDisplay 差し込み変数をエディタ上で表示名にする・キーに戻す
  * @property {boolean} mergeTagTrigger 区切り開始文字を入力したときに差し込み変数の候補を出す
  * @property {ImageSelectHook | null} onImageSelect
  * @property {readonly import('./web-fonts.js').WebFontOption[]} webFontOptions Web フォントの候補

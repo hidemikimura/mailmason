@@ -639,7 +639,9 @@ export class MmTableEditor extends LitElement {
                 .ctx=${ctx}
                 style=${styleMap({ 'text-align': align })}
               ></mm-text-editor>`
-            : html`<div class="cell">${unsafeHTML(cell)}</div>`;
+            : html`<div class="cell">
+                ${unsafeHTML(ctx.mergeTagDisplay.toLabels(cell, { html: true }))}
+              </div>`;
           /** @param {PointerEvent} e */
           const onPointerDown = (e) => {
             if (active && !e.shiftKey) {

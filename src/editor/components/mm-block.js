@@ -246,7 +246,7 @@ export class MmBlock extends LitElement {
     // 編集していないブロックのマージタグもハイライトする
     const content = this.renderRoot.querySelector('.content');
     if (this.editing || !this.ctx) clearHighlights(this);
-    else highlightMergeTags(this, content, this.ctx.delimiters);
+    else highlightMergeTags(this, content, this.ctx.mergeTagDisplay);
   }
 
   /**
@@ -351,6 +351,8 @@ export class MmBlock extends LitElement {
     let failed = false;
     try {
       content = def ? renderBlockContent(block, contentWidth, body, ctx.htmlOptions) : '';
+      // 差し込み変数は表示名で見せる（書き出しはキーのまま）
+      content = ctx.mergeTagDisplay.toLabels(content, { html: true });
     } catch (error) {
       // カスタムブロックの renderHtml が例外を投げても、エディタは止めない
       console.error(`[mailmason] ${block.type} (${block.id}) の描画に失敗しました`, error);

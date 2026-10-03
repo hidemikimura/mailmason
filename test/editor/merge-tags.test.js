@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createBlock, createRow, createTemplate } from '../../src/index.js';
 import { filterMergeTags, findMergeTagTrigger } from '../../src/editor/merge-tag-search.js';
+import { createMergeTagDisplay } from '../../src/editor/merge-tag-display.js';
 import { canvasBlocks, deep, fixtures, frame, mount, press } from './helpers.js';
 
 /** @typedef {import('../../src/index.js').MailmasonEditor} MailmasonEditor */
@@ -379,5 +380,129 @@ describe('差し込み変数の候補（キャンバス）', () => {
     expect(
       tableEditor.shadowRoot.querySelector('mm-text-editor').closest('td').dataset.column,
     ).toBe('0');
+  });
+});
+
+describe('差し込み変数の表示名', () => {
+  it('キーを表示名にし、表示名をキーに戻す（空白・区切りの内側の空白は保つ）', () => {
+    const display = createMergeTagDisplay(TAGS);
+    const stored = '{{name}} 様 {{ coupon }} / {{coupon_expiry}} {{unknown}}';
+    const shown = display.toLabels(stored);
+    expect(shown).toBe('{{氏名}} 様 {{ クーポンコード }} / {{クーポンの有効期限}} {{unknown}}');
+    expect(display.toKeys(shown)).toBe(stored);
+    expect(display.text('unsubscribe_url')).toBe('{{配信停止 URL}}');
+    expect(display.text('nope')).toBe('{{nope}}');
+  });
+
+  it('HTML では表示名をエスケープし、&nbsp; になった空白にも合わせる', () => {
+    const display = createMergeTagDisplay([...TAGS, { key: 'shop', label: 'A&B "店"' }]);
+    const shown = display.toLabels('<a href="{{shop}}">{{unsubscribe_url}}</a>', { html: true });
+    expect(shown).toBe('<a href="{{A&amp;B &quot;店&quot;}}">{{配信停止 URL}}</a>');
+    expect(display.toKeys(shown, { html: true })).toBe(
+      '<a href="{{shop}}">{{unsubscribe_url}}</a>',
+    );
+    expect(display.toKeys('<p>{{配信停止&nbsp;URL}}</p>', { html: true })).toBe(
+      '<p>{{unsubscribe_url}}</p>',
+    );
+  });
+
+  it('キーに戻せない表示名（重複・他のキーと同じ・区切りを含む）はキーのまま見せる', () => {
+    const display = createMergeTagDisplay([
+      { key: 'a', label: '同じ' },
+      { key: 'b', label: '同じ' },
+      { key: 'c', label: 'a' },
+      { key: 'd', label: 'x}}y' },
+      { key: 'e', label: '' },
+    ]);
+    const stored = '{{a}}{{b}}{{c}}{{d}}{{e}}';
+    expect(display.toLabels(stored)).toBe(stored);
+    expect(display.toKeys('{{同じ}}')).toBe('{{同じ}}');
+  });
+
+  it('区切りを変えても使える', () => {
+    const display = createMergeTagDisplay(TAGS, { open: '%%', close: '%%' });
+    expect(display.toLabels('%%name%% {{name}}')).toBe('%%氏名%% {{name}}');
+    expect(display.toKeys('%%氏名%%')).toBe('%%name%%');
+  });
+
+  it('設定欄・キャンバスでは表示名で見せ、保存と書き出しはキーのまま', async () => {
+    const el = await mount({ mergeTags: TAGS });
+    const template = createTemplate();
+    const button = createBlock('button', { label: '{{name}} 様' });
+    const text = createBlock('text', { html: '<p>こんにちは {{name}} 様</p>' });
+    template.body.rows.push(createRow('1', [[button, text]]));
+    el.loadJson(template);
+    el.select(button.id);
+    await frame();
+    const field = /** @type {HTMLElement} */ (deep(el, 'mm-settings-panel', '[data-key="label"]'));
+    const input = /** @type {HTMLInputElement} */ (field.querySelector('input'));
+    expect(input.value).toBe('{{氏名}} 様');
+
+    // 候補から入れると表示名で入り、保存はキー
+    input.setSelectionRange(input.value.length, input.value.length);
+    const picker = /** @type {any} */ (field.querySelector('mm-merge-tag-picker'));
+    picker.shadowRoot.querySelector('.toggle').click();
+    await picker.updateComplete;
+    const search = picker.shadowRoot.querySelector('.search');
+    search.value = 'points';
+    search.dispatchEvent(new Event('input'));
+    await picker.updateComplete;
+    await picker.shadowRoot.querySelector('mm-merge-tag-list').updateComplete;
+    press(search, 'Enter');
+    await frame();
+    expect(input.value).toBe('{{氏名}} 様{{保有ポイント}}');
+    const values = () => el.getJson().body.rows[0].columns[0].blocks;
+    expect(values()[0].values.label).toBe('{{name}} 様{{points}}');
+
+    // 表示名を直接書いてもキーで保存する
+    input.value = '{{クーポンコード}}';
+    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    await frame();
+    expect(values()[0].values.label).toBe('{{coupon}}');
+
+    // キャンバスの表示は表示名
+    const blocks = canvasBlocks(el);
+    expect(blocks[0].shadowRoot?.textContent).toContain('{{クーポンコード}}');
+    expect(blocks[1].shadowRoot?.textContent).toContain('こんにちは {{氏名}} 様');
+
+    // 書き出しはキー
+    expect(el.exportHtml()).toContain('こんにちは {{name}} 様');
+    expect(el.exportHtml()).not.toContain('氏名');
+    expect(el.exportText()).toContain('{{name}}');
+  });
+
+  it('キャンバスの直接編集でも表示名で見せ、キーで保存する', async () => {
+    const el = await mount({ mergeTags: TAGS });
+    const template = createTemplate();
+    const text = createBlock('text', { html: '<p>こんにちは {{name}} 様</p>' });
+    template.body.rows.push(createRow('1', [[text]]));
+    el.loadJson(template);
+    await frame();
+    const block = /** @type {any} */ (canvasBlocks(el)[0]);
+    block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, composed: true }));
+    await frame();
+    await frame();
+    const editor = block.shadowRoot.querySelector('mm-text-editor');
+    await editor.updateComplete;
+    const editable = /** @type {HTMLElement} */ (editor.shadowRoot.querySelector('.editable'));
+    expect(editable.innerHTML).toBe('<p>こんにちは {{氏名}} 様</p>');
+    editable.focus();
+    const last = /** @type {Text} */ (editable.querySelector('p')?.lastChild);
+    /** @type {Selection} */ (document.getSelection()).setBaseAndExtent(
+      last,
+      last.length,
+      last,
+      last.length,
+    );
+    document.execCommand('insertText', false, '{{');
+    await frame();
+    const list = editor.shadowRoot.querySelector('.suggest mm-merge-tag-list');
+    await list.updateComplete;
+    list.shadowRoot.querySelector('[data-key="coupon"]').click();
+    await frame();
+    expect(editable.textContent).toBe('こんにちは {{氏名}} 様{{クーポンコード}}');
+    expect(el.getJson().body.rows[0].columns[0].blocks[0].values.html).toBe(
+      '<p>こんにちは {{name}} 様{{coupon}}</p>',
+    );
   });
 });

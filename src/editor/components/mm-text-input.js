@@ -13,6 +13,7 @@ import './mm-merge-tag-picker.js';
 
 /** @import { MergeTag } from '../fields/fields.js' */
 /** @import { MergeTagDelimiters } from '../../core/merge-tags.js' */
+/** @import { MergeTagDisplay } from '../merge-tag-display.js' */
 /** @import { Translate } from '../i18n.js' */
 /** @import { MmMergeTagList } from './mm-merge-tag-list.js' */
 
@@ -27,6 +28,7 @@ export class MmTextInput extends LitElement {
     disabled: { type: Boolean },
     tags: { attribute: false },
     delimiters: { attribute: false },
+    display: { attribute: false },
     trigger: { type: Boolean },
     t: { attribute: false },
     _suggest: { state: true },
@@ -45,6 +47,8 @@ export class MmTextInput extends LitElement {
     this.tags = [];
     /** @type {MergeTagDelimiters} */
     this.delimiters = { open: '{{', close: '}}' };
+    /** @type {MergeTagDisplay | null} 差し込み変数を表示名で見せる（value はキーのまま渡す） */
+    this.display = null;
     this.trigger = true;
     /** @type {Translate} */
     this.t = (key) => key;
@@ -141,7 +145,7 @@ export class MmTextInput extends LitElement {
     const suggest = this._suggest;
     if (!suggest) return;
     this._suggest = null;
-    this._replace(suggest.start, suggest.end, mergeTagText(event.detail.key, this.delimiters));
+    this._replace(suggest.start, suggest.end, this._tagText(event.detail.key));
   }
 
   /** @param {CustomEvent<{ key: string }>} event */
@@ -150,11 +154,17 @@ export class MmTextInput extends LitElement {
     const field = this.field;
     const start = field.selectionStart ?? field.value.length;
     const end = field.selectionEnd ?? start;
-    this._replace(start, end, mergeTagText(event.detail.key, this.delimiters));
+    this._replace(start, end, this._tagText(event.detail.key));
+  }
+
+  /** @param {string} key */
+  _tagText(key) {
+    return this.display ? this.display.text(key) : mergeTagText(key, this.delimiters);
   }
 
   render() {
     const hasTags = this.tags.length > 0;
+    const value = this.display ? this.display.toLabels(this.value) : this.value;
     const common = {
       id: this.inputId,
       class: 'mm-text-input-field',
@@ -164,7 +174,7 @@ export class MmTextInput extends LitElement {
           id=${common.id}
           class=${common.class}
           rows=${this.rows}
-          .value=${this.value}
+          .value=${value}
           placeholder=${this.placeholder}
           ?disabled=${this.disabled}
           @input=${this._onInput}
@@ -177,7 +187,7 @@ export class MmTextInput extends LitElement {
           class=${common.class}
           type="text"
           inputmode=${this.inputmode}
-          .value=${this.value}
+          .value=${value}
           placeholder=${this.placeholder}
           ?disabled=${this.disabled}
           @input=${this._onInput}

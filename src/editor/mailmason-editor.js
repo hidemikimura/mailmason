@@ -18,6 +18,7 @@ import './components/mm-palette.js';
 import './components/mm-canvas.js';
 import './components/mm-settings-panel.js';
 import { mergeTagValues } from './util.js';
+import { createMergeTagDisplay } from './merge-tag-display.js';
 import { insertBlock, placeBlock, placeRow } from './components/mm-palette.js';
 import { DEFAULT_MAX_IMAGE_SIZE, ImageUploader, imageFiles, uploadTargetOf } from './upload.js';
 import { getEditorBlockDef } from './blocks/index.js';
@@ -1099,6 +1100,7 @@ export class MailmasonEditor extends LitElement {
       instantiateComponent: (component) => this._instantiate(component),
       mergeTags: this.mergeTags,
       delimiters: this.mergeTagDelimiters,
+      mergeTagDisplay: createMergeTagDisplay(this.mergeTags, this.mergeTagDelimiters),
       mergeTagTrigger: this.mergeTagTrigger !== false,
       onImageSelect: this.onImageSelect,
       onImageUpload: this.onImageUpload,
