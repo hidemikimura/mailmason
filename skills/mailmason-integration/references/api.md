@@ -4,28 +4,30 @@
 
 オブジェクト・配列・関数はプロパティで渡します（属性名がある項目は HTML の属性でも指定できます）。
 
-| プロパティ           | 属性                   | 型                            | 既定値                        | 内容                                                                                                                       |
-| -------------------- | ---------------------- | ----------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `template`           | —                      | `Template`                    | 空のテンプレート              | 取得すると `getJson()`、代入すると `loadJson()` と同じ                                                                     |
-| `theme`              | —                      | `Partial<BodySettings>`       | `{}`                          | 新規テンプレートの既定デザイン（幅・色・フォントなど）。読み込んだ JSON には適用しない                                     |
-| `locale`             | `locale`               | `'ja' \| 'en'`                | `'ja'`                        | UI の言語。テキストパートの SNS 名などにも使う                                                                             |
-| `messages`           | —                      | `Record<string, string>`      | `{}`                          | UI 文言の部分上書き（例: `{ 'toolbar.preview': '確認' }`）                                                                 |
-| `mergeTags`          | —                      | `MergeTag[]`                  | `[]`                          | 差し込み変数の候補（`group` でグループ分け）                                                                               |
-| `mergeTagDelimiters` | —                      | `{ open, close }`             | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                                                       |
-| `mergeTagTrigger`    | `merge-tag-trigger`    | `boolean`                     | `true`                        | 区切り開始文字（`{{`）を入力したときに差し込み変数の候補を出す。属性で消すときは `merge-tag-trigger="false"`               |
-| `onImageSelect`      | —                      | `ImageSelectHook \| null`     | `null`                        | 画像欄の「選択…」ボタンで呼ぶ。自前の画像ライブラリ画面などを開いて URL を返す                                             |
-| `onImageUpload`      | —                      | `ImageUploadHook \| null`     | `null`                        | ローカルの画像ファイル（と QR コードの PNG）を受け取ってアップロードし、URL を返す。無ければ QR コードのブロックは使えない |
-| `blocks`             | —                      | `CustomBlock[]`               | `[]`                          | カスタムブロックの定義（`defineBlock()` の戻り値）。`loadJson` より前に設定する。書き出し・プレビューにも使う              |
-| `components`         | —                      | `Component[]`                 | `[]`                          | 保存済みのコンポーネント（行・ブロック）。パレットの「保存済み」に出す                                                     |
-| `onSaveComponent`    | —                      | `SaveComponentHook \| null`   | `null`                        | 「コンポーネントとして保存」で呼ぶ。アプリが保存し、id を付けて返すと一覧に加える                                          |
-| `onDeleteComponent`  | —                      | `DeleteComponentHook \| null` | `null`                        | 「保存済み」の削除で呼ぶ。`false` を返すと取り消し                                                                         |
-| `maxImageSize`       | `max-image-size`       | `number`                      | `5242880`（5MB）              | アップロードできる画像の上限（バイト、0 で無制限）                                                                         |
-| `socialIconBaseUrl`  | `social-icon-base-url` | `string`                      | `''`                          | SNS アイコン PNG の置き場所。`{base}/{service}-{color\|mono}.png` を参照。空ならテキストリンク                             |
-| `outlookFontFamily`  | `outlook-font-family`  | `string`                      | `'Arial, sans-serif'`         | Outlook（Windows）用のフォント（最初のフォントが無いと明朝体になるため）                                                   |
-| `historyLimit`       | `history-limit`        | `number`                      | `100`                         | Undo の履歴の上限                                                                                                          |
-| `colorMode`          | `color-mode`           | `'light' \| 'dark' \| 'auto'` | `'light'`                     | エディタ UI の配色（メールの色ではない）                                                                                   |
-| `view`               | `view`                 | `'edit' \| 'preview'`         | `'edit'`                      | 編集画面かプレビューか                                                                                                     |
-| `previewDevice`      | `preview-device`       | `'desktop' \| 'mobile'`       | `'desktop'`                   | プレビューの幅（900px / 375px）                                                                                            |
+| プロパティ           | 属性                   | 型                                                                     | 既定値                        | 内容                                                                                                                                     |
+| -------------------- | ---------------------- | ---------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `template`           | —                      | `Template`                                                             | 空のテンプレート              | 取得すると `getJson()`、代入すると `loadJson()` と同じ                                                                                   |
+| `theme`              | —                      | `Partial<BodySettings>`                                                | `{}`                          | 新規テンプレートの既定デザイン（幅・色・フォントなど）。読み込んだ JSON には適用しない                                                   |
+| `locale`             | `locale`               | `'ja' \| 'en'`                                                         | `'ja'`                        | UI の言語。テキストパートの SNS 名などにも使う                                                                                           |
+| `messages`           | —                      | `Record<string, string>`                                               | `{}`                          | UI 文言の部分上書き（例: `{ 'toolbar.preview': '確認' }`）                                                                               |
+| `mergeTags`          | —                      | `MergeTag[]`                                                           | `[]`                          | 差し込み変数の候補（`group` でグループ分け）                                                                                             |
+| `mergeTagDelimiters` | —                      | `{ open, close }`                                                      | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                                                                     |
+| `mergeTagTrigger`    | `merge-tag-trigger`    | `boolean`                                                              | `true`                        | 区切り開始文字（`{{`）を入力したときに差し込み変数の候補を出す。属性で消すときは `merge-tag-trigger="false"`                             |
+| `textOptions`        | —                      | `{ wrapWidth?, newline?, headingPrefix?, dividerText?, textVariant? }` | `{}`                          | テキストパートの作り方。プレビュー・手直しの古さの判定・`exportText()` に同じものを使う（サーバーの `resolveTextPart` にも同じ値を渡す） |
+| `textEditConfirm`    | `text-edit-confirm`    | `boolean`                                                              | `true`                        | テキストパートを全文編集する前に、本文と切れることを伝えて部品ごとの設定を案内する。属性で消すときは `text-edit-confirm="false"`         |
+| `onImageSelect`      | —                      | `ImageSelectHook \| null`                                              | `null`                        | 画像欄の「選択…」ボタンで呼ぶ。自前の画像ライブラリ画面などを開いて URL を返す                                                           |
+| `onImageUpload`      | —                      | `ImageUploadHook \| null`                                              | `null`                        | ローカルの画像ファイル（と QR コードの PNG）を受け取ってアップロードし、URL を返す。無ければ QR コードのブロックは使えない               |
+| `blocks`             | —                      | `CustomBlock[]`                                                        | `[]`                          | カスタムブロックの定義（`defineBlock()` の戻り値）。`loadJson` より前に設定する。書き出し・プレビューにも使う                            |
+| `components`         | —                      | `Component[]`                                                          | `[]`                          | 保存済みのコンポーネント（行・ブロック）。パレットの「保存済み」に出す                                                                   |
+| `onSaveComponent`    | —                      | `SaveComponentHook \| null`                                            | `null`                        | 「コンポーネントとして保存」で呼ぶ。アプリが保存し、id を付けて返すと一覧に加える                                                        |
+| `onDeleteComponent`  | —                      | `DeleteComponentHook \| null`                                          | `null`                        | 「保存済み」の削除で呼ぶ。`false` を返すと取り消し                                                                                       |
+| `maxImageSize`       | `max-image-size`       | `number`                                                               | `5242880`（5MB）              | アップロードできる画像の上限（バイト、0 で無制限）                                                                                       |
+| `socialIconBaseUrl`  | `social-icon-base-url` | `string`                                                               | `''`                          | SNS アイコン PNG の置き場所。`{base}/{service}-{color\|mono}.png` を参照。空ならテキストリンク                                           |
+| `outlookFontFamily`  | `outlook-font-family`  | `string`                                                               | `'Arial, sans-serif'`         | Outlook（Windows）用のフォント（最初のフォントが無いと明朝体になるため）                                                                 |
+| `historyLimit`       | `history-limit`        | `number`                                                               | `100`                         | Undo の履歴の上限                                                                                                                        |
+| `colorMode`          | `color-mode`           | `'light' \| 'dark' \| 'auto'`                                          | `'light'`                     | エディタ UI の配色（メールの色ではない）                                                                                                 |
+| `view`               | `view`                 | `'edit' \| 'preview'`                                                  | `'edit'`                      | 編集画面かプレビューか                                                                                                                   |
+| `previewDevice`      | `preview-device`       | `'desktop' \| 'mobile'`                                                | `'desktop'`                   | プレビューの幅（900px / 375px）                                                                                                          |
 
 ### 型
 
@@ -100,13 +102,14 @@ type DeleteComponentHook = (component: Component) => Promise<boolean | void> | b
 
 ### `RenderTextOptions`
 
-| キー            | 既定値     | 内容                                                          |
-| --------------- | ---------- | ------------------------------------------------------------- |
-| `wrapWidth`     | `0`        | 折り返す桁数（全角 = 2 桁）。0 は折り返さない。URL は折らない |
-| `newline`       | `'\n'`     | `'\r\n'` も可                                                 |
-| `headingPrefix` | `''`       | 見出しの前に付ける記号（例: `'■ '`）                          |
-| `dividerText`   | `'-'` × 40 | 区切り線                                                      |
-| `mergeValues`   | `null`     | マージタグを値に置き換える（エスケープしない）                |
+| キー            | 既定値     | 内容                                                                                               |
+| --------------- | ---------- | -------------------------------------------------------------------------------------------------- |
+| `wrapWidth`     | `0`        | 折り返す桁数（全角 = 2 桁）。0 は折り返さない。URL は折らない                                      |
+| `newline`       | `'\n'`     | `'\r\n'` も可                                                                                      |
+| `headingPrefix` | `''`       | 見出しの前に付ける記号（例: `'■ '`）                                                               |
+| `dividerText`   | `'-'` × 40 | 区切り線                                                                                           |
+| `mergeValues`   | `null`     | マージタグを値に置き換える（エスケープしない）                                                     |
+| `textVariant`   | `'both'`   | PC 用・スマホ用で分けた部品・行（`hideOn`）のどちらを出すか（`'both'` / `'desktop'` / `'mobile'`） |
 
 ## イベント
 

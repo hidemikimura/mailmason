@@ -169,6 +169,19 @@ export declare class MailmasonEditor extends LitElement {
    * （属性 merge-tag-trigger、既定 true。属性で消すときは merge-tag-trigger="false"）
    */
   mergeTagTrigger: boolean;
+  /**
+   * テキストパートの作り方。プレビュー・手直しの古さの判定・exportText() に同じものを使う。
+   * サーバーで resolveTextPart() を使うときも同じ値を渡す（違うと手直しが「古い」と判定される）
+   */
+  textOptions: Pick<
+    RenderTextOptions,
+    'wrapWidth' | 'newline' | 'headingPrefix' | 'dividerText' | 'textVariant'
+  >;
+  /**
+   * テキストパートを全文編集する前に、本文と切れることを伝え、部品ごとの設定を案内する
+   * （属性 text-edit-confirm、既定 true。属性で消すときは text-edit-confirm="false"）
+   */
+  textEditConfirm: boolean;
   /** 画像欄の「選択…」ボタンで呼ぶ */
   onImageSelect: ImageSelectHook | null;
   /** ローカルの画像ファイル（と QR コードの PNG）をアップロードする。無ければ QR コードのブロックは出ない */

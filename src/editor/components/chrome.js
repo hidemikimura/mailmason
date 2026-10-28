@@ -57,6 +57,16 @@ export function renderChrome(label, actions, t, onDragStart) {
 }
 
 export const chromeStyles = css`
+  .badges {
+    position: absolute;
+    bottom: 4px;
+    display: flex;
+    gap: 4px;
+    pointer-events: none;
+  }
+  .badges .badge {
+    position: static;
+  }
   .chrome {
     position: absolute;
     left: -2px;
@@ -124,16 +134,25 @@ export const chromeStyles = css`
 `;
 
 /**
- * 表示する画面のバッジ（スマホで非表示 / PC で非表示）
- * @param {'mobile' | 'desktop' | null} hideOn
+ * 部品・行のバッジ（表示する画面とテキストパートでの扱い）。並びの位置は呼ぶ側の .badges で決める
+ * @param {'mobile' | 'desktop' | null} hideOn スマホで非表示 / PC で非表示
+ * @param {'hidden' | 'only' | undefined} textMode テキストパートに出さない / テキストパートだけ
  * @param {{ t: Translate }} ctx
  */
-export function hideBadge(hideOn, ctx) {
-  if (hideOn === 'mobile') return html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>`;
-  if (hideOn === 'desktop') {
-    return html`<span class="badge" data-hide="desktop">${ctx.t('badge.hiddenOnDesktop')}</span>`;
-  }
-  return nothing;
+export function elementBadges(hideOn, textMode, ctx) {
+  const badges = [
+    hideOn === 'mobile' ? html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>` : null,
+    hideOn === 'desktop'
+      ? html`<span class="badge" data-hide="desktop">${ctx.t('badge.hiddenOnDesktop')}</span>`
+      : null,
+    textMode === 'hidden'
+      ? html`<span class="badge" data-text="hidden">${ctx.t('badge.textHidden')}</span>`
+      : null,
+    textMode === 'only'
+      ? html`<span class="badge" data-text="only">${ctx.t('badge.textOnly')}</span>`
+      : null,
+  ].filter(Boolean);
+  return badges.length > 0 ? html`<div class="badges">${badges}</div>` : nothing;
 }
 
 /**

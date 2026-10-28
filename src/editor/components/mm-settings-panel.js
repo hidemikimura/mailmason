@@ -4,6 +4,12 @@ import { findRowIndex, locateBlock, locateColumn } from '../../core/model/tree.j
 import { getBlockDef } from '../../core/blocks/registry.js';
 import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { renderField } from '../fields/fields.js';
+import {
+  BLOCK_TEXT_FIELD,
+  ROW_TEXT_FIELD,
+  autoTextPreview,
+  textModeValues,
+} from './text-part-fields.js';
 import { controls } from '../styles.js';
 import { getIn, isComposing, patchAt } from '../util.js';
 import { define } from '../context.js';
@@ -264,6 +270,28 @@ export class MmSettingsPanel extends LitElement {
       .with-menu {
         display: flex;
         gap: 4px;
+      }
+      .text-preview .hint {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 11px;
+        color: var(--mm-color-muted);
+      }
+      .text-preview pre {
+        margin: 0;
+        padding: 6px 8px;
+        max-height: 120px;
+        overflow: auto;
+        border-radius: var(--mm-radius);
+        background: var(--mm-color-surface-2);
+        font:
+          11px/1.5 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
       }
       .with-menu input,
       .with-menu textarea {
@@ -797,6 +825,20 @@ export class MmSettingsPanel extends LitElement {
     return specs.map((spec) => renderField(spec, getIn(fieldCtx.values, spec.key), fieldCtx));
   }
 
+  /**
+   * テキストパートでの扱いの設定欄
+   * @param {import('../../core/model/types.js').Block | import('../../core/model/types.js').Row} element
+   */
+  _textModeContext(element) {
+    return this._fieldContext(`mm-${element.id}-text`, textModeValues(element), (_key, mode) =>
+      this.ctx.store.dispatch({
+        type: 'setElementText',
+        id: element.id,
+        text: { mode: /** @type {string} */ (mode) },
+      }),
+    );
+  }
+
   /** @param {Target} target */
   _breadcrumb(target) {
     const { t, store } = this.ctx;
@@ -934,6 +976,10 @@ export class MmSettingsPanel extends LitElement {
           <h3>${t('section.layout')}</h3>
           ${this._fields(ROW_FIELDS, fieldCtx)}
         </section>
+        <section>
+          <h3>${t('section.textPart')}</h3>
+          ${this._fields([ROW_TEXT_FIELD], this._textModeContext(row))}
+        </section>
         ${this._renderSaveComponent(row.id, t('crumb.row'))}`;
     } else if (target.kind === 'column') {
       const { column } = target;
@@ -1013,6 +1059,11 @@ export class MmSettingsPanel extends LitElement {
               <section>
                 <h3>${t('section.visibility')}</h3>
                 ${this._fields([VISIBILITY_FIELD], hideCtx)}
+              </section>
+              <section>
+                <h3>${t('section.textPart')}</h3>
+                ${this._fields([BLOCK_TEXT_FIELD], this._textModeContext(block))}
+                ${autoTextPreview(block, this.ctx)}
               </section>
               ${this._renderSaveComponent(block.id, blockLabel(edef, this.ctx))}`
           : html`<section>

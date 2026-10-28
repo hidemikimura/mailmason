@@ -22,6 +22,17 @@ const shown = (text) =>
     .replaceAll('{{name}}', '{{氏名}}')
     .replaceAll('{{unsubscribe_url}}', '{{配信停止 URL}}');
 
+/**
+ * 「編集する」を押し、案内で「全文を編集する」を選ぶ
+ * @param {MailmasonEditor} el
+ */
+async function startTextEditing(el) {
+  inPreview(el, '[data-action="edit-text"]').click();
+  await frame();
+  inPreview(el, '[data-action="confirm-edit-text"]').click();
+  await frame();
+}
+
 /** @param {number} ms */
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -192,8 +203,7 @@ describe('プレビュー', () => {
   it('「編集する」で手編集に切り替え、入力はテキストパートに保存する', async () => {
     const el = await setup();
     await openTextTab(el);
-    inPreview(el, '[data-action="edit-text"]').click();
-    await frame();
+    await startTextEditing(el);
     const { text } = el.getJson();
     expect(text.mode).toBe('manual');
     expect(text.content).toContain('{{name}} 様'); // 保存するのは差し込み前
@@ -225,8 +235,7 @@ describe('プレビュー', () => {
   it('手編集の欄でも {{ から差し込み変数の候補を出し、元に戻す・やり直すが効く', async () => {
     const el = await setup();
     await openTextTab(el);
-    inPreview(el, '[data-action="edit-text"]').click();
-    await frame();
+    await startTextEditing(el);
     const before = /** @type {string} */ (el.getJson().text.content);
     const field = /** @type {any} */ (inPreview(el, 'mm-text-input'));
     const textarea = /** @type {HTMLTextAreaElement} */ (field.querySelector('textarea'));
@@ -261,8 +270,7 @@ describe('プレビュー', () => {
     const warnings = /** @type {any[]} */ ([]);
     el.addEventListener('mm-warning', (e) => warnings.push(/** @type {CustomEvent} */ (e).detail));
     await openTextTab(el);
-    inPreview(el, '[data-action="edit-text"]').click();
-    await frame();
+    await startTextEditing(el);
     expect(inPreview(el, '.notice')).toBeNull();
 
     await clickToolbar(el, 'view', 'edit');

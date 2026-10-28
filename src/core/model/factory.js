@@ -14,7 +14,7 @@ import { deepMerge } from './utils.js';
 /** @import { Block, BodySettings, Column, Row, RowLayout, Template } from './types.js' */
 
 /** テンプレート JSON の現行バージョン */
-export const TEMPLATE_VERSION = 1;
+export const TEMPLATE_VERSION = 2;
 
 const ID_LENGTH = 8;
 const ID_CHARS = '0123456789abcdefghijklmnopqrstuvwxyz';

@@ -481,6 +481,7 @@ ${table(bodySettingsSchema, /** @type {any} */ (defaultBodySettings()), 'body')}
 | \`layout\` | 下のレイアウト | カラムの分け方 |
 | \`settings\` | オブジェクト | 行の設定（下記） |
 | \`columns\` | 配列 | カラム。数はレイアウトと同じ（合わなければ警告して合わせる） |
+| \`text\` | \`{ "mode": "hidden" }\`（省略可） | テキストパートでの扱い。\`"hidden"\` で行ごとテキストパートに出さない（中のブロックの設定より先に効く）。省略すると自動 |
 
 ### レイアウト
 
@@ -513,6 +514,7 @@ ${table(columnSettingsSchema, /** @type {any} */ (defaultColumnSettings()), 'col
 | \`values\` | オブジェクト | 種類ごとの値（下記）。省略した項目は既定値 |
 | \`style\` | オブジェクト | 背景と余白（下記） |
 | \`hideOn\` | \`"mobile"\` \\| \`"desktop"\` \\| \`null\` | \`"mobile"\` でスマホでは表示しない。\`"desktop"\` で PC では表示しない（スマホだけに出す。Outlook（Windows）とメディアクエリに対応しないメールソフトでは表示されない） |
+| \`text\` | \`{ "mode": "hidden" \\| "only" }\`（省略可） | テキストパートでの扱い。\`"hidden"\` でテキストパートに出さない。\`"only"\` で HTML に出さず、テキストパートだけに出す。省略すると自動（本文から作る） |
 
 ### 共通のスタイル（\`style\`）
 

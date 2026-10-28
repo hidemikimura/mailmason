@@ -4,7 +4,18 @@
 
 ## 未公開
 
+### 互換性
+
+- テンプレート JSON の版（`version`）を 2 にした。版 1 のテンプレートはそのまま読み込める（警告なし）。版 2 のテンプレートは 0.8.0 以前の mailmason では読み込めない（`unsupported-version`）。古い版で開いて保存し直すと、新しい項目（ブロック・行の `text`）が消えるため
+- テキストパートで、代替テキストが空の画像を出さないようにした（飾りの画像とみなす）。これまではリンク付きならリンク先の URL だけを出していた。全文を手で直したテキストパートは、該当する画像があると「古い」（`stale-text`）と出る
+- プレビューの「テキスト」タブで「編集する」を押すと、全文編集を始める前に案内を出すようにした（`textEditConfirm = false` で前と同じ）
+
 ### 追加
+
+- テキストパートで、ブロック・行ごとに扱いを変えられるようにした。設定パネルの「テキストパート」で、ブロックは「自動」「出さない」「テキストだけ」（HTML に出さない）、行は「自動」「行ごと出さない」から選ぶ。行の設定はブロックの設定より先に効く。選ばなかったブロックは本文と連動したまま。キャンバスに印を出し、「自動」の下にそのブロックから作られるテキストを見せる。テンプレート JSON ではブロック・行の `text`（省略すると自動）、コマンドは `setElementText`
+- `RenderTextOptions` に `textVariant`（`'both'` / `'desktop'` / `'mobile'`）を足した。PC 用・スマホ用で分けた部品・行のどちらをテキストパートに出すか選べる（既定は両方で今と同じ）
+- エディタに `textOptions` を足した。プレビュー・手直しの古さの判定・`exportText()` に同じテキストパートの作り方を使う
+- エディタに `textEditConfirm`（属性 `text-edit-confirm`）を足した
 
 - 差し込み変数の入力欄 `<mm-text-input>` を公開した（`MmTextInput`）。件名など、エディタの外の欄に置ける。`display-labels` で欄の中を表示名で見せ、`value` とイベント（`mm-value-input`・`mm-value-change`、`detail: { value }`）はキーで返す。`locale`・`messages` で文言を変えられ、エディタの外でも見た目の初期値を持つ。入力中の候補の一覧の幅は `--mm-suggest-width` で変えられる
 - `<mm-text-input>` がフォームの部品として振る舞う（form-associated custom element）。`name` の値（キー）を送り、`required`・`maxlength`（キーで書いた値の文字数）で検査する。フォームのリセットと `<fieldset disabled>` も効く。`autocomplete`・`aria-describedby`・`aria-invalid` は中の欄に写す

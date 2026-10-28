@@ -2,6 +2,7 @@
 import { getBlockDef } from '../blocks/registry.js';
 import { migrate } from '../migrate/index.js';
 import { DEFAULT_DELIMITERS, replaceMergeTags } from '../merge-tags.js';
+import { matchesVariant } from '../text-override.js';
 import { wrapText } from './wrap.js';
 
 /** @import { ResolvedTextOptions } from '../blocks/types.js' */
@@ -9,7 +10,8 @@ import { wrapText } from './wrap.js';
 
 /**
  * @typedef {Object} RenderTextOptions
- * @property {number} [wrapWidth] 折り返す桁数（全角 = 2）。0 なら折り返さない（既定）
+ * @property {number} [wrapWidth] 折り返す桁数（全角 = 2）。0 なら折り返さない（既定）。
+ *   差し込み変数の置き換えを配信システムで行うなら 0 を勧める（`{{order_id}}` の長さで数えるため、届くメールで幅がずれる）
  * @property {'\n' | '\r\n'} [newline] 改行コード（既定 '\n'）
  * @property {string} [headingPrefix] 見出しの前に付ける記号（例: '■ '。既定なし）
  * @property {string} [dividerText] 区切り線の文字列（既定は '-' × 40）
@@ -17,7 +19,11 @@ import { wrapText } from './wrap.js';
  * @property {Record<string, string> | null} [mergeValues] 指定するとマージタグを値に置き換える
  * @property {MergeTagDelimiters} [mergeTagDelimiters] 既定 `{{` `}}`
  * @property {readonly import('../blocks/types.js').CoreBlockDef[] | null} [blocks] カスタムブロックの定義
+ * @property {import('../text-override.js').TextVariant} [textVariant] PC 用・スマホ用で分けた部品・行（hideOn）のどちらを出すか。
+ *   'both'（既定）は両方、'desktop' はスマホだけに出すものを除く、'mobile' は PC だけに出すものを除く
  */
+
+const TEXT_VARIANTS = ['both', 'desktop', 'mobile'];
 
 /**
  * @param {RenderTextOptions} options
@@ -33,6 +39,9 @@ export function resolveTextOptions(options) {
     mergeValues: options.mergeValues ?? null,
     mergeTagDelimiters: options.mergeTagDelimiters ?? DEFAULT_DELIMITERS,
     blocks: options.blocks ?? null,
+    textVariant: /** @type {import('../text-override.js').TextVariant} */ (
+      TEXT_VARIANTS.includes(options.textVariant ?? '') ? options.textVariant : 'both'
+    ),
   };
 }
 
@@ -66,9 +75,13 @@ export function renderText(input, options = {}) {
   });
   /** @type {string[]} */
   const chunks = [];
+  const { textVariant } = resolved;
   for (const row of template.body.rows) {
+    // 行の hidden は中の部品の設定より先に効く
+    if (row.text?.mode === 'hidden' || !matchesVariant(row.settings.hideOn, textVariant)) continue;
     for (const column of row.columns) {
       for (const block of column.blocks) {
+        if (block.text?.mode === 'hidden' || !matchesVariant(block.hideOn, textVariant)) continue;
         const def = getBlockDef(block.type, resolved.blocks);
         if (!def) continue;
         const chunk = def.renderText(block, { options: resolved }).trim();
@@ -77,6 +90,19 @@ export function renderText(input, options = {}) {
     }
   }
   return finishText(chunks.join('\n\n'), resolved, true);
+}
+
+/**
+ * ブロック 1 つを自動生成したときのテキスト（text.mode は見ない。エディタの設定欄で見せる用）
+ * @param {import('../model/types.js').Block} block 正規化済みのブロック
+ * @param {RenderTextOptions} [options]
+ * @returns {string}
+ */
+export function renderBlockText(block, options = {}) {
+  const resolved = resolveTextOptions(options);
+  const def = getBlockDef(block.type, resolved.blocks);
+  if (!def) return '';
+  return finishText(def.renderText(block, { options: resolved }).trim(), resolved, true);
 }
 
 /**

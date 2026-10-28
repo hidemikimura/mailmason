@@ -55,9 +55,9 @@ export function imageHtml(image) {
  * @returns {string}
  */
 export function imageText(image) {
-  if (!image.src) return '';
-  if (image.alt) return image.href ? `[${image.alt}] ( ${image.href} )` : `[${image.alt}]`;
-  return image.href;
+  // 代替テキストが空の画像は飾り（ロゴ・区切りの絵など）とみなし、テキストパートに出さない
+  if (!image.src || !image.alt) return '';
+  return image.href ? `[${image.alt}] ( ${image.href} )` : `[${image.alt}]`;
 }
 
 /**

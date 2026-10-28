@@ -4,6 +4,7 @@ import { migrate } from '../migrate/index.js';
 import { computeLayout } from '../model/layout.js';
 import { DEFAULT_DELIMITERS, replaceMergeTags } from '../merge-tags.js';
 import { escapeAttr } from '../richtext/entities.js';
+import { isInHtml } from '../text-override.js';
 import { TABLE_OPEN, paddingDecl, styleAttr } from './styles.js';
 import { renderLines, wrap } from './lines.js';
 import { skeleton } from './skeleton.js';
@@ -116,7 +117,10 @@ function mobileOnlyRow(cells) {
  * @returns {Lines}
  */
 function renderBlocks(blocks, width, template, options) {
-  const rows = blocks.flatMap((block) => renderBlock(block, width, template, options));
+  // テキストパートだけに出す部品（text.mode: 'only'）は HTML に出さない
+  const rows = blocks
+    .filter(isInHtml)
+    .flatMap((block) => renderBlock(block, width, template, options));
   return rows.length > 0 ? [wrap(`${TABLE_OPEN}>`, rows, '</table>')] : [];
 }
 

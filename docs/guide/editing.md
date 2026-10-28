@@ -49,7 +49,7 @@
 ```json
 {
   "mailmason": "clipboard",
-  "version": 1,
+  "version": 2,
   "kind": "blocks",
   "items": [{ "id": "b_…", "type": "text", "values": {} }]
 }

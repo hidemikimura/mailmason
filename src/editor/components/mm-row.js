@@ -2,7 +2,7 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { chromeStyles, hideBadge, isToggleClick, renderChrome } from './chrome.js';
+import { chromeStyles, elementBadges, isToggleClick, renderChrome } from './chrome.js';
 import { define } from '../context.js';
 import { backgroundStyles } from '../util.js';
 import './mm-block.js';
@@ -81,6 +81,9 @@ export class MmRow extends LitElement {
         color: #8a939d;
         font: 12px/1.4 var(--mm-font-family);
         min-height: 48px;
+      }
+      .badges {
+        left: 4px;
       }
       .badge {
         position: absolute;
@@ -208,7 +211,7 @@ export class MmRow extends LitElement {
       >
         <div class="columns">${columns}</div>
       </div>
-      ${hideBadge(settings.hideOn, ctx)}
+      ${elementBadges(settings.hideOn, row.text?.mode, ctx)}
       ${
         selectedRow
           ? renderChrome(

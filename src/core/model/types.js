@@ -49,12 +49,25 @@
  */
 
 /**
+ * テキストパートでの部品の扱い（省略すると自動）
+ * @typedef {Object} BlockText
+ * @property {'hidden' | 'only'} mode hidden: テキストパートに出さない / only: HTML に出さず、テキストパートだけに出す
+ */
+
+/**
+ * テキストパートでの行の扱い（省略すると自動）
+ * @typedef {Object} RowText
+ * @property {'hidden'} mode 行ごとテキストパートに出さない（中の部品の設定より先に効く）
+ */
+
+/**
  * @typedef {Object} Block
  * @property {string} id
  * @property {string} type
  * @property {Record<string, unknown>} values
  * @property {{ backgroundColor: string | null, padding: Spacing }} style
  * @property {'mobile' | 'desktop' | null} hideOn スマホで隠す / PC で隠す（スマホだけに出す）
+ * @property {BlockText} [text] テキストパートでの扱い（省略すると自動）
  */
 
 /**
@@ -80,6 +93,7 @@
  * @property {RowLayout} layout
  * @property {RowSettings} settings
  * @property {Column[]} columns
+ * @property {RowText} [text] テキストパートでの扱い（省略すると自動）
  */
 
 /**
@@ -97,7 +111,7 @@
 
 /**
  * @typedef {Object} Template
- * @property {1} version
+ * @property {2} version
  * @property {Body} body
  * @property {TextPart} text
  */

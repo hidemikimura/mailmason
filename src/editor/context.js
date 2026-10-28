@@ -28,6 +28,9 @@
  * @property {MergeTagDelimiters} delimiters
  * @property {MergeTagDisplay} mergeTagDisplay 差し込み変数をエディタ上で表示名にする・キーに戻す
  * @property {boolean} mergeTagTrigger 区切り開始文字を入力したときに差し込み変数の候補を出す
+ * @property {import('../core/render-text/index.js').RenderTextOptions} textOptions
+ *   テキストパートの作り方（locale・区切り・カスタムブロック・editor.textOptions。差し込みの値は含めない）
+ * @property {boolean} textEditConfirm テキストパートを全文編集する前に、本文と切れることを伝える
  * @property {ImageSelectHook | null} onImageSelect
  * @property {readonly import('./web-fonts.js').WebFontOption[]} webFontOptions Web フォントの候補
  * @property {import('./upload.js').ImageUploadHook | null} onImageUpload

@@ -47,7 +47,7 @@ editor.onDeleteComponent = async (component) => {
   "id": "cmp_1",
   "name": "フッター",
   "kind": "row",
-  "version": 1,
+  "version": 2,
   "content": { "id": "r_…", "layout": "1", "settings": { … }, "columns": [ … ] }
 }
 ```

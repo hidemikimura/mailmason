@@ -96,6 +96,12 @@ export class MailmasonEditor extends LitElement {
       // 既定が true なので、属性は "false" のときだけオフにする
       converter: { fromAttribute: (/** @type {string | null} */ value) => value !== 'false' },
     },
+    textOptions: { attribute: false },
+    textEditConfirm: {
+      type: Boolean,
+      attribute: 'text-edit-confirm',
+      converter: { fromAttribute: (/** @type {string | null} */ value) => value !== 'false' },
+    },
     onImageSelect: { attribute: false },
     onImageUpload: { attribute: false },
     webFontOptions: { attribute: false },
@@ -238,6 +244,13 @@ export class MailmasonEditor extends LitElement {
     this.mergeTagDelimiters = DEFAULT_DELIMITERS;
     /** 区切り開始文字（`{{` など）を入力したときに差し込み変数の候補を出す */
     this.mergeTagTrigger = true;
+    /**
+     * @type {Pick<RenderTextOptions, 'wrapWidth' | 'newline' | 'headingPrefix' | 'dividerText' | 'textVariant'>}
+     * テキストパートの作り方。プレビュー・手直しの古さの判定・exportText() に同じものを使う
+     */
+    this.textOptions = {};
+    /** テキストパートを全文編集する前に、本文と切れることを伝える */
+    this.textEditConfirm = true;
     /** @type {readonly WebFontOption[]} 全体設定の「Web フォントを追加」に出す候補（既定は Google Fonts） */
     this.webFontOptions = DEFAULT_WEB_FONT_OPTIONS;
     /** @type {ImageSelectHook | null} 画像の「選択…」ボタンで呼ぶフック。URL を返す */
@@ -552,9 +565,7 @@ export class MailmasonEditor extends LitElement {
     const { template } = this.store.getState();
     this._checkMergeTags(template);
     const part = resolveTextPart(template, {
-      locale: this.locale,
-      mergeTagDelimiters: this.mergeTagDelimiters,
-      blocks: this.blocks,
+      ...this._textOptions(),
       ...options,
       mergeValues: this._withFallbacks(options.mergeValues),
     });
@@ -1061,6 +1072,19 @@ export class MailmasonEditor extends LitElement {
     }
   }
 
+  /**
+   * テキストパートの作り方（差し込みの値は含めない）
+   * @returns {RenderTextOptions}
+   */
+  _textOptions() {
+    return {
+      locale: this.locale,
+      mergeTagDelimiters: this.mergeTagDelimiters,
+      blocks: this.blocks,
+      ...this.textOptions,
+    };
+  }
+
   /** @returns {EditorContext} */
   _context() {
     const key = JSON.stringify([
@@ -1069,6 +1093,8 @@ export class MailmasonEditor extends LitElement {
       this.mergeTags,
       this.mergeTagDelimiters,
       this.mergeTagTrigger,
+      this.textOptions,
+      this.textEditConfirm,
       this.socialIconBaseUrl,
       this.outlookFontFamily,
     ]);
@@ -1102,6 +1128,8 @@ export class MailmasonEditor extends LitElement {
       delimiters: this.mergeTagDelimiters,
       mergeTagDisplay: getMergeTagDisplay(this.mergeTags, this.mergeTagDelimiters),
       mergeTagTrigger: this.mergeTagTrigger !== false,
+      textOptions: this._textOptions(),
+      textEditConfirm: this.textEditConfirm !== false,
       onImageSelect: this.onImageSelect,
       onImageUpload: this.onImageUpload,
       webFontOptions: this.webFontOptions,

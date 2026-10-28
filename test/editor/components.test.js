@@ -57,7 +57,7 @@ describe('コンポーネント（保存した行・ブロック）', () => {
     /** @type {HTMLButtonElement} */ (saveButton(el)).click();
     await vi.waitFor(() => expect(el.components).toHaveLength(1));
 
-    expect(received[0]).toMatchObject({ name: '商品 2 列', kind: 'row', version: 1 });
+    expect(received[0]).toMatchObject({ name: '商品 2 列', kind: 'row', version: 2 });
     expect(received[0].content).toEqual(row);
     expect(el.components[0].id).toBe('cmp_1');
     await frame();

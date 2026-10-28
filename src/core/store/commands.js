@@ -11,6 +11,7 @@ import {
   hideOnSchema,
   rowSettingsSchema,
 } from '../model/settings.js';
+import { normalizeBlockText, normalizeRowText, withText } from '../text-override.js';
 import {
   clamp,
   collectIds,
@@ -52,6 +53,8 @@ import { mergeBySchema } from '../model/schema.js';
  *   patch は values に深くマージする（配列は置き換え）
  * @typedef {{ type: 'updateBlockStyle', blockId: string, patch: Partial<Block['style']> }} UpdateBlockStyleCommand
  * @typedef {{ type: 'setBlockHideOn', blockId: string, hideOn: 'mobile' | 'desktop' | null }} SetBlockHideOnCommand
+ * @typedef {{ type: 'setElementText', id: string, text: { mode: string } | null }} SetElementTextCommand
+ *   部品・行のテキストパートでの扱いを決める（id は部品か行の ID。null か mode: 'auto' で自動に戻す）
  * @typedef {{ type: 'setTextPart', content: string, sourceHash?: string | null }} SetTextPartCommand
  * @typedef {{ type: 'resetTextPart' }} ResetTextPartCommand
  * @typedef {{ type: 'loadTemplate', template: Template }} LoadTemplateCommand
@@ -66,7 +69,7 @@ import { mergeBySchema } from '../model/schema.js';
  *   | UpdateBodySettingsCommand | AddBlockCommand | MoveBlockCommand | MoveBlockToNewRowCommand
  *   | DuplicateBlockCommand
  *   | RemoveBlockCommand | UpdateBlockValuesCommand | UpdateBlockStyleCommand
- *   | SetBlockHideOnCommand | SetTextPartCommand | ResetTextPartCommand | LoadTemplateCommand
+ *   | SetBlockHideOnCommand | SetElementTextCommand | SetTextPartCommand | ResetTextPartCommand | LoadTemplateCommand
  *   | BatchCommand)
  *   & { mergeKey?: string }} Command
  *   mergeKey: 同じ値のコマンドが短時間に続いたら、ストアが 1 つの履歴にまとめる
@@ -373,6 +376,27 @@ export function applyCommand(template, command, warnings = [], options = {}) {
       const blocks = column.blocks.slice();
       blocks[blockIndex] = next;
       return replaceColumn(template, rowIndex, columnIndex, { ...column, blocks });
+    }
+
+    case 'setElementText': {
+      const ctx = { path: '', warnings };
+      const rowIndex = findRowIndex(template, command.id);
+      if (rowIndex !== -1) {
+        const row = rows[rowIndex];
+        ctx.path = `row(${row.id})`;
+        const text = normalizeRowText(command.text ?? undefined, ctx);
+        if (isEqual(text, row.text)) return template;
+        return replaceRow(template, rowIndex, withText(row, text));
+      }
+      const { rowIndex: r, columnIndex, blockIndex } = requireBlock(template, command.id);
+      const column = rows[r].columns[columnIndex];
+      const block = column.blocks[blockIndex];
+      ctx.path = `block(${block.id})`;
+      const text = normalizeBlockText(command.text ?? undefined, ctx);
+      if (isEqual(text, block.text)) return template;
+      const blocks = column.blocks.slice();
+      blocks[blockIndex] = withText(block, text);
+      return replaceColumn(template, r, columnIndex, { ...column, blocks });
     }
 
     case 'setTextPart': {

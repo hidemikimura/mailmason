@@ -444,6 +444,21 @@ export type BuiltinBlockType = keyof BlockValuesMap;
 /** カスタムブロックの type（英小文字・数字・ハイフン。ハイフンを 1 つ以上含む） */
 export type CustomBlockType = `${string}-${string}`;
 
+/** テキストパートでのブロックの扱い（省略すると自動） */
+export interface BlockText {
+  /** 'hidden' でテキストパートに出さない。'only' で HTML に出さず、テキストパートだけに出す */
+  mode: 'hidden' | 'only';
+}
+
+/** テキストパートでの行の扱い（省略すると自動） */
+export interface RowText {
+  /** 行ごとテキストパートに出さない（中のブロックの設定より先に効く） */
+  mode: 'hidden';
+}
+
+/** PC 用・スマホ用で分けた部品・行（hideOn）のどちらをテキストパートに出すか */
+export type TextVariant = 'both' | 'desktop' | 'mobile';
+
 /** ブロックの共通部分 */
 export interface BlockBase<T extends string = string, V = Record<string, unknown>> {
   id: string;
@@ -455,6 +470,8 @@ export interface BlockBase<T extends string = string, V = Record<string, unknown
    * Outlook（Windows）とメディアクエリに対応しないメールソフトでは表示されない）
    */
   hideOn: HideOn;
+  /** テキストパートでの扱い（省略すると自動） */
+  text?: BlockText;
 }
 
 /** 標準ブロック。`BlockOf<'table'>` のように type を指定して使う */
@@ -487,6 +504,8 @@ export interface Row {
   settings: RowSettings;
   /** レイアウトの数だけ並ぶ */
   columns: Column[];
+  /** テキストパートでの扱い（省略すると自動） */
+  text?: RowText;
 }
 
 /** 本文 */
@@ -506,7 +525,7 @@ export interface TextPart {
 
 /** テンプレート JSON（保存するのはこれだけ） */
 export interface Template {
-  version: 1;
+  version: 2;
   body: Body;
   text: TextPart;
 }
@@ -582,7 +601,7 @@ export declare class MailmasonError extends Error {
 // ---------------------------------------------------------------------------
 
 /** テンプレートのバージョン */
-export declare const TEMPLATE_VERSION: 1;
+export declare const TEMPLATE_VERSION: 2;
 
 /** 行（r）・カラム（c）・ブロック（b）の ID を作る */
 export declare function createId(prefix: 'r' | 'c' | 'b'): string;
@@ -1022,6 +1041,12 @@ export interface SetBlockHideOnCommand {
   blockId: string;
   hideOn: HideOn;
 }
+/** 部品・行のテキストパートでの扱いを決める（id は部品か行の ID。null か mode: 'auto' で自動に戻す） */
+export interface SetElementTextCommand {
+  type: 'setElementText';
+  id: string;
+  text: BlockText | RowText | { mode: 'auto' } | null;
+}
 export interface SetTextPartCommand {
   type: 'setTextPart';
   content: string;
@@ -1058,6 +1083,7 @@ export type Command = (
   | UpdateBlockValuesCommand
   | UpdateBlockStyleCommand
   | SetBlockHideOnCommand
+  | SetElementTextCommand
   | SetTextPartCommand
   | ResetTextPartCommand
   | LoadTemplateCommand
@@ -1164,7 +1190,10 @@ export declare const HTML_SIZE_WARNING_BYTES: number;
 export declare function renderHtml(input: unknown, options?: RenderHtmlOptions): string;
 
 export interface RenderTextOptions extends BlocksOption {
-  /** 折り返す桁数（全角 = 2 桁、0 は折り返さない。URL は折らない） */
+  /**
+   * 折り返す桁数（全角 = 2 桁、0 は折り返さない。URL は折らない）。
+   * 差し込み変数の置き換えを配信システムで行うなら 0 を勧める（`{{order_id}}` の長さで数えるため、届くメールで幅がずれる）
+   */
   wrapWidth?: number;
   newline?: '\n' | '\r\n';
   /** 見出しの前に付ける記号（例: '■ '） */
@@ -1175,6 +1204,11 @@ export interface RenderTextOptions extends BlocksOption {
   /** マージタグを値に置き換える（エスケープしない） */
   mergeValues?: Record<string, string> | null;
   mergeTagDelimiters?: MergeTagDelimiters;
+  /**
+   * PC 用・スマホ用で分けた部品・行（hideOn）のどちらを出すか。'both'（既定）は両方、
+   * 'desktop' はスマホだけに出すものを除く、'mobile' は PC だけに出すものを除く
+   */
+  textVariant?: TextVariant;
 }
 
 /** 自動生成のテキストパート（手編集は使わない。配信には resolveTextPart を使う） */

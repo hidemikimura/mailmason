@@ -54,6 +54,7 @@ export class MmPreview extends LitElement {
     _useSamples: { state: true },
     _useWebFonts: { state: true },
     _output: { state: true },
+    _confirmEdit: { state: true },
   };
 
   static styles = [
@@ -218,6 +219,8 @@ export class MmPreview extends LitElement {
     this._useWebFonts = true;
     /** @type {PreviewOutput | null} */
     this._output = null;
+    /** 全文編集の前の案内を出している */
+    this._confirmEdit = false;
     /** @type {ReturnType<typeof setTimeout> | null} */
     this._timer = null;
     /** 古さの警告を通知済みか（同じ状態で何度も出さない） */
@@ -247,10 +250,18 @@ export class MmPreview extends LitElement {
 
   /** 出力の作り方を決めるオプション（変わったらすぐ作り直す） */
   _key() {
-    const { htmlOptions, locale, delimiters } = this.ctx;
+    const { htmlOptions, locale, delimiters, textOptions } = this.ctx;
     // カスタムブロックの定義は関数を含むので type だけを比べる
-    const options = { ...htmlOptions, blocks: htmlOptions.blocks?.map((def) => def.type) ?? null };
-    return JSON.stringify([options, locale, delimiters, this._values(), this._useWebFonts]);
+    /** @param {{ blocks?: readonly { type: string }[] | null }} o */
+    const comparable = (o) => ({ ...o, blocks: o.blocks?.map((def) => def.type) ?? null });
+    return JSON.stringify([
+      comparable(htmlOptions),
+      comparable(textOptions),
+      locale,
+      delimiters,
+      this._values(),
+      this._useWebFonts,
+    ]);
   }
 
   /** 出力を作る */
@@ -258,11 +269,7 @@ export class MmPreview extends LitElement {
     this._cancel();
     const { template, ctx } = this;
     const values = this._values();
-    const textOptions = {
-      locale: ctx.locale,
-      mergeTagDelimiters: ctx.delimiters,
-      blocks: ctx.blocks,
-    };
+    const { textOptions } = ctx;
     let output;
     try {
       output = renderHtml(template, {
@@ -363,10 +370,17 @@ export class MmPreview extends LitElement {
 
   // ---- テキストパート -------------------------------------------------------
 
+  /** 「編集する」。全文編集は本文と切れるので、先に部品ごとの設定を案内する（textEditConfirm） */
+  _requestEditing() {
+    if (this.ctx.textEditConfirm) this._confirmEdit = true;
+    else this._startEditing();
+  }
+
   /** 自動生成のテキストを元に手編集を始める */
   _startEditing() {
     const { template, ctx } = this;
-    const options = { locale: ctx.locale, mergeTagDelimiters: ctx.delimiters, blocks: ctx.blocks };
+    const options = ctx.textOptions;
+    this._confirmEdit = false;
     ctx.store.dispatch({
       type: 'setTextPart',
       // 保存するのは差し込み前のテキスト（マージタグのまま）
@@ -391,11 +405,7 @@ export class MmPreview extends LitElement {
     ctx.store.dispatch({
       type: 'setTextPart',
       content: template.text.content ?? '',
-      sourceHash: textSourceHash(template, {
-        locale: ctx.locale,
-        mergeTagDelimiters: ctx.delimiters,
-        blocks: ctx.blocks,
-      }),
+      sourceHash: textSourceHash(template, ctx.textOptions),
     });
   }
 
@@ -442,11 +452,37 @@ export class MmPreview extends LitElement {
               ? html`<button type="button" data-action="reset-text" @click=${this._resetText}>
                   ${t('preview.resetText')}
                 </button>`
-              : html`<button type="button" data-action="edit-text" @click=${this._startEditing}>
+              : html`<button
+                  type="button"
+                  data-action="edit-text"
+                  ?disabled=${this._confirmEdit}
+                  @click=${this._requestEditing}
+                >
                   ${t('preview.editText')}
                 </button>`
           }
         </div>
+        ${
+          !manual && this._confirmEdit
+            ? html`<div
+                class="notice confirm"
+                role="alertdialog"
+                aria-label=${t('preview.editText')}
+              >
+                <p>${t('preview.editConfirm')}</p>
+                <button type="button" data-action="confirm-edit-text" @click=${this._startEditing}>
+                  ${t('preview.editConfirmOk')}
+                </button>
+                <button
+                  type="button"
+                  data-action="cancel-edit-text"
+                  @click=${() => (this._confirmEdit = false)}
+                >
+                  ${t('preview.editCancel')}
+                </button>
+              </div>`
+            : nothing
+        }
         ${
           manual && this._isStale()
             ? html`<div class="notice" role="alert">

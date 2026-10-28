@@ -20,7 +20,11 @@ import { normalizeTemplate } from './normalize.js';
  * 追加するときは変換前後のフィクスチャを必ず用意すること。
  * @type {Record<number, (json: Record<string, unknown>) => Record<string, unknown>>}
  */
-const migrations = {};
+const migrations = {
+  // 2: 部品・行に省略できる `text`（テキストパートでの扱い）を足した。形は変えない
+  // （古い版の mailmason が新しい項目を黙って消さないよう、版で区別する）
+  1: (json) => ({ ...json, version: 2 }),
+};
 
 /**
  * JSON（オブジェクトまたは文字列）を現行バージョンのテンプレートにする。

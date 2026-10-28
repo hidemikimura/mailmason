@@ -13,7 +13,7 @@ Mailmason のメールは 1 つのテンプレート JSON で表します。エ�
 
 ```
 template
-├─ version: 1
+├─ version: 2
 ├─ body
 │  ├─ settings        幅・背景色・フォント・文字色・リンク色・title・preheader
 │  └─ rows[]          上から順に並ぶ行

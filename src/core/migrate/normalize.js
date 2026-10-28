@@ -17,6 +17,7 @@ import {
 } from '../model/settings.js';
 import { isEqual, isPlainObject } from '../model/utils.js';
 import { DEFAULT_DELIMITERS } from '../merge-tags.js';
+import { normalizeBlockText, normalizeRowText, withText } from '../text-override.js';
 
 /** @import { NormalizeContext } from '../model/schema.js' */
 /** @import { Block, Column, Row, RowLayout, Template } from '../model/types.js' */
@@ -104,8 +105,9 @@ function normalizeBlock(input, ids, ctx, options) {
     child(ctx, 'style'),
   );
   const hideOn = hideOnSchema.normalize(input.hideOn, null, child(ctx, 'hideOn'));
-  warnUnknownKeys(input, ['id', 'type', 'values', 'style', 'hideOn'], ctx);
-  return { id, type: input.type, values, style, hideOn };
+  const text = normalizeBlockText(input.text, ctx);
+  warnUnknownKeys(input, ['id', 'type', 'values', 'style', 'hideOn', 'text'], ctx);
+  return withText({ id, type: input.type, values, style, hideOn }, text);
 }
 
 /**
@@ -214,8 +216,9 @@ function normalizeRow(input, ids, ctx, options) {
     }
   }
 
-  warnUnknownKeys(input, ['id', 'layout', 'settings', 'columns'], ctx);
-  return { id, layout, settings, columns };
+  const text = normalizeRowText(input.text, ctx);
+  warnUnknownKeys(input, ['id', 'layout', 'settings', 'columns', 'text'], ctx);
+  return withText({ id, layout, settings, columns }, text);
 }
 
 /**

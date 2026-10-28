@@ -10,7 +10,7 @@ import { isCovered } from '../../core/blocks/table-layout.js';
 import { resolveTextStyle } from '../../core/render-html/styles.js';
 import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { clearHighlights, highlightMergeTags } from '../richtext/highlight.js';
-import { chromeStyles, hideBadge, isToggleClick, renderChrome } from './chrome.js';
+import { chromeStyles, elementBadges, isToggleClick, renderChrome } from './chrome.js';
 import { define } from '../context.js';
 import './mm-text-editor.js';
 import { loadTableEditor, preload } from '../lazy.js';
@@ -171,6 +171,9 @@ export class MmBlock extends LitElement {
         background: rgba(0, 0, 0, 0.55);
         color: #fff;
         pointer-events: none;
+      }
+      .badges {
+        right: 4px;
       }
       .badge.warn {
         left: 4px;
@@ -404,7 +407,7 @@ export class MmBlock extends LitElement {
     };
 
     return html`<div class="content" style=${styleMap(style)}>${inner}</div>
-      ${hideBadge(block.hideOn, ctx)}
+      ${elementBadges(block.hideOn, block.text?.mode, ctx)}
       ${
         block.type === 'qr' && !uploading && qrStatus(block) === 'stale'
           ? html`<span class="badge warn">${ctx.t('badge.qrStale')}</span>`
