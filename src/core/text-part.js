@@ -1,6 +1,7 @@
 // テキストパートの自動生成と手編集の関係（どちらを使うか、手編集が古くなっていないか）
 import { fnv1a } from './hash.js';
 import { migrate } from './migrate/index.js';
+import { diffLines } from './text-diff.js';
 import { collectText, finishText, renderText, resolveTextOptions } from './render-text/index.js';
 
 /** @import { RenderTextOptions } from './render-text/index.js' */
@@ -25,6 +26,8 @@ export function textSourceHash(input, options = {}) {
  * @property {string[]} staleBlockIds 参照を含まない指定の文を持ち、指定したあとに本文が変わった部品（auto のとき）
  * @property {import('./render-text/index.js').TextRefIssue[]} unknownRefs 指定の文・種類ごとの書き方で、
  *   その部品に無い名前を参照したところ（auto のとき）
+ * @property {import('./text-diff.js').TextDiff | null} diff 全文の手編集が古いとき、手編集を始めた時点
+ *   （text.sourceText）から今の自動生成までの差分。sourceText が無い古いテンプレートでは null
  */
 
 /**
@@ -40,15 +43,25 @@ export function resolveTextPart(input, options = {}) {
     blocks: resolved.blocks,
   });
   if (template.text.mode === 'manual' && template.text.content !== null) {
-    const stale = template.text.sourceHash !== textSourceHash(template, options);
+    const current = renderText(template, { ...options, mergeValues: null });
+    const stale = template.text.sourceHash !== fnv1a(current);
+    const { sourceText } = template.text;
     return {
       text: finishText(template.text.content, resolved, false),
       mode: 'manual',
       stale,
       staleBlockIds: [],
       unknownRefs: [],
+      diff: stale && sourceText !== undefined ? diffLines(sourceText, current) : null,
     };
   }
   const { text, unknownRefs, staleBlockIds } = collectText(template, options);
-  return { text, mode: 'auto', stale: staleBlockIds.length > 0, staleBlockIds, unknownRefs };
+  return {
+    text,
+    mode: 'auto',
+    stale: staleBlockIds.length > 0,
+    staleBlockIds,
+    unknownRefs,
+    diff: null,
+  };
 }

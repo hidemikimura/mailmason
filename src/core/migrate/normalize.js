@@ -272,8 +272,10 @@ export function normalizeTemplate(input, ctx, options = {}) {
   warnUnknownKeys(rawBody, ['settings', 'rows'], bodyCtx);
 
   const textCtx = child(ctx, 'text');
+  // sourceText は手で直しているときだけ持つ（省略できる項目なので、スキーマとは別に見る）
+  const { sourceText, ...textInput } = isPlainObject(input.text) ? input.text : {};
   const text = textPartSchema.normalize(
-    input.text,
+    isPlainObject(input.text) ? textInput : input.text,
     { mode: 'auto', content: null, sourceHash: null },
     textCtx,
   );
@@ -281,6 +283,19 @@ export function normalizeTemplate(input, ctx, options = {}) {
     warn(textCtx, 'invalid-value', 'Manual text mode without content; switched to auto.');
     text.mode = 'auto';
     text.sourceHash = null;
+  }
+  if (sourceText !== undefined && sourceText !== null) {
+    if (typeof sourceText !== 'string') {
+      warn(child(textCtx, 'sourceText'), 'invalid-value', 'Invalid sourceText; it was removed.');
+    } else if (text.mode !== 'manual') {
+      warn(
+        child(textCtx, 'sourceText'),
+        'unknown-key',
+        'sourceText is used only in manual mode; it was removed.',
+      );
+    } else {
+      text.sourceText = sourceText;
+    }
   }
 
   warnUnknownKeys(input, ['version', 'body', 'text'], ctx);

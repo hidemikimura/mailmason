@@ -9,8 +9,8 @@ const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 
 /** 上限（gzip、KB） */
 const BUDGETS = {
-  'mailmason.bundle.js': 85,
-  'mailmason.iife.js': 105,
+  'mailmason.bundle.js': 90,
+  'mailmason.iife.js': 110,
 };
 
 /** @param {string} path */

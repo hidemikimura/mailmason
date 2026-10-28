@@ -50,6 +50,10 @@ export const en = {
   'preview.stale':
     'The email content changed after you edited the text. Check that the text still matches.',
   'preview.acknowledge': 'Mark as checked',
+  'preview.diffSummary':
+    'Changes to the body since you started editing (+{added} / −{removed} lines). Import the ones you need.',
+  'preview.diffImport': 'Import',
+  'preview.diffNotFound': 'The original lines were not found in your edited text',
   'preview.editConfirm':
     'Once you edit the whole text, later changes to the email body will no longer reach the text part (you will only be told that something changed). To leave out the logo or add a sentence only to the text part, use the “Text part” setting of a block or row instead; it stays in sync with the body.',
   'preview.editConfirmOk': 'Edit the whole text',

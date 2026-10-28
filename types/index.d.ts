@@ -101,6 +101,9 @@ export interface EditorWarning extends Warning {
   blockId?: string;
   /** stale-text: 指定の文が古くなったブロック（全文の手編集のときは無い） */
   blockIds?: string[];
+  /** stale-text: 全文の手編集を始めたあとに増えた行・消えた行の数（差分を出せるとき） */
+  added?: number;
+  removed?: number;
   [key: string]: unknown;
 }
 

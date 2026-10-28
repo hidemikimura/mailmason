@@ -132,7 +132,10 @@ export type Checks = [
     >
   >,
   Expect<
-    Equal<TextPart, { mode: 'auto' | 'manual'; content: string | null; sourceHash: string | null }>
+    Equal<
+      Omit<TextPart, 'sourceText'>,
+      { mode: 'auto' | 'manual'; content: string | null; sourceHash: string | null }
+    >
   >,
   Expect<
     Equal<

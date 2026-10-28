@@ -536,6 +536,11 @@ export interface TextPart {
   content: string | null;
   /** 手編集を始めた時点の自動生成テキストのハッシュ */
   sourceHash: string | null;
+  /**
+   * 手編集を始めた時点（または最後に確認・取り込みをした時点）の自動生成テキスト。
+   * 今の自動生成との差分を見せるのに使う（manual のときだけ。無い古いテンプレートでは差分を出さない）
+   */
+  sourceText?: string;
 }
 
 /** テンプレート JSON（保存するのはこれだけ） */
@@ -1066,6 +1071,8 @@ export interface SetTextPartCommand {
   type: 'setTextPart';
   content: string;
   sourceHash?: string | null;
+  /** 手編集を始めた時点の自動生成（差分を見せるのに使う）。省くと今の値のまま、null で消す */
+  sourceText?: string | null;
 }
 export interface ResetTextPartCommand {
   type: 'resetTextPart';
@@ -1234,6 +1241,33 @@ export interface RenderTextOptions extends BlocksOption {
 /** 自動生成のテキストパート（手編集は使わない。配信には resolveTextPart を使う） */
 export declare function renderText(input: unknown, options?: RenderTextOptions): string;
 
+/** 変わった行の中の違い（前後の同じ部分と、違う部分） */
+export interface TextDiffLineChange {
+  prefix: string;
+  removed: string;
+  added: string;
+  suffix: string;
+}
+
+/** ひとまとまりの変更 */
+export interface TextDiffHunk {
+  /** 変更前のテキストで、変更が始まる行（0 から） */
+  start: number;
+  removed: string[];
+  added: string[];
+  /** 消えた行と増えた行を先頭から組にした、行の中の違い */
+  changes: TextDiffLineChange[];
+}
+
+/** 全文の手編集を始めた時点から、今の自動生成までの差分 */
+export interface TextDiff {
+  hunks: TextDiffHunk[];
+  /** 増えた行の数 */
+  added: number;
+  /** 消えた行の数 */
+  removed: number;
+}
+
 /** 指定の文・種類ごとの書き方で、そのブロックに無い名前を参照したところ */
 export interface TextRefIssue {
   blockId: string;
@@ -1250,6 +1284,8 @@ export interface ResolvedTextPart {
   staleBlockIds: string[];
   /** そのブロックに無い名前の参照（auto のとき）。出力には `{@名前}` のまま残る */
   unknownRefs: TextRefIssue[];
+  /** 全文の手編集が古いとき、手編集を始めた時点（text.sourceText）からの差分。sourceText が無ければ null */
+  diff: TextDiff | null;
 }
 
 /** 配信に使うテキストパート（手編集があればそれ、無ければ自動生成） */

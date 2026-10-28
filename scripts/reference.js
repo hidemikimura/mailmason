@@ -546,6 +546,8 @@ ${services}
 
 ${table(textPartSchema, { mode: 'auto', content: null, sourceHash: null }, 'text')}
 
+手で直しているとき（\`mode: "manual"\`）だけ、省略できる \`sourceText\`（文字列）を持ちます。手直しを始めた時点（または最後に確認・取り込みをした時点）の自動生成で、今の自動生成との差分を見せるのに使います。
+
 \`mode: "manual"\` のとき、\`sourceHash\` が今の本文から作ったハッシュと違えば「手編集の後に本文が変わった」と判定します（\`resolveTextPart\` の \`stale\`）。
 `;
 }

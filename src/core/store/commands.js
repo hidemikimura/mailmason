@@ -55,7 +55,8 @@ import { mergeBySchema } from '../model/schema.js';
  * @typedef {{ type: 'setBlockHideOn', blockId: string, hideOn: 'mobile' | 'desktop' | null }} SetBlockHideOnCommand
  * @typedef {{ type: 'setElementText', id: string, text: { mode: string } | null }} SetElementTextCommand
  *   部品・行のテキストパートでの扱いを決める（id は部品か行の ID。null か mode: 'auto' で自動に戻す）
- * @typedef {{ type: 'setTextPart', content: string, sourceHash?: string | null }} SetTextPartCommand
+ * @typedef {{ type: 'setTextPart', content: string, sourceHash?: string | null, sourceText?: string | null }} SetTextPartCommand
+ *   sourceHash・sourceText は省くと今の値のまま、null で消す
  * @typedef {{ type: 'resetTextPart' }} ResetTextPartCommand
  * @typedef {{ type: 'loadTemplate', template: Template }} LoadTemplateCommand
  *   正規化済みのテンプレートを渡すこと（外部データは先に migrate() を通す）
@@ -403,12 +404,16 @@ export function applyCommand(template, command, warnings = [], options = {}) {
       if (typeof command.content !== 'string') {
         throw new MailmasonError('invalid-command', 'setTextPart needs string content.');
       }
+      const sourceText =
+        command.sourceText === undefined ? template.text.sourceText : command.sourceText;
+      /** @type {Template['text']} */
       const text = {
-        mode: /** @type {const} */ ('manual'),
+        mode: 'manual',
         content: command.content,
         sourceHash:
           command.sourceHash === undefined ? template.text.sourceHash : command.sourceHash,
       };
+      if (typeof sourceText === 'string') text.sourceText = sourceText;
       return isEqual(text, template.text) ? template : { ...template, text };
     }
 

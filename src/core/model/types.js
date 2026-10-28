@@ -110,6 +110,8 @@
  * @property {'auto' | 'manual'} mode
  * @property {string | null} content 手編集したテキスト（manual のとき）
  * @property {string | null} sourceHash 手編集を始めた時点の自動生成テキストのハッシュ
+ * @property {string} [sourceText] 手編集を始めた時点（または最後に確認・取り込みをした時点）の自動生成テキスト。
+ *   今の自動生成との差分を見せるのに使う（manual のときだけ）
  */
 
 /**

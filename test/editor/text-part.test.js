@@ -340,3 +340,112 @@ describe('指定の文と参照', () => {
     );
   });
 });
+
+describe('全文の手直しと本文の差分', () => {
+  async function editing() {
+    const el = await mount();
+    const template = createTemplate();
+    const text = createBlock('text', { html: '<p>秋の新作です</p><p>送料は 500 円です</p>' });
+    text.id = 'b_text00001';
+    template.body.rows.push(createRow('1', [[text]]));
+    el.loadJson(template);
+    el.view = 'preview';
+    await frame();
+    const root = /** @type {any} */ (deep(el, 'mm-preview')).shadowRoot;
+    root.querySelector('[data-tab="text"]').click();
+    await frame();
+    root.querySelector('[data-action="edit-text"]').click();
+    await frame();
+    root.querySelector('[data-action="confirm-edit-text"]').click();
+    await frame();
+    /** @param {string} html */
+    const changeBody = async (html) => {
+      /** @type {any} */ (el).store.dispatch({
+        type: 'updateBlockValues',
+        blockId: 'b_text00001',
+        patch: { html },
+      });
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      await frame();
+    };
+    /** @param {string} content */
+    const setContent = async (content) => {
+      /** @type {any} */ (el).store.dispatch({ type: 'setTextPart', content });
+      await frame();
+    };
+    return { el, root, changeBody, setContent };
+  }
+
+  it('手直しを始めた時点の自動生成を sourceText に残す', async () => {
+    const { el } = await editing();
+    const { text } = el.getJson();
+    expect(text.mode).toBe('manual');
+    expect(text.sourceText).toBe('秋の新作です\n\n送料は 500 円です');
+    expect(text.content).toBe(text.sourceText);
+  });
+
+  it('本文が変わると差分を見せ、取り込むと手直しの文に入り、全部取り込むと警告が消える', async () => {
+    const { el, root, changeBody, setContent } = await editing();
+    await setContent('いつもありがとうございます\n\n秋の新作です\n\n送料は 500 円です');
+    await changeBody('<p>冬の新作です</p><p>送料は無料です</p>');
+
+    expect(root.querySelector('.notice[role="alert"]')).not.toBeNull();
+    expect(root.querySelector('.diff-summary').textContent).toContain('+2 行 / −2 行');
+    const hunks = root.querySelectorAll('.hunk');
+    expect(hunks).toHaveLength(2);
+    expect(hunks[0].querySelector('del').textContent).toBe('秋');
+    expect(hunks[0].querySelector('ins').textContent).toBe('冬');
+
+    /** @type {any[]} */
+    const warnings = [];
+    el.addEventListener('mm-warning', (e) => warnings.push(/** @type {any} */ (e).detail));
+    el.exportText();
+    expect(warnings).toContainEqual(
+      expect.objectContaining({ code: 'stale-text', added: 2, removed: 2 }),
+    );
+
+    hunks[0].querySelector('[data-action="import-hunk"]').click();
+    await frame();
+    expect(el.getJson().text.content).toBe(
+      'いつもありがとうございます\n\n冬の新作です\n\n送料は 500 円です',
+    );
+    expect(root.querySelectorAll('.hunk')).toHaveLength(1);
+    expect(root.querySelector('.notice[role="alert"]')).not.toBeNull();
+
+    root.querySelector('.hunk [data-action="import-hunk"]').click();
+    await frame();
+    expect(el.getJson().text.content).toBe(
+      'いつもありがとうございます\n\n冬の新作です\n\n送料は無料です',
+    );
+    expect(root.querySelector('.notice[role="alert"]')).toBeNull();
+    expect(root.querySelector('.diff')).toBeNull();
+
+    el.undo();
+    await frame();
+    expect(root.querySelectorAll('.hunk')).toHaveLength(1);
+  });
+
+  it('手直しの文に変わる前の行が無ければ取り込めない。確認済みにすると差分も消える', async () => {
+    const { el, root, changeBody, setContent } = await editing();
+    await setContent('すっかり書き換えた文');
+    await changeBody('<p>冬の新作です</p><p>送料は 500 円です</p>');
+    const button = root.querySelector('.hunk [data-action="import-hunk"]');
+    expect(button.disabled).toBe(true);
+    root.querySelector('[data-action="acknowledge"]').click();
+    await frame();
+    expect(root.querySelector('.diff')).toBeNull();
+    expect(el.getJson().text.sourceText).toBe('冬の新作です\n\n送料は 500 円です');
+    expect(el.getJson().text.content).toBe('すっかり書き換えた文');
+  });
+
+  it('sourceText の無い古いテンプレートは、古いとだけ出す', async () => {
+    const { el, root, changeBody } = await editing();
+    const json = el.getJson();
+    delete json.text.sourceText;
+    el.loadJson(json);
+    await frame();
+    await changeBody('<p>冬の新作です</p>');
+    expect(root.querySelector('.notice[role="alert"]')).not.toBeNull();
+    expect(root.querySelector('.diff')).toBeNull();
+  });
+});

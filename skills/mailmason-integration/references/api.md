@@ -128,25 +128,25 @@ type DeleteComponentHook = (component: Component) => Promise<boolean | void> | b
 
 ### 警告コード（`mm-warning` / `loadJson` の戻り値）
 
-| コード                                                                    | 内容                                                                                                                 |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `missing-version`                                                         | `version` が無かったので補った                                                                                       |
-| `invalid-value`                                                           | 型や範囲が不正な値を既定値にした                                                                                     |
-| `unknown-key`                                                             | 未知のキーを削除した                                                                                                 |
-| `regenerated-id`                                                          | 空・重複した ID を振り直した                                                                                         |
-| `layout-mismatch`                                                         | カラムの数をレイアウトに合わせた                                                                                     |
-| `unknown-block-type`                                                      | 未知のブロック（データは残し、出力しない）                                                                           |
-| `sanitized-html`                                                          | テキストの HTML を許可タグに整えた                                                                                   |
-| `unknown-merge-tag`                                                       | `mergeTags` に無いキーを使っている（書き出し時）                                                                     |
-| `html-size`                                                               | HTML が 90KB を超えた（`bytes` 付き）                                                                                |
-| `stale-text`                                                              | 手直ししたテキストパート（全文、または参照を含まないブロックの指定の文。後者は `blockIds` 付き）が本文より古い       |
-| `unknown-text-ref`                                                        | テキストパートの指定の文・種類ごとの書き方で、そのブロックに無い名前を参照した（書き出し時、`blockId`・`name` 付き） |
-| `image-upload-type` / `image-upload-size`                                 | アップロードできない形式 / 大きさ（`fileName` 付き）                                                                 |
-| `image-upload-failed`                                                     | `onImageUpload` が失敗した（`error` 付き）                                                                           |
-| `qr-missing` / `qr-stale`                                                 | QR コードの画像が未作成 / 作成後に設定が変わった（書き出し時、`blockId` 付き）                                       |
-| `component-save-failed` / `component-delete-failed` / `invalid-component` | コンポーネントの保存・削除に失敗 / 入れられない形                                                                    |
-| `block-action-failed`                                                     | カスタムブロックの `action` の処理が失敗した（`error` 付き）                                                         |
-| `qr-too-long` / `qr-failed`                                               | 内容が長すぎて QR コードにできない / 作れなかった                                                                    |
+| コード                                                                    | 内容                                                                                                                                   |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing-version`                                                         | `version` が無かったので補った                                                                                                         |
+| `invalid-value`                                                           | 型や範囲が不正な値を既定値にした                                                                                                       |
+| `unknown-key`                                                             | 未知のキーを削除した                                                                                                                   |
+| `regenerated-id`                                                          | 空・重複した ID を振り直した                                                                                                           |
+| `layout-mismatch`                                                         | カラムの数をレイアウトに合わせた                                                                                                       |
+| `unknown-block-type`                                                      | 未知のブロック（データは残し、出力しない）                                                                                             |
+| `sanitized-html`                                                          | テキストの HTML を許可タグに整えた                                                                                                     |
+| `unknown-merge-tag`                                                       | `mergeTags` に無いキーを使っている（書き出し時）                                                                                       |
+| `html-size`                                                               | HTML が 90KB を超えた（`bytes` 付き）                                                                                                  |
+| `stale-text`                                                              | 手直ししたテキストパート（全文なら差分の `added`・`removed` 付き、参照を含まないブロックの指定の文なら `blockIds` 付き）が本文より古い |
+| `unknown-text-ref`                                                        | テキストパートの指定の文・種類ごとの書き方で、そのブロックに無い名前を参照した（書き出し時、`blockId`・`name` 付き）                   |
+| `image-upload-type` / `image-upload-size`                                 | アップロードできない形式 / 大きさ（`fileName` 付き）                                                                                   |
+| `image-upload-failed`                                                     | `onImageUpload` が失敗した（`error` 付き）                                                                                             |
+| `qr-missing` / `qr-stale`                                                 | QR コードの画像が未作成 / 作成後に設定が変わった（書き出し時、`blockId` 付き）                                                         |
+| `component-save-failed` / `component-delete-failed` / `invalid-component` | コンポーネントの保存・削除に失敗 / 入れられない形                                                                                      |
+| `block-action-failed`                                                     | カスタムブロックの `action` の処理が失敗した（`error` 付き）                                                                           |
+| `qr-too-long` / `qr-failed`                                               | 内容が長すぎて QR コードにできない / 作れなかった                                                                                      |
 
 ### エラー（`MailmasonError`、`code` プロパティ）
 
@@ -239,18 +239,18 @@ mailmason-editor::part(toolbar) {
 
 ## `@hidemikimura/mailmason/core`（Node でも動く）
 
-| 関数                                                                                       | 内容                                                                                            |
-| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `renderHtml(template, options?)`                                                           | 配信用 HTML                                                                                     |
-| `renderText(template, options?)`                                                           | 自動生成のテキストパート                                                                        |
-| `resolveTextPart(template, options?)`                                                      | `{ text, mode, stale, staleBlockIds, unknownRefs }`。手直しがあればそれを使う（配信にはこちら） |
-| `validate(json)`                                                                           | `{ valid, warnings, error }`。例外を投げない                                                    |
-| `migrate(json, { mergeTagDelimiters })`                                                    | `{ template, warnings }`。正規化したテンプレート（不正なら例外）                                |
-| `createTemplate(theme?)` / `createRow(layout, blocks?)` / `createBlock(type, values?)`     | 部品を作る                                                                                      |
-| `findMergeTags(template)` / `replaceMergeTags(text, values)`                               | マージタグの列挙・置換                                                                          |
-| `sanitizeHtml(html)`                                                                       | テキストブロック用に HTML を許可タグへ整える                                                    |
-| `defineBlock(definition)`                                                                  | カスタムブロックを定義する（下記）                                                              |
-| `extractComponent(template, id, { name })` / `instantiateComponent(component, { blocks })` | 行・ブロックをコンポーネントとして切り出す / 新しい ID の行・ブロックにする                     |
+| 関数                                                                                       | 内容                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `renderHtml(template, options?)`                                                           | 配信用 HTML                                                                                                                                                                                           |
+| `renderText(template, options?)`                                                           | 自動生成のテキストパート                                                                                                                                                                              |
+| `resolveTextPart(template, options?)`                                                      | `{ text, mode, stale, staleBlockIds, unknownRefs, diff }`。手直しがあればそれを使う（配信にはこちら）。`diff` は全文の手直しが古いときの、手直しを始めた時点からの差分（`{ hunks, added, removed }`） |
+| `validate(json)`                                                                           | `{ valid, warnings, error }`。例外を投げない                                                                                                                                                          |
+| `migrate(json, { mergeTagDelimiters })`                                                    | `{ template, warnings }`。正規化したテンプレート（不正なら例外）                                                                                                                                      |
+| `createTemplate(theme?)` / `createRow(layout, blocks?)` / `createBlock(type, values?)`     | 部品を作る                                                                                                                                                                                            |
+| `findMergeTags(template)` / `replaceMergeTags(text, values)`                               | マージタグの列挙・置換                                                                                                                                                                                |
+| `sanitizeHtml(html)`                                                                       | テキストブロック用に HTML を許可タグへ整える                                                                                                                                                          |
+| `defineBlock(definition)`                                                                  | カスタムブロックを定義する（下記）                                                                                                                                                                    |
+| `extractComponent(template, id, { name })` / `instantiateComponent(component, { blocks })` | 行・ブロックをコンポーネントとして切り出す / 新しい ID の行・ブロックにする                                                                                                                           |
 
 `renderHtml` / `renderText` / `resolveTextPart` / `migrate` / `validate` / `findMergeTags` / `createBlock` / `createStore` は `blocks` オプションでカスタムブロックの定義を受け取ります（渡さないと未知のブロックとして出力しない）。
 

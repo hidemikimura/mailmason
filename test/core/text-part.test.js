@@ -24,6 +24,7 @@ describe('テキストパート', () => {
       stale: false,
       staleBlockIds: [],
       unknownRefs: [],
+      diff: null,
     });
   });
 
@@ -41,6 +42,7 @@ describe('テキストパート', () => {
       stale: false,
       staleBlockIds: [],
       unknownRefs: [],
+      diff: null,
     });
   });
 

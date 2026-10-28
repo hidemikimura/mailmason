@@ -68,7 +68,8 @@ export function buildSchemaTypes() {
     ['RowSettings', 'RowSettings', rowSettingsSchema],
     ['ColumnSettings', 'ColumnSettings', columnSettingsSchema],
     ['BlockStyle', 'BlockStyle', blockStyleSchema],
-    ['TextPart', 'TextPart', textPartSchema],
+    // sourceText は manual のときだけ持つ省略できる項目で、スキーマの外で整える（normalize.js）
+    ['TextPart', "Omit<TextPart, 'sourceText'>", textPartSchema],
     ...BLOCK_TYPES.map(
       (type) =>
         /** @type {[string, string, Schema]} */ ([

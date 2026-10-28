@@ -7,7 +7,8 @@ import { HTML_SIZE_WARNING_BYTES, renderHtml } from '../../core/render-html/inde
 import { usedWebFonts } from '../../core/render-html/web-fonts.js';
 import { renderText } from '../../core/render-text/index.js';
 import { escapeText } from '../../core/richtext/entities.js';
-import { textSourceHash } from '../../core/text-part.js';
+import { fnv1a } from '../../core/hash.js';
+import { applyHunk, applyHunkToBase, diffLines } from '../../core/text-diff.js';
 import { replaceMergeTags } from '../../core/merge-tags.js';
 import { mergeTagValues } from '../util.js';
 import { controls } from '../styles.js';
@@ -41,8 +42,22 @@ function withBaseTarget(source) {
  * @property {string} html
  * @property {number} bytes
  * @property {string} text 自動生成のテキスト（サンプル値を差し込み済み）
+ * @property {string} source 自動生成のテキスト（差し込み前。手編集の差分の比べる先）
  * @property {string} hash 自動生成のテキストのハッシュ（手編集の古さ判定用）
  */
+
+/**
+ * 差分の 1 行。変わった行は、行の中の違う部分に印を付ける（行ごとに要素を分け、テンプレートの空白を入れない）
+ * @param {'removed' | 'added'} kind
+ * @param {string} line
+ * @param {import('../../core/text-diff.js').TextDiffLineChange | undefined} change
+ */
+function diffLine(kind, line, change) {
+  if (!change) return html`<div class=${kind}>${line}</div>`;
+  const part = kind === 'removed' ? change.removed : change.added;
+  const mark = kind === 'removed' ? html`<del>${part}</del>` : html`<ins>${part}</ins>`;
+  return html`<div class=${kind}>${change.prefix}${mark}${change.suffix}</div>`;
+}
 
 export class MmPreview extends LitElement {
   static properties = {
@@ -174,6 +189,57 @@ export class MmPreview extends LitElement {
         margin: 0;
         flex: 1;
       }
+      .diff {
+        display: grid;
+        gap: 6px;
+      }
+      .diff-summary {
+        margin: 0;
+        color: var(--mm-color-muted);
+      }
+      .hunk {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .hunk .lines {
+        flex: 1;
+        min-width: 0;
+        padding: 6px 10px;
+        border: 1px solid var(--mm-color-border);
+        border-radius: var(--mm-radius);
+        background: var(--mm-color-surface);
+        font:
+          12px/1.6 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+      }
+      .hunk .lines > div {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .hunk .removed::before {
+        content: '− ';
+      }
+      .hunk .added::before {
+        content: '+ ';
+      }
+      .hunk .removed {
+        color: #82071e;
+      }
+      .hunk .added {
+        color: #116329;
+      }
+      .hunk del {
+        background: #ffd7d5;
+        text-decoration: none;
+      }
+      .hunk ins {
+        background: #ccffd8;
+        text-decoration: none;
+      }
       pre,
       .text textarea {
         margin: 0;
@@ -270,6 +336,8 @@ export class MmPreview extends LitElement {
     const { template, ctx } = this;
     const values = this._values();
     const { textOptions } = ctx;
+    // 差し込み前の自動生成（手編集の古さの判定と差分に使う。core の textSourceHash と同じ）
+    const source = renderText(template, { ...textOptions, mergeValues: null });
     let output;
     try {
       output = renderHtml(template, {
@@ -288,7 +356,8 @@ export class MmPreview extends LitElement {
       html: output,
       bytes: new TextEncoder().encode(output).length,
       text: renderText(template, { ...textOptions, mergeValues: values }),
-      hash: textSourceHash(template, textOptions),
+      source,
+      hash: fnv1a(source),
     };
   }
 
@@ -379,13 +448,14 @@ export class MmPreview extends LitElement {
   /** 自動生成のテキストを元に手編集を始める */
   _startEditing() {
     const { template, ctx } = this;
-    const options = ctx.textOptions;
     this._confirmEdit = false;
+    // 保存するのは差し込み前のテキスト（マージタグのまま）。差分を見せるため、始めた時点の自動生成も残す
+    const source = renderText(template, { ...ctx.textOptions, mergeValues: null });
     ctx.store.dispatch({
       type: 'setTextPart',
-      // 保存するのは差し込み前のテキスト（マージタグのまま）
-      content: renderText(template, options),
-      sourceHash: textSourceHash(template, options),
+      content: source,
+      sourceHash: fnv1a(source),
+      sourceText: source,
     });
   }
 
@@ -399,14 +469,73 @@ export class MmPreview extends LitElement {
     this.ctx.store.dispatch({ type: 'resetTextPart' });
   }
 
-  /** 今の本文を確認したことにして、古さの警告を消す */
+  /** 今の本文を確認したことにして、古さの警告と差分を消す */
   _acknowledge() {
     const { template, ctx } = this;
+    const output = /** @type {PreviewOutput} */ (this._output);
     ctx.store.dispatch({
       type: 'setTextPart',
       content: template.text.content ?? '',
-      sourceHash: textSourceHash(template, ctx.textOptions),
+      sourceHash: output.hash,
+      sourceText: output.source,
     });
+  }
+
+  /**
+   * 本文の変更を 1 つ、手編集の文に取り込む。差分の比べる元（sourceText）にも同じ変更を当て、
+   * 全部取り込むと古さの警告も消える
+   * @param {import('../../core/text-diff.js').TextDiffHunk} hunk
+   * @param {string} content 取り込んだ後の手編集の文
+   */
+  _importHunk(hunk, content) {
+    const { template, ctx } = this;
+    const output = /** @type {PreviewOutput} */ (this._output);
+    const sourceText = applyHunkToBase(template.text.sourceText ?? '', hunk);
+    ctx.store.dispatch({
+      type: 'setTextPart',
+      content,
+      sourceText,
+      sourceHash: sourceText === output.source ? output.hash : template.text.sourceHash,
+    });
+  }
+
+  /**
+   * 手編集を始めてからの本文の変更（sourceText が無い古いテンプレートでは出さない）
+   * @param {Template['text']} text
+   */
+  _renderDiff(text) {
+    const { t } = this.ctx;
+    const output = /** @type {PreviewOutput} */ (this._output);
+    if (text.sourceText === undefined) return nothing;
+    const diff = diffLines(text.sourceText, output.source);
+    if (diff.hunks.length === 0) return nothing;
+    return html`<div class="diff">
+      <p class="diff-summary">
+        ${t('preview.diffSummary', { added: diff.added, removed: diff.removed })}
+      </p>
+      ${diff.hunks.map((hunk) => {
+        const applied = applyHunk(
+          text.content ?? '',
+          hunk,
+          /** @type {string} */ (text.sourceText),
+        );
+        return html`<div class="hunk">
+          <div class="lines">
+            ${hunk.removed.map((line, i) => diffLine('removed', line, hunk.changes[i]))}
+            ${hunk.added.map((line, i) => diffLine('added', line, hunk.changes[i]))}
+          </div>
+          <button
+            type="button"
+            data-action="import-hunk"
+            ?disabled=${applied === null}
+            title=${applied === null ? t('preview.diffNotFound') : ''}
+            @click=${() => applied !== null && this._importHunk(hunk, applied)}
+          >
+            ${t('preview.diffImport')}
+          </button>
+        </div>`;
+      })}
+    </div>`;
   }
 
   // ---- 描画 -----------------------------------------------------------------
@@ -486,11 +615,12 @@ export class MmPreview extends LitElement {
         ${
           manual && this._isStale()
             ? html`<div class="notice" role="alert">
-                <p>${t('preview.stale')}</p>
-                <button type="button" data-action="acknowledge" @click=${this._acknowledge}>
-                  ${t('preview.acknowledge')}
-                </button>
-              </div>`
+                  <p>${t('preview.stale')}</p>
+                  <button type="button" data-action="acknowledge" @click=${this._acknowledge}>
+                    ${t('preview.acknowledge')}
+                  </button>
+                </div>
+                ${this._renderDiff(text)}`
             : nothing
         }
         ${

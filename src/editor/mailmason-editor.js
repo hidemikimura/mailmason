@@ -579,6 +579,7 @@ export class MailmasonEditor extends LitElement {
         code: 'stale-text',
         path: 'text',
         message: 'The manual text part was edited before the latest HTML changes.',
+        ...(part.diff ? { added: part.diff.added, removed: part.diff.removed } : {}),
       });
     } else if (part.stale) {
       this._warn({
