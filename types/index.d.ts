@@ -27,6 +27,8 @@ export interface MergeTag {
   label: string;
   /** グループ名。候補の一覧でグループごとにまとめる（無い候補は「その他」） */
   group?: string;
+  /** グループの説明。一覧のグループ名の下に出す（グループで最初に書いた候補のものを使う） */
+  groupDescription?: string;
   /** プレビューで使う値 */
   sample?: string;
   /** 書き出しで値が無いときに使う値（mergeValues を渡したときだけ） */
@@ -263,13 +265,22 @@ export interface MmTextInputEventMap extends HTMLElementEventMap {
   'mm-value-input': CustomEvent<MmValueDetail>;
   /** 値を確定したとき（中の欄の change と同じ時機。候補を選んで入れたときも） */
   'mm-value-change': CustomEvent<MmValueDetail>;
+  /** 確定した値に、tags に無い差し込み変数があるとき（tags が空なら出さない） */
+  'mm-unknown-merge-tag': CustomEvent<MmUnknownMergeTagDetail>;
+}
+
+/** `mm-unknown-merge-tag` の detail */
+export interface MmUnknownMergeTagDetail {
+  /** tags に無いキー（出現順、重複なし）。`{{未知の変数}}` のようにキーに使えない文字を含むものも入る */
+  keys: string[];
 }
 
 /**
  * 差し込み変数を入れられる入力欄 `<mm-text-input>`（件名など、エディタの外の欄に置ける）。
  * Shadow DOM を使わないので、外の `<label for>` で中の欄（`input-id`）を指せる。
+ * フォームの部品として振る舞い、`name` の値（キーで書いた value）を送り、`required`・`maxlength` で検査する。
  *
- * @fires mm-value-input / mm-value-change
+ * @fires mm-value-input / mm-value-change / mm-unknown-merge-tag
  * @cssprop --mm-suggest-width 入力中に出す候補の一覧の幅（既定 260px）
  */
 export declare class MmTextInput extends LitElement {
@@ -302,6 +313,26 @@ export declare class MmTextInput extends LitElement {
   locale: 'ja' | 'en' | (string & {});
   /** 文言の部分上書き（例: `{ 'mergeTag.insert': '変数を入れる' }`） */
   messages: Record<string, string>;
+  /** フォームで送るときの名前（属性 name） */
+  name: string;
+  /** 空なら検査で弾く（属性 required） */
+  required: boolean;
+  /** value（キーで書いた値）の文字数の上限。超えると検査で弾く（属性 maxlength、-1 で上限なし） */
+  maxLength: number;
+  /** 中の欄の autocomplete（属性 autocomplete） */
+  autocomplete: string;
+  /** 中の欄に写す aria-describedby（属性 aria-describedby） */
+  describedBy: string;
+  /** 中の欄に写す aria-invalid（属性 aria-invalid） */
+  invalid: string;
+
+  /** 囲んでいるフォーム */
+  readonly form: HTMLFormElement | null;
+  readonly validity: ValidityState;
+  readonly validationMessage: string;
+  readonly willValidate: boolean;
+  checkValidity(): boolean;
+  reportValidity(): boolean;
 
   addEventListener<K extends keyof MmTextInputEventMap>(
     type: K,

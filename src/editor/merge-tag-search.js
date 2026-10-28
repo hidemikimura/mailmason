@@ -6,6 +6,7 @@
 /**
  * @typedef {Object} MergeTagGroup
  * @property {string | null} name グループ名（group の無い候補は null。グループがある候補と混ざるときは最後に並べる）
+ * @property {string | null} description グループの説明（そのグループで最初に groupDescription を持つ候補のもの）
  * @property {MergeTag[]} tags
  */
 
@@ -41,9 +42,11 @@ export function filterMergeTags(tags, query) {
   }
   const named = [...groups].filter(([name]) => name !== null);
   const rest = groups.get(null);
+  /** @param {MergeTag[]} list */
+  const description = (list) => list.find((tag) => tag.groupDescription)?.groupDescription ?? null;
   return [
-    ...named.map(([name, list]) => ({ name, tags: list })),
-    ...(rest ? [{ name: null, tags: rest }] : []),
+    ...named.map(([name, list]) => ({ name, description: description(list), tags: list })),
+    ...(rest ? [{ name: null, description: null, tags: rest }] : []),
   ];
 }
 
@@ -78,4 +81,29 @@ export function findMergeTagTrigger(textBeforeCaret, delimiters) {
  */
 export function mergeTagText(key, delimiters) {
   return `${delimiters.open}${key}${delimiters.close}`;
+}
+
+/** @param {string} value */
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * 候補に無い差し込み変数（出現順、重複なし）。キーに使えない文字（日本語など）を含むものも拾う
+ * @param {string} value
+ * @param {readonly MergeTag[]} tags
+ * @param {MergeTagDelimiters} delimiters
+ * @returns {string[]}
+ */
+export function findUnknownMergeTags(value, tags, delimiters) {
+  const known = new Set(tags.map((tag) => tag.key));
+  const pattern = new RegExp(
+    `${escapeRegExp(delimiters.open)}\\s*([^\\r\\n]+?)\\s*${escapeRegExp(delimiters.close)}`,
+    'g',
+  );
+  const unknown = new Set();
+  for (const match of value.matchAll(pattern)) {
+    if (!known.has(match[1])) unknown.add(match[1]);
+  }
+  return [...unknown];
 }

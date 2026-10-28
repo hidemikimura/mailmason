@@ -4,13 +4,14 @@
 // - mergeTagTrigger が有効なら、区切り開始文字（`{{` など）を入力すると候補を出し、続けて入力した文字で絞り込む
 // - displayLabels なら、欄の中は候補の表示名（`{{氏名}}`）で見せ、value とイベントはキー（`{{name}}`）で返す
 // Shadow DOM を使わない（外の <label for> が中の欄を指せるように。設定パネルのスタイルもそのまま効く）。
-// 値は入力のたびに value に入れ、`mm-value-input`（入力のたび）・`mm-value-change`（確定したとき）で伝える
+// 値は入力のたびに value に入れ、`mm-value-input`（入力のたび）・`mm-value-change`（確定したとき）で伝える。
+// フォームの部品として振る舞う（form-associated custom element）: name の値を送り、required・maxlength で検査する
 import { LitElement, css, html, nothing } from 'lit';
 import { live } from 'lit/directives/live.js';
-import { findMergeTagTrigger, mergeTagText } from '../merge-tag-search.js';
+import { findMergeTagTrigger, findUnknownMergeTags, mergeTagText } from '../merge-tag-search.js';
 import { getMergeTagDisplay } from '../merge-tag-display.js';
 import { createTranslator, loadMessages, needsMessages } from '../i18n.js';
-import { registerTokenDefaults } from '../styles.js';
+import { adoptStyles, registerTokenDefaults } from '../styles.js';
 import { isComposing } from '../util.js';
 import { define } from '../context.js';
 import './mm-merge-tag-list.js';
@@ -74,19 +75,9 @@ const lightStyles = css`
   }
 `;
 
-/** @type {WeakSet<Document | ShadowRoot>} スタイルを足し終えた場所 */
-const styledRoots = new WeakSet();
-
-/** @param {Node} root */
-function adoptLightStyles(root) {
-  if (!(root instanceof Document || root instanceof ShadowRoot) || styledRoots.has(root)) return;
-  const sheet = lightStyles.styleSheet;
-  if (!sheet) return;
-  styledRoots.add(root);
-  root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
-}
-
 export class MmTextInput extends LitElement {
+  static formAssociated = true;
+
   static properties = {
     value: { type: String },
     inputId: { type: String, attribute: 'input-id' },
@@ -104,10 +95,17 @@ export class MmTextInput extends LitElement {
       converter: { fromAttribute: (/** @type {string | null} */ value) => value !== 'false' },
     },
     displayLabels: { type: Boolean, attribute: 'display-labels' },
+    name: { type: String, reflect: true },
+    required: { type: Boolean, reflect: true },
+    maxLength: { type: Number, attribute: 'maxlength' },
+    autocomplete: { type: String },
+    describedBy: { type: String, attribute: 'aria-describedby' },
+    invalid: { type: String, attribute: 'aria-invalid' },
     locale: { type: String },
     messages: { attribute: false },
     t: { attribute: false },
     _suggest: { state: true },
+    _formDisabled: { state: true },
   };
 
   constructor() {
@@ -128,6 +126,17 @@ export class MmTextInput extends LitElement {
     this.mergeTagTrigger = true;
     /** 欄の中を候補の表示名で見せる */
     this.displayLabels = false;
+    /** フォームで送るときの名前 */
+    this.name = '';
+    this.required = false;
+    /** value（キーで書いた値）の文字数の上限。-1 なら上限なし */
+    this.maxLength = -1;
+    /** 中の欄の autocomplete */
+    this.autocomplete = '';
+    /** 中の欄に写す aria-describedby（属性 aria-describedby） */
+    this.describedBy = '';
+    /** 中の欄に写す aria-invalid（属性 aria-invalid） */
+    this.invalid = '';
     this.locale = 'ja';
     /** @type {Record<string, string>} 文言の部分上書き（例: `{ 'mergeTag.insert': '変数' }`） */
     this.messages = {};
@@ -139,6 +148,10 @@ export class MmTextInput extends LitElement {
     this._replacing = false;
     /** @type {{ locale: string, messages: Record<string, string>, t: Translate } | null} */
     this._translator = null;
+    /** 囲んでいる <fieldset disabled> などで使えなくなっている */
+    this._formDisabled = false;
+    /** @type {ElementInternals | null} */
+    this._internals = this.attachInternals?.() ?? null;
   }
 
   createRenderRoot() {
@@ -148,7 +161,7 @@ export class MmTextInput extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     registerTokenDefaults();
-    adoptLightStyles(this.getRootNode());
+    adoptStyles(this.getRootNode(), lightStyles);
   }
 
   /** @param {Map<string, unknown>} changed */
@@ -159,6 +172,75 @@ export class MmTextInput extends LitElement {
         (error) => console.error('[mailmason] 文言を読み込めませんでした', error),
       );
     }
+  }
+
+  /** @param {Map<string, unknown>} changed */
+  updated(changed) {
+    if (!this._suggest) {
+      this.field?.removeAttribute('aria-controls');
+      this.field?.removeAttribute('aria-activedescendant');
+    }
+    if (['value', 'required', 'maxLength', 'locale', 'messages'].some((key) => changed.has(key))) {
+      this._syncForm();
+    }
+  }
+
+  /** フォームに送る値と、検査の結果を合わせる */
+  _syncForm() {
+    const internals = this._internals;
+    if (!internals) return;
+    internals.setFormValue(this.value);
+    const t = this._t;
+    if (this.required && !this.value) {
+      internals.setValidity({ valueMissing: true }, t('mergeTag.required'), this.field);
+    } else if (this.maxLength >= 0 && this.value.length > this.maxLength) {
+      internals.setValidity(
+        { tooLong: true },
+        t('mergeTag.tooLong', { max: this.maxLength }),
+        this.field,
+      );
+    } else {
+      internals.setValidity({});
+    }
+  }
+
+  /** 囲んでいるフォーム */
+  get form() {
+    return this._internals?.form ?? null;
+  }
+
+  get validity() {
+    return /** @type {ValidityState} */ (this._internals?.validity);
+  }
+
+  get validationMessage() {
+    return this._internals?.validationMessage ?? '';
+  }
+
+  get willValidate() {
+    return this._internals?.willValidate ?? false;
+  }
+
+  checkValidity() {
+    return this._internals?.checkValidity() ?? true;
+  }
+
+  reportValidity() {
+    return this._internals?.reportValidity() ?? true;
+  }
+
+  formResetCallback() {
+    this.value = this.getAttribute('value') ?? '';
+  }
+
+  /** @param {boolean} disabled */
+  formDisabledCallback(disabled) {
+    this._formDisabled = disabled;
+  }
+
+  /** @param {unknown} state */
+  formStateRestoreCallback(state) {
+    if (typeof state === 'string') this.value = state;
   }
 
   /** @returns {HTMLInputElement | HTMLTextAreaElement} */
@@ -264,6 +346,27 @@ export class MmTextInput extends LitElement {
 
   _onChange() {
     this._emit('mm-value-change');
+    if (this.tags.length === 0) return;
+    const keys = findUnknownMergeTags(this.value, this.tags, this.delimiters);
+    if (keys.length > 0) {
+      this.dispatchEvent(
+        new CustomEvent('mm-unknown-merge-tag', { detail: { keys }, bubbles: true }),
+      );
+    }
+  }
+
+  /** @param {CustomEvent<{ listboxId: string | null, activeId: string | null }>} event */
+  _onActive(event) {
+    event.stopPropagation();
+    const field = this.field;
+    const { listboxId, activeId } = event.detail;
+    for (const [name, id] of /** @type {const} */ ([
+      ['aria-controls', listboxId],
+      ['aria-activedescendant', activeId],
+    ])) {
+      if (id) field.setAttribute(name, id);
+      else field.removeAttribute(name);
+    }
   }
 
   /** @param {KeyboardEvent} event */
@@ -310,14 +413,32 @@ export class MmTextInput extends LitElement {
   render() {
     const t = this._t;
     const text = this._fieldText();
+    const disabled = this.disabled || this._formDisabled;
+    // 入力中に候補を出すときだけ combobox（候補は aria-activedescendant で指す。_onActive）
+    const combobox = this.tags.length > 0 && this.mergeTagTrigger;
+    const aria = {
+      role: combobox ? 'combobox' : nothing,
+      autocomplete: combobox ? 'list' : nothing,
+      expanded: combobox ? String(Boolean(this._suggest)) : nothing,
+      describedBy: this.describedBy || nothing,
+      invalid: this.invalid || nothing,
+      required: this.required ? 'true' : nothing,
+    };
     const field = this.multiline
       ? html`<textarea
           id=${this.inputId || nothing}
           class="mm-text-input-field"
           rows=${this.rows}
+          autocomplete=${this.autocomplete || nothing}
+          role=${aria.role}
+          aria-autocomplete=${aria.autocomplete}
+          aria-expanded=${aria.expanded}
+          aria-describedby=${aria.describedBy}
+          aria-invalid=${aria.invalid}
+          aria-required=${aria.required}
           .value=${live(text)}
           placeholder=${this.placeholder || nothing}
-          ?disabled=${this.disabled}
+          ?disabled=${disabled}
           @input=${this._onInput}
           @change=${this._onChange}
           @keydown=${this._onKeydown}
@@ -329,9 +450,16 @@ export class MmTextInput extends LitElement {
           class="mm-text-input-field"
           type="text"
           inputmode=${this.inputmode}
+          autocomplete=${this.autocomplete || nothing}
+          role=${aria.role}
+          aria-autocomplete=${aria.autocomplete}
+          aria-expanded=${aria.expanded}
+          aria-describedby=${aria.describedBy}
+          aria-invalid=${aria.invalid}
+          aria-required=${aria.required}
           .value=${live(text)}
           placeholder=${this.placeholder || nothing}
-          ?disabled=${this.disabled}
+          ?disabled=${disabled}
           @input=${this._onInput}
           @change=${this._onChange}
           @keydown=${this._onKeydown}
@@ -347,15 +475,20 @@ export class MmTextInput extends LitElement {
               .tags=${this.tags}
               .delimiters=${this.delimiters}
               .t=${t}
-              ?disabled=${this.disabled}
+              ?disabled=${disabled}
               @mm-merge-tag-pick=${this._onPickerPick}
             ></mm-merge-tag-picker>`
           : nothing
       }
       ${
         this._suggest
-          ? html`<div class="mm-text-input-suggest" @mm-merge-tag-pick=${this._onSuggestPick}>
+          ? html`<div
+              class="mm-text-input-suggest"
+              @mm-merge-tag-pick=${this._onSuggestPick}
+              @mm-merge-tag-active=${this._onActive}
+            >
               <mm-merge-tag-list
+                light
                 .tags=${this.tags}
                 .query=${this._suggest.query}
                 .delimiters=${this.delimiters}

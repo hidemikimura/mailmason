@@ -44,7 +44,8 @@ import { TABLE_MAX_COLUMNS } from '../../core/blocks/table.js';
 
 /**
  * 差し込み変数の候補。group があると候補の一覧でグループごとにまとめる
- * @typedef {{ key: string, label: string, group?: string, sample?: string, fallback?: string }} MergeTag
+ * groupDescription はグループの説明（一覧のグループ名の下に出す。グループで最初に書いた候補のものを使う）
+ * @typedef {{ key: string, label: string, group?: string, groupDescription?: string, sample?: string, fallback?: string }} MergeTag
  */
 
 /**

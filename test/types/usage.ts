@@ -205,6 +205,17 @@ if (editor) {
     const value: string = event.detail.value;
     void value;
   });
+  field.addEventListener('mm-unknown-merge-tag', (event) => {
+    const keys: string[] = event.detail.keys;
+    void keys;
+  });
+  field.tags = [
+    { key: 'name', label: '氏名', group: '会員', groupDescription: 'ログイン中の会員' },
+  ];
+  field.required = true;
+  const valid: boolean = field.checkValidity();
+  const form: HTMLFormElement | null = field.form;
+  void [valid, form];
   // @ts-expect-error 区切りはオブジェクト
   field.delimiters = '{{';
   void typed;

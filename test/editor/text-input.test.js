@@ -218,3 +218,142 @@ describe('<mm-text-input>（エディタの中）', () => {
     expect(leaked).toEqual([]);
   });
 });
+
+describe('<mm-text-input> とフォーム・読み上げ', () => {
+  /** @param {string} attributes */
+  async function inForm(attributes) {
+    document.body.innerHTML = `<form>
+      <fieldset>
+        <mm-text-input ${attributes}></mm-text-input>
+      </fieldset>
+    </form>`;
+    const form = /** @type {HTMLFormElement} */ (document.querySelector('form'));
+    const el = /** @type {MmTextInput} */ (document.querySelector('mm-text-input'));
+    el.tags = TAGS;
+    await el.updateComplete;
+    const input = /** @type {HTMLInputElement} */ (el.querySelector('input'));
+    return { form, el, input };
+  }
+
+  it('<form> の中に置くと name の値（キー）が送られ、required が効く', async () => {
+    const { form, el, input } = await inForm('name="subject" required display-labels');
+    expect(el.form).toBe(form);
+    expect(form.checkValidity()).toBe(false);
+    expect(el.validity.valueMissing).toBe(true);
+    expect(el.validationMessage).toBe('入力してください');
+    expect(input.getAttribute('aria-required')).toBe('true');
+
+    typeInto(input, '{{注文番号}} のお知らせ');
+    await el.updateComplete;
+    expect(form.checkValidity()).toBe(true);
+    expect(new FormData(form).get('subject')).toBe('{{order.id}} のお知らせ');
+    // 中の欄は送らない（name が無い）
+    expect([...new FormData(form).keys()]).toEqual(['subject']);
+  });
+
+  it('maxlength はキーで書いた値の文字数で検査する', async () => {
+    const { el, input } = await inForm('name="subject" maxlength="10"');
+    typeInto(input, '{{order.id}}');
+    await el.updateComplete;
+    expect(el.checkValidity()).toBe(false);
+    expect(el.validity.tooLong).toBe(true);
+    expect(el.validationMessage).toBe('10 文字以内で入力してください');
+    typeInto(input, '{{name}}');
+    await el.updateComplete;
+    expect(el.checkValidity()).toBe(true);
+  });
+
+  it('フォームのリセットで value 属性の値に戻り、<fieldset disabled> で使えなくなる', async () => {
+    const { form, el, input } = await inForm('name="subject" value="元の件名"');
+    typeInto(input, '書き換えた');
+    await el.updateComplete;
+    form.reset();
+    await el.updateComplete;
+    expect(el.value).toBe('元の件名');
+    expect(input.value).toBe('元の件名');
+
+    /** @type {HTMLFieldSetElement} */ (form.querySelector('fieldset')).disabled = true;
+    await el.updateComplete;
+    expect(input.disabled).toBe(true);
+  });
+
+  it('autocomplete・aria-describedby・aria-invalid を中の欄に写す', async () => {
+    const { input } = await inForm(
+      'autocomplete="off" aria-describedby="subject-help" aria-invalid="true"',
+    );
+    expect(input.getAttribute('autocomplete')).toBe('off');
+    expect(input.getAttribute('aria-describedby')).toBe('subject-help');
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('入力中の候補を読み上げで選べる（combobox と aria-activedescendant）', async () => {
+    const { el, input } = await place();
+    expect(input.getAttribute('role')).toBe('combobox');
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    input.focus();
+    input.value = '{{';
+    input.setSelectionRange(2, 2);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await el.updateComplete;
+    const list = /** @type {any} */ (el.querySelector('.mm-text-input-suggest mm-merge-tag-list'));
+    await list.updateComplete;
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    const listbox = document.getElementById(
+      /** @type {string} */ (input.getAttribute('aria-controls')),
+    );
+    expect(listbox?.getAttribute('role')).toBe('listbox');
+    const active = () =>
+      document.getElementById(/** @type {string} */ (input.getAttribute('aria-activedescendant')));
+    expect(active()?.dataset.key).toBe('name');
+    press(input, 'ArrowDown');
+    await list.updateComplete;
+    expect(active()?.dataset.key).toBe('order.id');
+    expect(active()?.getAttribute('aria-selected')).toBe('true');
+
+    press(input, 'Escape');
+    await el.updateComplete;
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(input.hasAttribute('aria-activedescendant')).toBe(false);
+    expect(input.hasAttribute('aria-controls')).toBe(false);
+  });
+
+  it('候補が無いときは combobox にしない', async () => {
+    const { input } = await place({ tags: [] });
+    expect(input.hasAttribute('role')).toBe(false);
+    expect(input.hasAttribute('aria-expanded')).toBe(false);
+  });
+
+  it('グループの説明を一覧に出す', async () => {
+    const tags = [
+      { key: 'name', label: '氏名', group: '会員', groupDescription: 'ログイン中の会員の情報' },
+      { key: 'order.id', label: '注文番号', group: '注文' },
+    ];
+    const { el, input } = await place({ tags });
+    input.focus();
+    input.value = '{{';
+    input.setSelectionRange(2, 2);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await el.updateComplete;
+    const list = /** @type {any} */ (el.querySelector('.mm-text-input-suggest mm-merge-tag-list'));
+    await list.updateComplete;
+    const descriptions = [...list.querySelectorAll('.group-description')];
+    expect(descriptions.map((d) => d.textContent.trim())).toEqual(['ログイン中の会員の情報']);
+    const group = list.querySelector('[role="group"]');
+    expect(group.getAttribute('aria-describedby')).toBe(descriptions[0].id);
+  });
+
+  it('確定した値に tags に無いキーがあると mm-unknown-merge-tag を出す', async () => {
+    const { el, input } = await place({}, 'display-labels');
+    /** @type {string[][]} */
+    const found = [];
+    el.addEventListener('mm-unknown-merge-tag', (event) =>
+      found.push(/** @type {CustomEvent} */ (event).detail.keys),
+    );
+    typeInto(input, '{{氏名}} {{未知の変数}} {{ shop_url }} {{未知の変数}}');
+    await el.updateComplete;
+    expect(found).toEqual([['未知の変数', 'shop_url']]);
+    typeInto(input, '{{氏名}} 様');
+    await el.updateComplete;
+    expect(found).toHaveLength(1);
+  });
+});

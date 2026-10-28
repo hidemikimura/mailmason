@@ -7,6 +7,10 @@
 ### 追加
 
 - 差し込み変数の入力欄 `<mm-text-input>` を公開した（`MmTextInput`）。件名など、エディタの外の欄に置ける。`display-labels` で欄の中を表示名で見せ、`value` とイベント（`mm-value-input`・`mm-value-change`、`detail: { value }`）はキーで返す。`locale`・`messages` で文言を変えられ、エディタの外でも見た目の初期値を持つ。入力中の候補の一覧の幅は `--mm-suggest-width` で変えられる
+- `<mm-text-input>` がフォームの部品として振る舞う（form-associated custom element）。`name` の値（キー）を送り、`required`・`maxlength`（キーで書いた値の文字数）で検査する。フォームのリセットと `<fieldset disabled>` も効く。`autocomplete`・`aria-describedby`・`aria-invalid` は中の欄に写す
+- `<mm-text-input>` の入力中の候補を画面読み上げで選べるようにした（中の欄を `role="combobox"` にし、`aria-expanded`・`aria-controls`・`aria-activedescendant` で候補を指す）
+- `<mm-text-input>` は、確定した値に `tags` に無い差し込み変数があると `mm-unknown-merge-tag`（`detail: { keys }`）を出す。キーに使えない文字を含む `{{未知の変数}}` も拾う
+- 差し込み変数の候補に `groupDescription`（グループの説明）を足した。候補の一覧のグループ名の下に出す（エディタの中の一覧も同じ）
 
 ### 変更
 

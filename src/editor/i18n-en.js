@@ -363,6 +363,8 @@ export const en = {
   'mergeTag.search': 'Filter by group, name or key',
   'mergeTag.empty': 'No matching merge tags',
   'mergeTag.other': 'Other',
+  'mergeTag.required': 'Please fill in this field.',
+  'mergeTag.tooLong': 'Please use {max} characters or fewer.',
   'social.add': 'Add link',
   'social.remove': 'Remove',
   'color.clear': 'Clear',

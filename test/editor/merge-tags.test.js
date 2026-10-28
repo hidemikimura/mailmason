@@ -21,12 +21,13 @@ const DELIMITERS = { open: '{{', close: '}}' };
 
 /** @param {any} list */
 const optionKeys = (list) =>
-  [...list.shadowRoot.querySelectorAll('[role="option"]')].map((o) => o.dataset.key);
+  [...(list.shadowRoot ?? list).querySelectorAll('[role="option"]')].map((o) => o.dataset.key);
 
 /** @param {any} list */
 const activeKey = (list) =>
-  /** @type {HTMLElement | null} */ (list.shadowRoot.querySelector('[aria-selected="true"]'))
-    ?.dataset.key;
+  /** @type {HTMLElement | null} */ (
+    (list.shadowRoot ?? list).querySelector('[aria-selected="true"]')
+  )?.dataset.key;
 
 describe('差し込み変数の絞り込み', () => {
   it('グループ名・表示名・キーで絞り込み、グループごとにまとめる（グループの無い候補は最後）', () => {

@@ -31,7 +31,15 @@
 
 ```ts
 // group があると候補の一覧でグループごとにまとめる。一覧はグループ名・label・key で絞り込める
-type MergeTag = { key: string; label: string; group?: string; sample?: string; fallback?: string };
+// groupDescription はグループの説明（一覧のグループ名の下に出す。グループで最初に書いた候補のものを使う）
+type MergeTag = {
+  key: string;
+  label: string;
+  group?: string;
+  groupDescription?: string;
+  sample?: string;
+  fallback?: string;
+};
 
 // フックの戻り値。data はブロックの uploadData に保存する任意のオブジェクト（JSON で表せる値）
 type ImageResult =
@@ -165,34 +173,45 @@ mailmason-editor::part(toolbar) {
 
 エディタの設定欄と同じ入力欄を、件名などエディタの外の欄に置けます。`@hidemikimura/mailmason` を import すると登録されます。Shadow DOM を使わないので、外の `<label for>` で中の欄（`input-id`）を指せます。
 
-| プロパティ        | 属性                | 型                       | 既定値                        | 内容                                                                                         |
-| ----------------- | ------------------- | ------------------------ | ----------------------------- | -------------------------------------------------------------------------------------------- |
-| `value`           | `value`             | `string`                 | `''`                          | 今の値。差し込み変数はキー（`{{order.id}}`）で書く。入力のたびに更新する                     |
-| `tags`            | —                   | `MergeTag[]`             | `[]`                          | 差し込み変数の候補。空なら「差し込み…」ボタンも候補も出さない                                |
-| `displayLabels`   | `display-labels`    | `boolean`                | `false`                       | 欄の中を `label` で見せる（`{{注文番号}}`）。`value` とイベントはキーのまま                  |
-| `delimiters`      | —                   | `{ open, close }`        | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                         |
-| `mergeTagTrigger` | `merge-tag-trigger` | `boolean`                | `true`                        | `{{` の入力で候補を出す。属性で消すときは `merge-tag-trigger="false"`                        |
-| `inputId`         | `input-id`          | `string`                 | `''`                          | 中の欄の id                                                                                  |
-| `placeholder`     | `placeholder`       | `string`                 | `''`                          |                                                                                              |
-| `inputmode`       | `inputmode`         | `string`                 | `'text'`                      |                                                                                              |
-| `multiline`       | `multiline`         | `boolean`                | `false`                       | 複数行（textarea）にする                                                                     |
-| `rows`            | `rows`              | `number`                 | `4`                           | 複数行の行数                                                                                 |
-| `disabled`        | `disabled`          | `boolean`                | `false`                       | 欄と「差し込み…」ボタンを使えなくする                                                        |
-| `locale`          | `locale`            | `'ja' \| 'en'`           | `'ja'`                        | 文言の言語                                                                                   |
-| `messages`        | —                   | `Record<string, string>` | `{}`                          | 文言の部分上書き（`mergeTag.insert`・`mergeTag.search`・`mergeTag.empty`・`mergeTag.other`） |
+| プロパティ        | 属性                | 型                       | 既定値                        | 内容                                                                                                                                  |
+| ----------------- | ------------------- | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `value`           | `value`             | `string`                 | `''`                          | 今の値。差し込み変数はキー（`{{order.id}}`）で書く。入力のたびに更新する                                                              |
+| `tags`            | —                   | `MergeTag[]`             | `[]`                          | 差し込み変数の候補。空なら「差し込み…」ボタンも候補も出さない                                                                         |
+| `displayLabels`   | `display-labels`    | `boolean`                | `false`                       | 欄の中を `label` で見せる（`{{注文番号}}`）。`value` とイベントはキーのまま                                                           |
+| `delimiters`      | —                   | `{ open, close }`        | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                                                                  |
+| `mergeTagTrigger` | `merge-tag-trigger` | `boolean`                | `true`                        | `{{` の入力で候補を出す。属性で消すときは `merge-tag-trigger="false"`                                                                 |
+| `inputId`         | `input-id`          | `string`                 | `''`                          | 中の欄の id                                                                                                                           |
+| `placeholder`     | `placeholder`       | `string`                 | `''`                          |                                                                                                                                       |
+| `inputmode`       | `inputmode`         | `string`                 | `'text'`                      |                                                                                                                                       |
+| `multiline`       | `multiline`         | `boolean`                | `false`                       | 複数行（textarea）にする                                                                                                              |
+| `rows`            | `rows`              | `number`                 | `4`                           | 複数行の行数                                                                                                                          |
+| `disabled`        | `disabled`          | `boolean`                | `false`                       | 欄と「差し込み…」ボタンを使えなくする                                                                                                 |
+| `name`            | `name`              | `string`                 | `''`                          | フォームで送るときの名前。送る値は `value`（キー）                                                                                    |
+| `required`        | `required`          | `boolean`                | `false`                       | 空ならフォームの検査で弾く                                                                                                            |
+| `maxLength`       | `maxlength`         | `number`                 | `-1`                          | `value`（キーで書いた値）の文字数の上限。超えると検査で弾く（入力は止めない）                                                         |
+| `autocomplete`    | `autocomplete`      | `string`                 | `''`                          | 中の欄の `autocomplete`                                                                                                               |
+| `describedBy`     | `aria-describedby`  | `string`                 | `''`                          | 中の欄に写す（説明・エラー表示の id）                                                                                                 |
+| `invalid`         | `aria-invalid`      | `string`                 | `''`                          | 中の欄に写す                                                                                                                          |
+| `locale`          | `locale`            | `'ja' \| 'en'`           | `'ja'`                        | 文言の言語                                                                                                                            |
+| `messages`        | —                   | `Record<string, string>` | `{}`                          | 文言の部分上書き（`mergeTag.insert`・`mergeTag.search`・`mergeTag.empty`・`mergeTag.other`・`mergeTag.required`・`mergeTag.tooLong`） |
 
 イベントは `bubbles: true` の `CustomEvent` です（`composed` ではないので、エディタの設定欄の入力欄のイベントはエディタの外に出ません）。
 
-| イベント          | `detail`    | いつ                                                         |
-| ----------------- | ----------- | ------------------------------------------------------------ |
-| `mm-value-input`  | `{ value }` | 入力のたび（候補を選んで入れたときも）。`value` はキーで書く |
-| `mm-value-change` | `{ value }` | 値を確定したとき（中の欄の `change` と同じ時機）             |
+| イベント               | `detail`    | いつ                                                                                                                                     |
+| ---------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `mm-value-input`       | `{ value }` | 入力のたび（候補を選んで入れたときも）。`value` はキーで書く                                                                             |
+| `mm-value-change`      | `{ value }` | 値を確定したとき（中の欄の `change` と同じ時機）                                                                                         |
+| `mm-unknown-merge-tag` | `{ keys }`  | 確定した値に `tags` に無い差し込み変数があるとき（`tags` が空なら出さない）。`{{未知の変数}}` のようにキーに使えない文字を含むものも入る |
 
 表示名とキーの行き来の決まり（`display-labels`。エディタの中と同じ）:
 
 - 表示名で手で打っても、表示名と一致すれば `value` ではキーに戻す
 - どの表示名・キーにも一致しない `{{…}}` は、打ったまま `value` に入れる
 - 次の候補は表示名で見せず、キーのまま見せる（キーに戻せなくなるため）: `label` が他の候補と同じ、他の候補の `key` と同じ、区切り文字や改行を含む、空
+
+フォームの部品として振る舞います（form-associated custom element）。`<form>` の中に置くと `name` の値が送られ、`required`・`maxlength` で検査し、フォームのリセット（`value` 属性の値に戻る）と `<fieldset disabled>` も効きます。`form`・`validity`・`validationMessage`・`willValidate`・`checkValidity()`・`reportValidity()` を使えます。検査の文言は `mergeTag.required`・`mergeTag.tooLong` で上書きできます。
+
+入力中の候補は、中の欄を `role="combobox"` にし、`aria-expanded`・`aria-controls`・`aria-activedescendant` で一覧と選択中の候補を指します（画面読み上げで選べる）。
 
 見た目は `--mm-color-*` `--mm-radius` `--mm-font-family` `--mm-font-size` で変えられます（エディタの外でも初期値があります）。入力中に出す候補の一覧の幅は `--mm-suggest-width`（既定 260px）。中の要素は次の class で指せます: `.mm-text-input-row`（欄とボタンの並び）、`.mm-text-input-field`（中の `input` / `textarea`）、`.mm-text-input-suggest`（入力中の候補）。
 

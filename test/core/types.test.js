@@ -47,7 +47,7 @@ describe('型定義', () => {
       .filter((name) => !name.startsWith('_') && name !== 't');
     expect(publicProps).toContain('displayLabels');
     for (const name of publicProps) expect(types, name).toMatch(new RegExp(`^  ${name}: `, 'm'));
-    for (const name of ['mm-value-input', 'mm-value-change']) {
+    for (const name of ['mm-value-input', 'mm-value-change', 'mm-unknown-merge-tag']) {
       expect(source).toContain(`'${name}'`);
       expect(types, name).toContain(`'${name}': CustomEvent<`);
     }

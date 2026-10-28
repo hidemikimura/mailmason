@@ -366,6 +366,8 @@ const ja = {
   'mergeTag.search': 'グループ名・名前・キーで絞り込み',
   'mergeTag.empty': '該当する差し込み変数がありません',
   'mergeTag.other': 'その他',
+  'mergeTag.required': '入力してください',
+  'mergeTag.tooLong': '{max} 文字以内で入力してください',
   'social.add': 'リンクを追加',
   'social.remove': '削除',
   'color.clear': 'なしにする',

@@ -36,6 +36,27 @@ export function registerTokenDefaults() {
   }
 }
 
+/** @type {WeakMap<CSSStyleSheet, WeakSet<Document | ShadowRoot>>} シートごとの、足し終えた場所 */
+const adopted = new WeakMap();
+
+/**
+ * Shadow DOM を使わない部品のスタイルを、置かれた場所（document か、親の Shadow Root）に一度だけ足す
+ * @param {Node} root 部品の getRootNode()
+ * @param {import('lit').CSSResult} styles
+ */
+export function adoptStyles(root, styles) {
+  const sheet = styles.styleSheet;
+  if (!sheet || !(root instanceof Document || root instanceof ShadowRoot)) return;
+  let roots = adopted.get(sheet);
+  if (!roots) {
+    roots = new WeakSet();
+    adopted.set(sheet, roots);
+  }
+  if (roots.has(root)) return;
+  roots.add(root);
+  root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+}
+
 const lightDeclarations = Object.entries(LIGHT_TOKENS)
   .map(([name, value]) => `${name}: ${value};`)
   .join('\n');
