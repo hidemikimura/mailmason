@@ -1,22 +1,11 @@
 // テキストパートの自動生成と手編集の関係（どちらを使うか、手編集が古くなっていないか）
+import { fnv1a } from './hash.js';
 import { migrate } from './migrate/index.js';
-import { finishText, renderText, resolveTextOptions } from './render-text/index.js';
+import { collectText, finishText, renderText, resolveTextOptions } from './render-text/index.js';
 
 /** @import { RenderTextOptions } from './render-text/index.js' */
 
-/**
- * FNV-1a（32bit）。暗号用途ではなく、変化の検出用
- * @param {string} value
- * @returns {string} 8 桁の 16 進数
- */
-export function fnv1a(value) {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < value.length; i++) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
-}
+export { fnv1a };
 
 /**
  * 手編集を始めるときに `text.sourceHash` に保存する値（その時点の自動生成テキストのハッシュ）
@@ -32,7 +21,10 @@ export function textSourceHash(input, options = {}) {
  * @typedef {Object} ResolvedTextPart
  * @property {string} text 配信に使うテキスト
  * @property {'auto' | 'manual'} mode
- * @property {boolean} stale 手編集の後に HTML 側が変わった（manual のときだけ true になりうる）
+ * @property {boolean} stale 手編集の後に本文が変わった。manual なら全文、auto なら指定の文の部品（staleBlockIds）
+ * @property {string[]} staleBlockIds 参照を含まない指定の文を持ち、指定したあとに本文が変わった部品（auto のとき）
+ * @property {import('./render-text/index.js').TextRefIssue[]} unknownRefs 指定の文・種類ごとの書き方で、
+ *   その部品に無い名前を参照したところ（auto のとき）
  */
 
 /**
@@ -49,7 +41,14 @@ export function resolveTextPart(input, options = {}) {
   });
   if (template.text.mode === 'manual' && template.text.content !== null) {
     const stale = template.text.sourceHash !== textSourceHash(template, options);
-    return { text: finishText(template.text.content, resolved, false), mode: 'manual', stale };
+    return {
+      text: finishText(template.text.content, resolved, false),
+      mode: 'manual',
+      stale,
+      staleBlockIds: [],
+      unknownRefs: [],
+    };
   }
-  return { text: renderText(template, options), mode: 'auto', stale: false };
+  const { text, unknownRefs, staleBlockIds } = collectText(template, options);
+  return { text, mode: 'auto', stale: staleBlockIds.length > 0, staleBlockIds, unknownRefs };
 }

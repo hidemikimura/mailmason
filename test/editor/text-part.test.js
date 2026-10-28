@@ -66,6 +66,7 @@ describe('設定欄の「テキストパート」', () => {
       '自動',
       '出さない',
       'テキストだけ',
+      '指定の文',
     ]);
     expect(segments(f)[0].getAttribute('aria-pressed')).toBe('true');
     // 「自動」のときは、この部品から作られるテキストを見せる
@@ -203,5 +204,139 @@ describe('全文編集の前の案内', () => {
     await frame();
     expect(root.querySelector('.notice.confirm')).toBeNull();
     expect(el.getJson().text.mode).toBe('manual');
+  });
+});
+
+describe('指定の文と参照', () => {
+  /** @param {Record<string, unknown>} [props] */
+  async function withButton(props = {}) {
+    const el = await mount({
+      mergeTags: [{ key: 'name', label: '氏名' }],
+      ...props,
+    });
+    const template = createTemplate();
+    const button = createBlock('button', {
+      label: 'パスワードを設定する',
+      href: 'https://example.com/reset',
+    });
+    button.id = 'b_button0001';
+    template.body.rows.push(createRow('1', [[button]]));
+    el.loadJson(template);
+    el.select(button.id);
+    await frame();
+    return el;
+  }
+
+  /** @param {MailmasonEditor} el */
+  const contentInput = (el) =>
+    /** @type {any} */ (deep(el, 'mm-settings-panel', '[data-key="content"] mm-text-input'));
+
+  it('「指定の文」は {@text} から始め、参照の名前をボタンで入れられ、値の変更を追いかける', async () => {
+    const el = await withButton();
+    segments(textField(el))[3].click();
+    await frame();
+    expect(blockOf(el, 'b_button0001')?.text).toMatchObject({ mode: 'custom', content: '{@text}' });
+    expect(el.exportText()).toBe('▶ パスワードを設定する\n  https://example.com/reset');
+
+    const input = contentInput(el);
+    const textarea = /** @type {HTMLTextAreaElement} */ (input.querySelector('textarea'));
+    const refs = [
+      .../** @type {HTMLElement} */ (deep(el, 'mm-settings-panel', '.refs')).querySelectorAll(
+        'button',
+      ),
+    ].map((b) => /** @type {HTMLElement} */ (b).dataset.ref);
+    expect(refs).toEqual(['text', 'label', 'href']);
+
+    textarea.focus();
+    textarea.value = '{{氏名}} 様、次の URL から設定してください：\n';
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    /** @type {HTMLButtonElement} */ (
+      deep(el, 'mm-settings-panel', '.refs button[data-ref="href"]')
+    ).click();
+    await frame();
+    expect(blockOf(el, 'b_button0001')?.text?.content).toBe(
+      '{{name}} 様、次の URL から設定してください：\n{@href}',
+    );
+    expect(blockBadges(el, 0)).toEqual(['テキストを指定']);
+
+    el.select('b_button0001');
+    /** @type {any} */ (el).store.dispatch({
+      type: 'updateBlockValues',
+      blockId: 'b_button0001',
+      patch: { href: 'https://example.com/reset2' },
+    });
+    await frame();
+    /** @type {string[]} */
+    const codes = [];
+    el.addEventListener('mm-warning', (e) => codes.push(/** @type {any} */ (e).detail.code));
+    expect(el.exportText()).toBe(
+      '{{name}} 様、次の URL から設定してください：\nhttps://example.com/reset2',
+    );
+    expect(codes).toEqual([]);
+  });
+
+  it('参照を含まない文は、部品が変わると印と案内を出し、確認済みにすると消える', async () => {
+    const el = await withButton();
+    segments(textField(el))[3].click();
+    await frame();
+    const textarea = contentInput(el).querySelector('textarea');
+    textarea.value = '固定の案内です';
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    await frame();
+    expect(deep(el, 'mm-settings-panel', '.stale')).toBeNull();
+
+    /** @type {any} */ (el).store.dispatch({
+      type: 'updateBlockValues',
+      blockId: 'b_button0001',
+      patch: { label: '変えたラベル' },
+    });
+    await frame();
+    expect(deep(el, 'mm-settings-panel', '.stale')).not.toBeNull();
+    expect(blockBadges(el, 0)).toEqual(['テキストが古い']);
+    /** @type {any[]} */
+    const warnings = [];
+    el.addEventListener('mm-warning', (e) => warnings.push(/** @type {any} */ (e).detail));
+    el.exportText();
+    expect(warnings).toContainEqual(
+      expect.objectContaining({ code: 'stale-text', blockIds: ['b_button0001'] }),
+    );
+
+    /** @type {HTMLButtonElement} */ (
+      deep(el, 'mm-settings-panel', '[data-action="acknowledge-text"]')
+    ).click();
+    await frame();
+    expect(deep(el, 'mm-settings-panel', '.stale')).toBeNull();
+    expect(blockBadges(el, 0)).toEqual(['テキストを指定']);
+  });
+
+  it('その部品に無い名前は設定欄で知らせ、書き出しで unknown-text-ref を出す', async () => {
+    const el = await withButton();
+    segments(textField(el))[3].click();
+    await frame();
+    const textarea = contentInput(el).querySelector('textarea');
+    textarea.value = '{@label} {@alt}';
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    await frame();
+    expect(deep(el, 'mm-settings-panel', '[data-key="content"] .warning')?.textContent).toContain(
+      '{@alt}',
+    );
+    /** @type {any[]} */
+    const warnings = [];
+    el.addEventListener('mm-warning', (e) => warnings.push(/** @type {any} */ (e).detail));
+    expect(el.exportText()).toBe('パスワードを設定する {@alt}');
+    expect(warnings).toContainEqual(
+      expect.objectContaining({ code: 'unknown-text-ref', blockId: 'b_button0001', name: 'alt' }),
+    );
+  });
+
+  it('textOptions.textTemplates で種類ごとの書き方を決められ、設定欄の見本にも出る', async () => {
+    const el = await withButton({
+      textOptions: { textTemplates: { button: '{@label}：{@href}' } },
+    });
+    expect(el.exportText()).toBe('パスワードを設定する：https://example.com/reset');
+    expect(deep(el, 'mm-settings-panel', '.text-preview pre')?.textContent).toBe(
+      'パスワードを設定する：https://example.com/reset',
+    );
   });
 });

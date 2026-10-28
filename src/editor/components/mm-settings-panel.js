@@ -4,12 +4,7 @@ import { findRowIndex, locateBlock, locateColumn } from '../../core/model/tree.j
 import { getBlockDef } from '../../core/blocks/registry.js';
 import { blockLabel, getEditorBlockDef } from '../blocks/index.js';
 import { renderField } from '../fields/fields.js';
-import {
-  BLOCK_TEXT_FIELD,
-  ROW_TEXT_FIELD,
-  autoTextPreview,
-  textModeValues,
-} from './text-part-fields.js';
+import { loadTextPartSettings, preload } from '../lazy.js';
 import { controls } from '../styles.js';
 import { getIn, isComposing, patchAt } from '../util.js';
 import { define } from '../context.js';
@@ -270,32 +265,6 @@ export class MmSettingsPanel extends LitElement {
       .with-menu {
         display: flex;
         gap: 4px;
-      }
-      .text-preview .hint {
-        display: block;
-        margin-bottom: 2px;
-        font-size: 11px;
-        color: var(--mm-color-muted);
-      }
-      .text-preview pre {
-        margin: 0;
-        padding: 6px 8px;
-        max-height: 120px;
-        overflow: auto;
-        border-radius: var(--mm-radius);
-        background: var(--mm-color-surface-2);
-        font:
-          11px/1.5 ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          Consolas,
-          monospace;
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
-      }
-      .with-menu input,
-      .with-menu textarea {
-        flex: 1;
       }
       .number {
         display: flex;
@@ -826,17 +795,20 @@ export class MmSettingsPanel extends LitElement {
   }
 
   /**
-   * テキストパートでの扱いの設定欄
+   * 「テキストパート」の欄（使うときに読み込む。読み込むまでは見出しだけ）
    * @param {import('../../core/model/types.js').Block | import('../../core/model/types.js').Row} element
+   * @param {'block' | 'row'} kind
    */
-  _textModeContext(element) {
-    return this._fieldContext(`mm-${element.id}-text`, textModeValues(element), (_key, mode) =>
-      this.ctx.store.dispatch({
-        type: 'setElementText',
-        id: element.id,
-        text: { mode: /** @type {string} */ (mode) },
-      }),
-    );
+  _renderTextPart(element, kind) {
+    preload(loadTextPartSettings);
+    return html`<section>
+      <h3>${this.ctx.t('section.textPart')}</h3>
+      <mm-text-part-settings
+        .element=${element}
+        kind=${kind}
+        .ctx=${this.ctx}
+      ></mm-text-part-settings>
+    </section>`;
   }
 
   /** @param {Target} target */
@@ -976,11 +948,7 @@ export class MmSettingsPanel extends LitElement {
           <h3>${t('section.layout')}</h3>
           ${this._fields(ROW_FIELDS, fieldCtx)}
         </section>
-        <section>
-          <h3>${t('section.textPart')}</h3>
-          ${this._fields([ROW_TEXT_FIELD], this._textModeContext(row))}
-        </section>
-        ${this._renderSaveComponent(row.id, t('crumb.row'))}`;
+        ${this._renderTextPart(row, 'row')} ${this._renderSaveComponent(row.id, t('crumb.row'))}`;
     } else if (target.kind === 'column') {
       const { column } = target;
       const fieldCtx = {
@@ -1060,11 +1028,7 @@ export class MmSettingsPanel extends LitElement {
                 <h3>${t('section.visibility')}</h3>
                 ${this._fields([VISIBILITY_FIELD], hideCtx)}
               </section>
-              <section>
-                <h3>${t('section.textPart')}</h3>
-                ${this._fields([BLOCK_TEXT_FIELD], this._textModeContext(block))}
-                ${autoTextPreview(block, this.ctx)}
-              </section>
+              ${this._renderTextPart(block, 'block')}
               ${this._renderSaveComponent(block.id, blockLabel(edef, this.ctx))}`
           : html`<section>
               <p class="message">${t('placeholder.unknown')}</p>

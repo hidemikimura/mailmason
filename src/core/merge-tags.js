@@ -84,7 +84,7 @@ function getByPath(values, path) {
  * @typedef {Object} MergeTagUsage
  * @property {string} key
  * @property {string | null} blockId ボディ設定（プリヘッダー・タイトル）なら null
- * @property {string} field 例: 'html', 'image.href', 'body.settings.preheader'
+ * @property {string} field 例: 'html', 'image.href', 'body.settings.preheader', 'text.content'（テキストパートの指定の文）
  */
 
 /**
@@ -106,6 +106,12 @@ export function findMergeTags(template, options = {}) {
   for (const row of template.body.rows) {
     for (const column of row.columns) {
       for (const block of column.blocks) {
+        // テキストパートの指定の文（text.mode: 'custom'）
+        if (block.text?.mode === 'custom') {
+          for (const key of extractMergeTags(block.text.content ?? '', delimiters)) {
+            usages.push({ key, blockId: block.id, field: 'text.content' });
+          }
+        }
         const def = getBlockDef(block.type, blocks);
         if (!def) continue;
         for (const field of def.mergeTagFields) {

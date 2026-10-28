@@ -99,6 +99,8 @@ export interface EditorWarning extends Warning {
   fileName?: string;
   error?: unknown;
   blockId?: string;
+  /** stale-text: 指定の文が古くなったブロック（全文の手編集のときは無い） */
+  blockIds?: string[];
   [key: string]: unknown;
 }
 
@@ -175,7 +177,7 @@ export declare class MailmasonEditor extends LitElement {
    */
   textOptions: Pick<
     RenderTextOptions,
-    'wrapWidth' | 'newline' | 'headingPrefix' | 'dividerText' | 'textVariant'
+    'wrapWidth' | 'newline' | 'headingPrefix' | 'dividerText' | 'textVariant' | 'textTemplates'
   >;
   /**
    * テキストパートを全文編集する前に、本文と切れることを伝え、部品ごとの設定を案内する
@@ -348,6 +350,8 @@ export declare class MmTextInput extends LitElement {
   readonly willValidate: boolean;
   checkValidity(): boolean;
   reportValidity(): boolean;
+  /** カーソル位置（選択していればその範囲）に文字を入れる。入力と同じく mm-value-input・mm-value-change を出す */
+  insertText(text: string): void;
 
   addEventListener<K extends keyof MmTextInputEventMap>(
     type: K,

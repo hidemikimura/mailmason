@@ -16,6 +16,11 @@
 - `RenderTextOptions` に `textVariant`（`'both'` / `'desktop'` / `'mobile'`）を足した。PC 用・スマホ用で分けた部品・行のどちらをテキストパートに出すか選べる（既定は両方で今と同じ）
 - エディタに `textOptions` を足した。プレビュー・手直しの古さの判定・`exportText()` に同じテキストパートの作り方を使う
 - エディタに `textEditConfirm`（属性 `text-edit-confirm`）を足した
+- テキストパートの「指定の文」: ブロックの扱いに「指定の文」（`text: { mode: 'custom', content }`）を足した。`{@名前}` でそのブロックの今の値（ボタンの `{@label}`・`{@href}`、画像の `{@alt}`・`{@href}` など）、`{@text}` で自動生成のテキストを参照でき、値を変えるとテキストパートも追いかける。差し込み変数も使え、`unknown-merge-tag` の検査に含める。そのブロックに無い名前は `mm-warning`（`unknown-text-ref`）で知らせる
+- 参照を含まない指定の文は、指定したあとにブロックの内容が変わると「古い」とする（`text.sourceHash`）。キャンバスに印を出し、設定欄で確認済みにできる。`stale-text` の `detail.blockIds` と、`resolveTextPart()` の `staleBlockIds` に入る。判定は折り返しなどの設定に左右されない
+- `RenderTextOptions` に `textTemplates`（種類ごとの既定の書き方。例: `{ button: '{@label}：{@href}' }`）を足した
+- `resolveTextPart()` の返り値に `staleBlockIds`・`unknownRefs` を足した
+- `<mm-text-input>` に `insertText(text)` を足した
 
 - 差し込み変数の入力欄 `<mm-text-input>` を公開した（`MmTextInput`）。件名など、エディタの外の欄に置ける。`display-labels` で欄の中を表示名で見せ、`value` とイベント（`mm-value-input`・`mm-value-change`、`detail: { value }`）はキーで返す。`locale`・`messages` で文言を変えられ、エディタの外でも見た目の初期値を持つ。入力中の候補の一覧の幅は `--mm-suggest-width` で変えられる
 - `<mm-text-input>` がフォームの部品として振る舞う（form-associated custom element）。`name` の値（キー）を送り、`required`・`maxlength`（キーで書いた値の文字数）で検査する。フォームのリセットと `<fieldset disabled>` も効く。`autocomplete`・`aria-describedby`・`aria-invalid` は中の欄に写す
@@ -25,6 +30,8 @@
 
 ### 変更
 
+- 設定パネルの「テキストパート」の欄は、ブロック・行を選んだときに読み込む（最初に読み込む量を増やさないため）
+- `npm run size` は、本体が最初に読み込む別ファイルも合計して上限と比べるようにした
 - 設定欄の入力中の候補の一覧の幅（260px）に、枠線を含めるようにした（2px 狭くなる）
 - プレビューの「テキスト」タブの手直しの欄を `<mm-text-input>` にした。`{{` で差し込み変数の候補を出し、「差し込み…」ボタンで入れられる。欄の中は表示名で見せ、保存はキーのまま。元に戻す・やり直すはこれまでどおり効く
 

@@ -290,6 +290,18 @@ export class MmTextInput extends LitElement {
     return this._display?.toLabels(this.value) ?? this.value;
   }
 
+  /**
+   * カーソル位置（選択していればその範囲）に文字を入れる。入力と同じく mm-value-input・mm-value-change を出す
+   * @param {string} text
+   */
+  insertText(text) {
+    const field = this.field;
+    if (!field) return;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? start;
+    this._replace(start, end, text);
+  }
+
   /** @param {string} key */
   _tagText(key) {
     return this._display?.text(key) ?? mergeTagText(key, this.delimiters);

@@ -16,6 +16,24 @@ const BUDGETS = {
 /** @param {string} path */
 const gzipKB = (path) => gzipSync(readFileSync(path), { level: 9 }).length / 1024;
 
+/**
+ * ファイルが静的に import する dist/chunks/ のファイル（たどった先も含む）。
+ * バンドラーが共通のコードを別ファイルに分けても、最初に読み込む量として数えるため
+ * @param {string} file dist からのパス
+ * @param {Set<string>} [found]
+ * @returns {Set<string>}
+ */
+function staticChunks(file, found = new Set()) {
+  const source = readFileSync(join(dist, file), 'utf8');
+  for (const match of source.matchAll(/(?:from|import)\s*"(\.{1,2}\/(?:chunks\/)?[^"]+\.js)"/g)) {
+    const name = join(file, '..', match[1]).replace(/\\/g, '/');
+    if (!name.startsWith('chunks/') || found.has(name)) continue;
+    found.add(name);
+    staticChunks(name, found);
+  }
+  return found;
+}
+
 if (!existsSync(join(dist, 'mailmason.bundle.js'))) {
   console.error('dist/ がありません。先に npm run build を実行してください');
   process.exit(1);
@@ -23,17 +41,24 @@ if (!existsSync(join(dist, 'mailmason.bundle.js'))) {
 
 let failed = false;
 const rows = [];
+/** 最初に読み込むファイル（本体が静的に import するもの） */
+const initial = staticChunks('mailmason.bundle.js');
 for (const [file, budget] of Object.entries(BUDGETS)) {
-  const size = gzipKB(join(dist, file));
+  const parts = file === 'mailmason.bundle.js' ? [file, ...initial] : [file];
+  const size = parts.reduce((sum, part) => sum + gzipKB(join(dist, part)), 0);
   const over = size > budget;
   failed ||= over;
-  rows.push([file, size, `上限 ${budget}KB${over ? ' を超えています' : ''}`]);
+  const label =
+    parts.length > 1 ? `${file}（最初に読み込む ${parts.length} ファイルの合計）` : file;
+  rows.push([label, size, `上限 ${budget}KB${over ? ' を超えています' : ''}`]);
 }
 const chunks = existsSync(join(dist, 'chunks'))
   ? readdirSync(join(dist, 'chunks')).filter((name) => name.endsWith('.js'))
   : [];
 for (const name of chunks.sort()) {
-  rows.push([`chunks/${name}`, gzipKB(join(dist, 'chunks', name)), '後から読み込む']);
+  const path = `chunks/${name}`;
+  const note = initial.has(path) ? '最初に読み込む（上の合計に含む）' : '後から読み込む';
+  rows.push([path, gzipKB(join(dist, path)), note]);
 }
 
 const width = Math.max(...rows.map(([name]) => name.length));

@@ -8,6 +8,15 @@
 /** @import { MergeTagDisplay } from './merge-tag-display.js' */
 
 /**
+ * 部品ごとのテキストパートの関数。後から読み込む設定欄（mm-text-part-settings）は core の書き出しを
+ * 直接 import せず、これを使う（バンドラーが本体の共通コードを別ファイルに分けないように）
+ * @typedef {Object} BlockTextHelpers
+ * @property {(block: import('../core/model/types.js').Block) => string} render その部品がテキストパートに出す内容
+ * @property {(block: import('../core/model/types.js').Block) => string} sourceHash 指定の文の古さの判定に使うハッシュ
+ * @property {(block: import('../core/model/types.js').Block) => boolean} isStale 参照を含まない指定の文が古いか
+ */
+
+/**
  * @typedef {Object} EditorContext
  * @property {Store} store
  * @property {Translate} t
@@ -31,6 +40,7 @@
  * @property {import('../core/render-text/index.js').RenderTextOptions} textOptions
  *   テキストパートの作り方（locale・区切り・カスタムブロック・editor.textOptions。差し込みの値は含めない）
  * @property {boolean} textEditConfirm テキストパートを全文編集する前に、本文と切れることを伝える
+ * @property {BlockTextHelpers} blockText 部品ごとのテキストパート（textOptions で作る）
  * @property {ImageSelectHook | null} onImageSelect
  * @property {readonly import('./web-fonts.js').WebFontOption[]} webFontOptions Web フォントの候補
  * @property {import('./upload.js').ImageUploadHook | null} onImageUpload

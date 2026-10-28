@@ -1,10 +1,12 @@
 // テキストパートでの部品・行の扱い（text.mode）と、PC 用・スマホ用の出し分け（textVariant）
 import { describe, expect, it } from 'vitest';
+import { blockTextSourceHash } from '../../src/core/render-text/index.js';
 import {
   applyCommand,
   createBlock,
   createRow,
   createTemplate,
+  findMergeTags,
   migrate,
   renderHtml,
   renderText,
@@ -55,7 +57,7 @@ describe('テンプレートの版と text の読み込み', () => {
 
   it('不正な text は警告して自動にする（行は only を選べない）', () => {
     const template = templateWith([
-      paragraph('a', { text: { mode: 'custom' } }),
+      paragraph('a', { text: { mode: 'bogus' } }),
       paragraph('b', { text: 'hidden' }),
       paragraph('c', { text: { mode: 'hidden', extra: 1 } }),
     ]);
@@ -227,5 +229,139 @@ describe('setElementText コマンド', () => {
     expect(() =>
       applyCommand(templateWith([]), { type: 'setElementText', id: 'b_none', text: null }),
     ).toThrow(/not found/);
+  });
+});
+
+describe('指定の文（text.mode: custom）と参照', () => {
+  /** @param {any} text */
+  const button = (text) => ({
+    ...createBlock('button', { label: 'パスワードを設定する', href: 'https://example.com/reset' }),
+    text,
+  });
+
+  it('{@名前} を今の値に置き換え、値を変えると追いかける（古いとは出ない）', () => {
+    const template = templateWith([
+      button({ mode: 'custom', content: '次の URL から設定してください：\n{@href}' }),
+    ]);
+    expect(renderText(template)).toBe('次の URL から設定してください：\nhttps://example.com/reset');
+    const blockId = template.body.rows[0].columns[0].blocks[0].id;
+    const next = applyCommand(template, {
+      type: 'updateBlockValues',
+      blockId,
+      patch: { label: '再設定する', href: 'https://example.com/reset2' },
+    });
+    const part = resolveTextPart(next);
+    expect(part.text).toBe('次の URL から設定してください：\nhttps://example.com/reset2');
+    expect(part.stale).toBe(false);
+    expect(part.staleBlockIds).toEqual([]);
+  });
+
+  it('{@text} は自動生成のテキスト。差し込み変数も使え、findMergeTags に入る', () => {
+    const block = paragraph('ご注文ありがとうございます', {
+      text: { mode: 'custom', content: '{{name}} 様\n{@text}' },
+    });
+    const template = templateWith([block]);
+    expect(renderText(template)).toBe('{{name}} 様\nご注文ありがとうございます');
+    expect(renderText(template, { mergeValues: { name: '山田' } })).toBe(
+      '山田 様\nご注文ありがとうございます',
+    );
+    expect(findMergeTags(template)).toContainEqual({
+      key: 'name',
+      blockId: block.id,
+      field: 'text.content',
+    });
+  });
+
+  it('参照を含まない文は、本文が変わると古いと判定し staleBlockIds に入れる', () => {
+    const block = button({ mode: 'custom', content: '合計：{{total}} 円' });
+    block.text.sourceHash = blockTextSourceHash(block);
+    const template = templateWith([block]);
+    expect(resolveTextPart(template).stale).toBe(false);
+    const next = applyCommand(template, {
+      type: 'updateBlockValues',
+      blockId: block.id,
+      patch: { label: '変えた' },
+    });
+    const part = resolveTextPart(next);
+    expect(part.text).toBe('合計：{{total}} 円');
+    expect(part.stale).toBe(true);
+    expect(part.staleBlockIds).toEqual([block.id]);
+  });
+
+  it('古さの判定は折り返しなどの設定に左右されない（sourceHash が無ければ判定しない）', () => {
+    const block = button({ mode: 'custom', content: '固定の文' });
+    block.text.sourceHash = blockTextSourceHash(block);
+    const template = templateWith([block]);
+    expect(resolveTextPart(template, { wrapWidth: 20, headingPrefix: '■ ' }).stale).toBe(false);
+    const noHash = templateWith([button({ mode: 'custom', content: '固定の文' })]);
+    expect(resolveTextPart(noHash).stale).toBe(false);
+  });
+
+  it('その部品に無い名前は書いたまま残し、unknownRefs で知らせる', () => {
+    const block = button({ mode: 'custom', content: '{@label} {@alt} {@nope}' });
+    const part = resolveTextPart(templateWith([block]));
+    expect(part.text).toBe('パスワードを設定する {@alt} {@nope}');
+    expect(part.unknownRefs).toEqual([
+      { blockId: block.id, name: 'alt' },
+      { blockId: block.id, name: 'nope' },
+    ]);
+  });
+
+  it('画像・画像＋テキスト・動画・QR・カスタムブロックの参照', () => {
+    const image = createBlock('image', {
+      src: 'https://example.com/a.png',
+      alt: '新作',
+      href: 'https://example.com/new',
+    });
+    const template = templateWith([
+      { ...image, text: { mode: 'custom', content: '{@alt}: {@href} ({@src})' } },
+    ]);
+    expect(renderText(template)).toBe('新作: https://example.com/new (https://example.com/a.png)');
+  });
+
+  it('custom で content が無いと警告して自動にする。custom 以外の content は消す', () => {
+    const template = templateWith([
+      paragraph('a', { text: { mode: 'custom' } }),
+      paragraph('b', { text: { mode: 'hidden', content: 'x' } }),
+      paragraph('c', { text: { mode: 'custom', content: 'c', sourceHash: 1 } }),
+    ]);
+    const { template: loaded, warnings } = migrate(template);
+    expect(warnings.map((w) => [w.code, w.path])).toEqual([
+      ['invalid-value', 'body.rows[0].columns[0].blocks[0].text.content'],
+      ['unknown-key', 'body.rows[0].columns[0].blocks[1].text.content'],
+      ['invalid-value', 'body.rows[0].columns[0].blocks[2].text.sourceHash'],
+    ]);
+    expect(loaded.body.rows[0].columns[0].blocks.map((b) => b.text)).toEqual([
+      undefined,
+      { mode: 'hidden' },
+      { mode: 'custom', content: 'c' },
+    ]);
+  });
+});
+
+describe('textTemplates（種類ごとの既定の書き方）', () => {
+  const template = templateWith([
+    createBlock('button', { label: '購入する', href: 'https://example.com/buy' }),
+    createBlock('button', { label: '', href: '' }),
+    {
+      ...createBlock('button', { label: '詳細', href: 'https://example.com/d' }),
+      text: { mode: 'custom', content: '詳細は {@href}' },
+    },
+  ]);
+
+  it('自動の部品に使い、指定の文の部品と中身の無い部品には使わない', () => {
+    const text = renderText(template, { textTemplates: { button: '{@label}：{@href}' } });
+    expect(text).toBe('購入する：https://example.com/buy\n\n詳細は https://example.com/d');
+  });
+
+  it('渡さないと今と同じ', () => {
+    expect(renderText(template)).toBe(
+      '▶ 購入する\n  https://example.com/buy\n\n詳細は https://example.com/d',
+    );
+  });
+
+  it('知らない名前は unknownRefs に入る', () => {
+    const part = resolveTextPart(template, { textTemplates: { button: '{@title}' } });
+    expect(part.unknownRefs.map((r) => r.name)).toEqual(['title']);
   });
 });

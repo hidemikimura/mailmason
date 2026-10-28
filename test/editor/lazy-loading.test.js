@@ -31,6 +31,22 @@ describe('後から読み込む部品', () => {
     expect(customElements.get('mailmason-editor')).toBeDefined();
     expect(customElements.get('mm-preview')).toBeUndefined();
     expect(customElements.get('mm-table-editor')).toBeUndefined();
+    expect(customElements.get('mm-text-part-settings')).toBeUndefined();
+  });
+
+  it('テキストパートの設定欄: 部品を選ぶと読み込んで表示する', async () => {
+    const el = await create();
+    const template = createTemplate();
+    const text = createBlock('text', { html: '<p>本文</p>' });
+    template.body.rows.push(createRow('1', [[text]]));
+    el.loadJson(template);
+    await frame();
+    el.select(text.id);
+    await vi.waitFor(() => expect(customElements.get('mm-text-part-settings')).toBeDefined());
+    await vi.waitFor(() =>
+      expect(deep(el, 'mm-settings-panel', 'mm-text-part-settings [data-key="mode"]')).toBeTruthy(),
+    );
+    expect(deep(el, 'mm-settings-panel', '.text-preview pre')?.textContent).toBe('本文');
   });
 
   it('表: 選ぶと編集部品を読み込み、直接編集できる', async () => {

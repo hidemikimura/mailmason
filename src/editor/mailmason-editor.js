@@ -19,6 +19,11 @@ import './components/mm-canvas.js';
 import './components/mm-settings-panel.js';
 import { mergeTagValues } from './util.js';
 import { getMergeTagDisplay } from './merge-tag-display.js';
+import {
+  blockTextSourceHash,
+  isBlockTextStale,
+  renderBlockText,
+} from '../core/render-text/index.js';
 import { insertBlock, placeBlock, placeRow } from './components/mm-palette.js';
 import { DEFAULT_MAX_IMAGE_SIZE, ImageUploader, imageFiles, uploadTargetOf } from './upload.js';
 import { getEditorBlockDef } from './blocks/index.js';
@@ -245,7 +250,7 @@ export class MailmasonEditor extends LitElement {
     /** 区切り開始文字（`{{` など）を入力したときに差し込み変数の候補を出す */
     this.mergeTagTrigger = true;
     /**
-     * @type {Pick<RenderTextOptions, 'wrapWidth' | 'newline' | 'headingPrefix' | 'dividerText' | 'textVariant'>}
+     * @type {Pick<RenderTextOptions, 'wrapWidth' | 'newline' | 'headingPrefix' | 'dividerText' | 'textVariant' | 'textTemplates'>}
      * テキストパートの作り方。プレビュー・手直しの古さの判定・exportText() に同じものを使う
      */
     this.textOptions = {};
@@ -569,11 +574,28 @@ export class MailmasonEditor extends LitElement {
       ...options,
       mergeValues: this._withFallbacks(options.mergeValues),
     });
-    if (part.stale) {
+    if (part.stale && part.mode === 'manual') {
       this._warn({
         code: 'stale-text',
         path: 'text',
         message: 'The manual text part was edited before the latest HTML changes.',
+      });
+    } else if (part.stale) {
+      this._warn({
+        code: 'stale-text',
+        path: 'text',
+        message:
+          'Custom text of some blocks was written before the latest changes to those blocks.',
+        blockIds: part.staleBlockIds,
+      });
+    }
+    for (const issue of part.unknownRefs) {
+      this._warn({
+        code: 'unknown-text-ref',
+        path: `block(${issue.blockId}).text.content`,
+        message: `Block has no value named "${issue.name}".`,
+        blockId: issue.blockId,
+        name: issue.name,
       });
     }
     return part.text;
@@ -1110,6 +1132,7 @@ export class MailmasonEditor extends LitElement {
     ) {
       return this._ctxCache.value;
     }
+    const textOptions = this._textOptions();
     /** @type {EditorContext} */
     const value = {
       store: this.store,
@@ -1128,7 +1151,12 @@ export class MailmasonEditor extends LitElement {
       delimiters: this.mergeTagDelimiters,
       mergeTagDisplay: getMergeTagDisplay(this.mergeTags, this.mergeTagDelimiters),
       mergeTagTrigger: this.mergeTagTrigger !== false,
-      textOptions: this._textOptions(),
+      textOptions,
+      blockText: {
+        render: (block) => renderBlockText(block, textOptions),
+        sourceHash: (block) => blockTextSourceHash(block, textOptions),
+        isStale: (block) => isBlockTextStale(block, textOptions),
+      },
       textEditConfirm: this.textEditConfirm !== false,
       onImageSelect: this.onImageSelect,
       onImageUpload: this.onImageUpload,

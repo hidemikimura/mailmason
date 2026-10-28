@@ -211,6 +211,8 @@ const ja = {
   'badge.hiddenOnDesktop': 'PC 非表示',
   'badge.textHidden': 'テキストに出さない',
   'badge.textOnly': 'テキストだけ',
+  'badge.textCustom': 'テキストを指定',
+  'badge.textStale': 'テキストが古い',
   'section.textPart': 'テキストパート',
   'field.textPart': 'テキストパートでの扱い',
   'field.textPartHelp':
@@ -220,6 +222,14 @@ const ja = {
   'textPart.hidden': '出さない',
   'textPart.hiddenRow': '行ごと出さない',
   'textPart.only': 'テキストだけ',
+  'textPart.custom': '指定の文',
+  'textPart.content': '指定の文',
+  'textPart.contentHelp':
+    '{@名前} でこの部品の今の値を、{@text} で自動で作ったテキストを入れます。参照した値は本文を変えると追いかけます。差し込み変数（{{ … }}）も使えます。',
+  'textPart.refs': 'この部品で参照できる値',
+  'textPart.unknownRef': '{names} はこの部品にありません（そのまま出ます）',
+  'textPart.stale':
+    '指定の文にしたあとに、この部品の内容が変わりました。文が今の内容と合っているか確認してください。',
   'textPart.preview': 'テキストパートに出る内容',
   'textPart.empty': '（出す内容がありません）',
   'crumb.body': '全体',

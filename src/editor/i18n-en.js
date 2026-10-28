@@ -208,6 +208,8 @@ export const en = {
   'badge.hiddenOnDesktop': 'Hidden on desktop',
   'badge.textHidden': 'Not in text',
   'badge.textOnly': 'Text only',
+  'badge.textCustom': 'Custom text',
+  'badge.textStale': 'Text outdated',
   'section.textPart': 'Text part',
   'field.textPart': 'In the text part',
   'field.textPartHelp':
@@ -217,6 +219,14 @@ export const en = {
   'textPart.hidden': 'Leave out',
   'textPart.hiddenRow': 'Leave out row',
   'textPart.only': 'Text only',
+  'textPart.custom': 'Custom',
+  'textPart.content': 'Custom text',
+  'textPart.contentHelp':
+    '{@name} inserts the current value of this block, and {@text} the automatically made text. Referenced values follow changes to the body. Merge tags ({{ … }}) work too.',
+  'textPart.refs': 'Values of this block you can reference',
+  'textPart.unknownRef': '{names} does not exist in this block (it is output as is)',
+  'textPart.stale':
+    'This block changed after you wrote the custom text. Check that the text still matches it.',
   'textPart.preview': 'What appears in the text part',
   'textPart.empty': '(nothing to show)',
   'crumb.body': 'Email',

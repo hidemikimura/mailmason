@@ -4,30 +4,30 @@
 
 オブジェクト・配列・関数はプロパティで渡します（属性名がある項目は HTML の属性でも指定できます）。
 
-| プロパティ           | 属性                   | 型                                                                     | 既定値                        | 内容                                                                                                                                     |
-| -------------------- | ---------------------- | ---------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `template`           | —                      | `Template`                                                             | 空のテンプレート              | 取得すると `getJson()`、代入すると `loadJson()` と同じ                                                                                   |
-| `theme`              | —                      | `Partial<BodySettings>`                                                | `{}`                          | 新規テンプレートの既定デザイン（幅・色・フォントなど）。読み込んだ JSON には適用しない                                                   |
-| `locale`             | `locale`               | `'ja' \| 'en'`                                                         | `'ja'`                        | UI の言語。テキストパートの SNS 名などにも使う                                                                                           |
-| `messages`           | —                      | `Record<string, string>`                                               | `{}`                          | UI 文言の部分上書き（例: `{ 'toolbar.preview': '確認' }`）                                                                               |
-| `mergeTags`          | —                      | `MergeTag[]`                                                           | `[]`                          | 差し込み変数の候補（`group` でグループ分け）                                                                                             |
-| `mergeTagDelimiters` | —                      | `{ open, close }`                                                      | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                                                                     |
-| `mergeTagTrigger`    | `merge-tag-trigger`    | `boolean`                                                              | `true`                        | 区切り開始文字（`{{`）を入力したときに差し込み変数の候補を出す。属性で消すときは `merge-tag-trigger="false"`                             |
-| `textOptions`        | —                      | `{ wrapWidth?, newline?, headingPrefix?, dividerText?, textVariant? }` | `{}`                          | テキストパートの作り方。プレビュー・手直しの古さの判定・`exportText()` に同じものを使う（サーバーの `resolveTextPart` にも同じ値を渡す） |
-| `textEditConfirm`    | `text-edit-confirm`    | `boolean`                                                              | `true`                        | テキストパートを全文編集する前に、本文と切れることを伝えて部品ごとの設定を案内する。属性で消すときは `text-edit-confirm="false"`         |
-| `onImageSelect`      | —                      | `ImageSelectHook \| null`                                              | `null`                        | 画像欄の「選択…」ボタンで呼ぶ。自前の画像ライブラリ画面などを開いて URL を返す                                                           |
-| `onImageUpload`      | —                      | `ImageUploadHook \| null`                                              | `null`                        | ローカルの画像ファイル（と QR コードの PNG）を受け取ってアップロードし、URL を返す。無ければ QR コードのブロックは使えない               |
-| `blocks`             | —                      | `CustomBlock[]`                                                        | `[]`                          | カスタムブロックの定義（`defineBlock()` の戻り値）。`loadJson` より前に設定する。書き出し・プレビューにも使う                            |
-| `components`         | —                      | `Component[]`                                                          | `[]`                          | 保存済みのコンポーネント（行・ブロック）。パレットの「保存済み」に出す                                                                   |
-| `onSaveComponent`    | —                      | `SaveComponentHook \| null`                                            | `null`                        | 「コンポーネントとして保存」で呼ぶ。アプリが保存し、id を付けて返すと一覧に加える                                                        |
-| `onDeleteComponent`  | —                      | `DeleteComponentHook \| null`                                          | `null`                        | 「保存済み」の削除で呼ぶ。`false` を返すと取り消し                                                                                       |
-| `maxImageSize`       | `max-image-size`       | `number`                                                               | `5242880`（5MB）              | アップロードできる画像の上限（バイト、0 で無制限）                                                                                       |
-| `socialIconBaseUrl`  | `social-icon-base-url` | `string`                                                               | `''`                          | SNS アイコン PNG の置き場所。`{base}/{service}-{color\|mono}.png` を参照。空ならテキストリンク                                           |
-| `outlookFontFamily`  | `outlook-font-family`  | `string`                                                               | `'Arial, sans-serif'`         | Outlook（Windows）用のフォント（最初のフォントが無いと明朝体になるため）                                                                 |
-| `historyLimit`       | `history-limit`        | `number`                                                               | `100`                         | Undo の履歴の上限                                                                                                                        |
-| `colorMode`          | `color-mode`           | `'light' \| 'dark' \| 'auto'`                                          | `'light'`                     | エディタ UI の配色（メールの色ではない）                                                                                                 |
-| `view`               | `view`                 | `'edit' \| 'preview'`                                                  | `'edit'`                      | 編集画面かプレビューか                                                                                                                   |
-| `previewDevice`      | `preview-device`       | `'desktop' \| 'mobile'`                                                | `'desktop'`                   | プレビューの幅（900px / 375px）                                                                                                          |
+| プロパティ           | 属性                   | 型                                                                                     | 既定値                        | 内容                                                                                                                                     |
+| -------------------- | ---------------------- | -------------------------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `template`           | —                      | `Template`                                                                             | 空のテンプレート              | 取得すると `getJson()`、代入すると `loadJson()` と同じ                                                                                   |
+| `theme`              | —                      | `Partial<BodySettings>`                                                                | `{}`                          | 新規テンプレートの既定デザイン（幅・色・フォントなど）。読み込んだ JSON には適用しない                                                   |
+| `locale`             | `locale`               | `'ja' \| 'en'`                                                                         | `'ja'`                        | UI の言語。テキストパートの SNS 名などにも使う                                                                                           |
+| `messages`           | —                      | `Record<string, string>`                                                               | `{}`                          | UI 文言の部分上書き（例: `{ 'toolbar.preview': '確認' }`）                                                                               |
+| `mergeTags`          | —                      | `MergeTag[]`                                                                           | `[]`                          | 差し込み変数の候補（`group` でグループ分け）                                                                                             |
+| `mergeTagDelimiters` | —                      | `{ open, close }`                                                                      | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                                                                     |
+| `mergeTagTrigger`    | `merge-tag-trigger`    | `boolean`                                                                              | `true`                        | 区切り開始文字（`{{`）を入力したときに差し込み変数の候補を出す。属性で消すときは `merge-tag-trigger="false"`                             |
+| `textOptions`        | —                      | `{ wrapWidth?, newline?, headingPrefix?, dividerText?, textVariant?, textTemplates? }` | `{}`                          | テキストパートの作り方。プレビュー・手直しの古さの判定・`exportText()` に同じものを使う（サーバーの `resolveTextPart` にも同じ値を渡す） |
+| `textEditConfirm`    | `text-edit-confirm`    | `boolean`                                                                              | `true`                        | テキストパートを全文編集する前に、本文と切れることを伝えて部品ごとの設定を案内する。属性で消すときは `text-edit-confirm="false"`         |
+| `onImageSelect`      | —                      | `ImageSelectHook \| null`                                                              | `null`                        | 画像欄の「選択…」ボタンで呼ぶ。自前の画像ライブラリ画面などを開いて URL を返す                                                           |
+| `onImageUpload`      | —                      | `ImageUploadHook \| null`                                                              | `null`                        | ローカルの画像ファイル（と QR コードの PNG）を受け取ってアップロードし、URL を返す。無ければ QR コードのブロックは使えない               |
+| `blocks`             | —                      | `CustomBlock[]`                                                                        | `[]`                          | カスタムブロックの定義（`defineBlock()` の戻り値）。`loadJson` より前に設定する。書き出し・プレビューにも使う                            |
+| `components`         | —                      | `Component[]`                                                                          | `[]`                          | 保存済みのコンポーネント（行・ブロック）。パレットの「保存済み」に出す                                                                   |
+| `onSaveComponent`    | —                      | `SaveComponentHook \| null`                                                            | `null`                        | 「コンポーネントとして保存」で呼ぶ。アプリが保存し、id を付けて返すと一覧に加える                                                        |
+| `onDeleteComponent`  | —                      | `DeleteComponentHook \| null`                                                          | `null`                        | 「保存済み」の削除で呼ぶ。`false` を返すと取り消し                                                                                       |
+| `maxImageSize`       | `max-image-size`       | `number`                                                                               | `5242880`（5MB）              | アップロードできる画像の上限（バイト、0 で無制限）                                                                                       |
+| `socialIconBaseUrl`  | `social-icon-base-url` | `string`                                                                               | `''`                          | SNS アイコン PNG の置き場所。`{base}/{service}-{color\|mono}.png` を参照。空ならテキストリンク                                           |
+| `outlookFontFamily`  | `outlook-font-family`  | `string`                                                                               | `'Arial, sans-serif'`         | Outlook（Windows）用のフォント（最初のフォントが無いと明朝体になるため）                                                                 |
+| `historyLimit`       | `history-limit`        | `number`                                                                               | `100`                         | Undo の履歴の上限                                                                                                                        |
+| `colorMode`          | `color-mode`           | `'light' \| 'dark' \| 'auto'`                                                          | `'light'`                     | エディタ UI の配色（メールの色ではない）                                                                                                 |
+| `view`               | `view`                 | `'edit' \| 'preview'`                                                                  | `'edit'`                      | 編集画面かプレビューか                                                                                                                   |
+| `previewDevice`      | `preview-device`       | `'desktop' \| 'mobile'`                                                                | `'desktop'`                   | プレビューの幅（900px / 375px）                                                                                                          |
 
 ### 型
 
@@ -102,14 +102,15 @@ type DeleteComponentHook = (component: Component) => Promise<boolean | void> | b
 
 ### `RenderTextOptions`
 
-| キー            | 既定値     | 内容                                                                                               |
-| --------------- | ---------- | -------------------------------------------------------------------------------------------------- |
-| `wrapWidth`     | `0`        | 折り返す桁数（全角 = 2 桁）。0 は折り返さない。URL は折らない                                      |
-| `newline`       | `'\n'`     | `'\r\n'` も可                                                                                      |
-| `headingPrefix` | `''`       | 見出しの前に付ける記号（例: `'■ '`）                                                               |
-| `dividerText`   | `'-'` × 40 | 区切り線                                                                                           |
-| `mergeValues`   | `null`     | マージタグを値に置き換える（エスケープしない）                                                     |
-| `textVariant`   | `'both'`   | PC 用・スマホ用で分けた部品・行（`hideOn`）のどちらを出すか（`'both'` / `'desktop'` / `'mobile'`） |
+| キー            | 既定値     | 内容                                                                                                                  |
+| --------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| `wrapWidth`     | `0`        | 折り返す桁数（全角 = 2 桁）。0 は折り返さない。URL は折らない                                                         |
+| `newline`       | `'\n'`     | `'\r\n'` も可                                                                                                         |
+| `headingPrefix` | `''`       | 見出しの前に付ける記号（例: `'■ '`）                                                                                  |
+| `dividerText`   | `'-'` × 40 | 区切り線                                                                                                              |
+| `mergeValues`   | `null`     | マージタグを値に置き換える（エスケープしない）                                                                        |
+| `textVariant`   | `'both'`   | PC 用・スマホ用で分けた部品・行（`hideOn`）のどちらを出すか（`'both'` / `'desktop'` / `'mobile'`）                    |
+| `textTemplates` | `{}`       | 種類ごとの既定の書き方（例: `{ button: '{@label}：{@href}' }`）。`{@名前}` でブロックの値、`{@text}` で自動生成を参照 |
 
 ## イベント
 
@@ -127,24 +128,25 @@ type DeleteComponentHook = (component: Component) => Promise<boolean | void> | b
 
 ### 警告コード（`mm-warning` / `loadJson` の戻り値）
 
-| コード                                                                    | 内容                                                                           |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `missing-version`                                                         | `version` が無かったので補った                                                 |
-| `invalid-value`                                                           | 型や範囲が不正な値を既定値にした                                               |
-| `unknown-key`                                                             | 未知のキーを削除した                                                           |
-| `regenerated-id`                                                          | 空・重複した ID を振り直した                                                   |
-| `layout-mismatch`                                                         | カラムの数をレイアウトに合わせた                                               |
-| `unknown-block-type`                                                      | 未知のブロック（データは残し、出力しない）                                     |
-| `sanitized-html`                                                          | テキストの HTML を許可タグに整えた                                             |
-| `unknown-merge-tag`                                                       | `mergeTags` に無いキーを使っている（書き出し時）                               |
-| `html-size`                                                               | HTML が 90KB を超えた（`bytes` 付き）                                          |
-| `stale-text`                                                              | 手直ししたテキストパートが本文より古い                                         |
-| `image-upload-type` / `image-upload-size`                                 | アップロードできない形式 / 大きさ（`fileName` 付き）                           |
-| `image-upload-failed`                                                     | `onImageUpload` が失敗した（`error` 付き）                                     |
-| `qr-missing` / `qr-stale`                                                 | QR コードの画像が未作成 / 作成後に設定が変わった（書き出し時、`blockId` 付き） |
-| `component-save-failed` / `component-delete-failed` / `invalid-component` | コンポーネントの保存・削除に失敗 / 入れられない形                              |
-| `block-action-failed`                                                     | カスタムブロックの `action` の処理が失敗した（`error` 付き）                   |
-| `qr-too-long` / `qr-failed`                                               | 内容が長すぎて QR コードにできない / 作れなかった                              |
+| コード                                                                    | 内容                                                                                                                 |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `missing-version`                                                         | `version` が無かったので補った                                                                                       |
+| `invalid-value`                                                           | 型や範囲が不正な値を既定値にした                                                                                     |
+| `unknown-key`                                                             | 未知のキーを削除した                                                                                                 |
+| `regenerated-id`                                                          | 空・重複した ID を振り直した                                                                                         |
+| `layout-mismatch`                                                         | カラムの数をレイアウトに合わせた                                                                                     |
+| `unknown-block-type`                                                      | 未知のブロック（データは残し、出力しない）                                                                           |
+| `sanitized-html`                                                          | テキストの HTML を許可タグに整えた                                                                                   |
+| `unknown-merge-tag`                                                       | `mergeTags` に無いキーを使っている（書き出し時）                                                                     |
+| `html-size`                                                               | HTML が 90KB を超えた（`bytes` 付き）                                                                                |
+| `stale-text`                                                              | 手直ししたテキストパート（全文、または参照を含まないブロックの指定の文。後者は `blockIds` 付き）が本文より古い       |
+| `unknown-text-ref`                                                        | テキストパートの指定の文・種類ごとの書き方で、そのブロックに無い名前を参照した（書き出し時、`blockId`・`name` 付き） |
+| `image-upload-type` / `image-upload-size`                                 | アップロードできない形式 / 大きさ（`fileName` 付き）                                                                 |
+| `image-upload-failed`                                                     | `onImageUpload` が失敗した（`error` 付き）                                                                           |
+| `qr-missing` / `qr-stale`                                                 | QR コードの画像が未作成 / 作成後に設定が変わった（書き出し時、`blockId` 付き）                                       |
+| `component-save-failed` / `component-delete-failed` / `invalid-component` | コンポーネントの保存・削除に失敗 / 入れられない形                                                                    |
+| `block-action-failed`                                                     | カスタムブロックの `action` の処理が失敗した（`error` 付き）                                                         |
+| `qr-too-long` / `qr-failed`                                               | 内容が長すぎて QR コードにできない / 作れなかった                                                                    |
 
 ### エラー（`MailmasonError`、`code` プロパティ）
 
@@ -213,6 +215,8 @@ mailmason-editor::part(toolbar) {
 - どの表示名・キーにも一致しない `{{…}}` は、打ったまま `value` に入れる
 - 次の候補は表示名で見せず、キーのまま見せる（キーに戻せなくなるため）: `label` が他の候補と同じ、他の候補の `key` と同じ、区切り文字や改行を含む、空
 
+メソッド `insertText(text)` で、カーソル位置（選択していればその範囲）に文字を入れられます（入力と同じくイベントを出す）。
+
 フォームの部品として振る舞います（form-associated custom element）。`<form>` の中に置くと `name` の値が送られ、`required`・`maxlength` で検査し、フォームのリセット（`value` 属性の値に戻る）と `<fieldset disabled>` も効きます。`form`・`validity`・`validationMessage`・`willValidate`・`checkValidity()`・`reportValidity()` を使えます。検査の文言は `mergeTag.required`・`mergeTag.tooLong` で上書きできます。
 
 入力中の候補は、中の欄を `role="combobox"` にし、`aria-expanded`・`aria-controls`・`aria-activedescendant` で一覧と選択中の候補を指します（画面読み上げで選べる）。
@@ -235,18 +239,18 @@ mailmason-editor::part(toolbar) {
 
 ## `@hidemikimura/mailmason/core`（Node でも動く）
 
-| 関数                                                                                       | 内容                                                                        |
-| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `renderHtml(template, options?)`                                                           | 配信用 HTML                                                                 |
-| `renderText(template, options?)`                                                           | 自動生成のテキストパート                                                    |
-| `resolveTextPart(template, options?)`                                                      | `{ text, mode, stale }`。手直しがあればそれを使う（配信にはこちら）         |
-| `validate(json)`                                                                           | `{ valid, warnings, error }`。例外を投げない                                |
-| `migrate(json, { mergeTagDelimiters })`                                                    | `{ template, warnings }`。正規化したテンプレート（不正なら例外）            |
-| `createTemplate(theme?)` / `createRow(layout, blocks?)` / `createBlock(type, values?)`     | 部品を作る                                                                  |
-| `findMergeTags(template)` / `replaceMergeTags(text, values)`                               | マージタグの列挙・置換                                                      |
-| `sanitizeHtml(html)`                                                                       | テキストブロック用に HTML を許可タグへ整える                                |
-| `defineBlock(definition)`                                                                  | カスタムブロックを定義する（下記）                                          |
-| `extractComponent(template, id, { name })` / `instantiateComponent(component, { blocks })` | 行・ブロックをコンポーネントとして切り出す / 新しい ID の行・ブロックにする |
+| 関数                                                                                       | 内容                                                                                            |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `renderHtml(template, options?)`                                                           | 配信用 HTML                                                                                     |
+| `renderText(template, options?)`                                                           | 自動生成のテキストパート                                                                        |
+| `resolveTextPart(template, options?)`                                                      | `{ text, mode, stale, staleBlockIds, unknownRefs }`。手直しがあればそれを使う（配信にはこちら） |
+| `validate(json)`                                                                           | `{ valid, warnings, error }`。例外を投げない                                                    |
+| `migrate(json, { mergeTagDelimiters })`                                                    | `{ template, warnings }`。正規化したテンプレート（不正なら例外）                                |
+| `createTemplate(theme?)` / `createRow(layout, blocks?)` / `createBlock(type, values?)`     | 部品を作る                                                                                      |
+| `findMergeTags(template)` / `replaceMergeTags(text, values)`                               | マージタグの列挙・置換                                                                          |
+| `sanitizeHtml(html)`                                                                       | テキストブロック用に HTML を許可タグへ整える                                                    |
+| `defineBlock(definition)`                                                                  | カスタムブロックを定義する（下記）                                                              |
+| `extractComponent(template, id, { name })` / `instantiateComponent(component, { blocks })` | 行・ブロックをコンポーネントとして切り出す / 新しい ID の行・ブロックにする                     |
 
 `renderHtml` / `renderText` / `resolveTextPart` / `migrate` / `validate` / `findMergeTags` / `createBlock` / `createStore` は `blocks` オプションでカスタムブロックの定義を受け取ります（渡さないと未知のブロックとして出力しない）。
 

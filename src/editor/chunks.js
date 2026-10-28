@@ -3,4 +3,5 @@
 export const importQr = () => import('./qr.js');
 export const importPreview = () => import('./components/mm-preview.js');
 export const importTableEditor = () => import('./components/mm-table-editor.js');
+export const importTextPartSettings = () => import('./components/mm-text-part-settings.js');
 export const importEnglish = () => import('./i18n-en.js');

@@ -407,7 +407,7 @@ export class MmBlock extends LitElement {
     };
 
     return html`<div class="content" style=${styleMap(style)}>${inner}</div>
-      ${elementBadges(block.hideOn, block.text?.mode, ctx)}
+      ${elementBadges(block.hideOn, block.text?.mode, ctx, ctx.blockText.isStale(block))}
       ${
         block.type === 'qr' && !uploading && qrStatus(block) === 'stale'
           ? html`<span class="badge warn">${ctx.t('badge.qrStale')}</span>`

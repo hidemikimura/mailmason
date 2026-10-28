@@ -136,10 +136,11 @@ export const chromeStyles = css`
 /**
  * 部品・行のバッジ（表示する画面とテキストパートでの扱い）。並びの位置は呼ぶ側の .badges で決める
  * @param {'mobile' | 'desktop' | null} hideOn スマホで非表示 / PC で非表示
- * @param {'hidden' | 'only' | undefined} textMode テキストパートに出さない / テキストパートだけ
+ * @param {'hidden' | 'only' | 'custom' | undefined} textMode テキストパートに出さない / テキストパートだけ / 指定の文
  * @param {{ t: Translate }} ctx
+ * @param {boolean} [textStale] 指定の文が本文より古い
  */
-export function elementBadges(hideOn, textMode, ctx) {
+export function elementBadges(hideOn, textMode, ctx, textStale = false) {
   const badges = [
     hideOn === 'mobile' ? html`<span class="badge">${ctx.t('badge.hiddenOnMobile')}</span>` : null,
     hideOn === 'desktop'
@@ -150,6 +151,12 @@ export function elementBadges(hideOn, textMode, ctx) {
       : null,
     textMode === 'only'
       ? html`<span class="badge" data-text="only">${ctx.t('badge.textOnly')}</span>`
+      : null,
+    textMode === 'custom' && !textStale
+      ? html`<span class="badge" data-text="custom">${ctx.t('badge.textCustom')}</span>`
+      : null,
+    textStale
+      ? html`<span class="badge warn" data-text="stale">${ctx.t('badge.textStale')}</span>`
       : null,
   ].filter(Boolean);
   return badges.length > 0 ? html`<div class="badges">${badges}</div>` : nothing;

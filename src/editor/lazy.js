@@ -2,7 +2,7 @@
 // 最初に読み込む量を減らす（iife 版はすべて 1 ファイルに入る）。
 // 部品のカスタム要素は、読み込む前に置いても定義されたときに中身が描かれる（Lit は定義前に入れたプロパティを引き継ぐ）
 import { loadMessages } from './i18n.js';
-import { importPreview, importQr, importTableEditor } from './chunks.js';
+import { importPreview, importQr, importTableEditor, importTextPartSettings } from './chunks.js';
 
 /**
  * 1 回だけ読み込む（失敗したら次に呼んだときにやり直す）
@@ -33,6 +33,9 @@ export const loadPreview = once(importPreview);
 /** 表の直接編集（<mm-table-editor>） */
 export const loadTableEditor = once(importTableEditor);
 
+/** 設定パネルの「テキストパート」（<mm-text-part-settings>） */
+export const loadTextPartSettings = once(importTextPartSettings);
+
 /**
  * 読み込みに失敗したとき（ネットワークの切断など）はコンソールに出すだけにする
  * @param {() => Promise<unknown>} load
@@ -46,5 +49,11 @@ export function preload(load) {
  * @param {string} [locale] 英語の文言も読み込むとき 'en' など
  */
 export async function loadAllEditorModules(locale = 'en') {
-  await Promise.all([loadQr(), loadPreview(), loadTableEditor(), loadMessages(locale)]);
+  await Promise.all([
+    loadQr(),
+    loadPreview(),
+    loadTableEditor(),
+    loadTextPartSettings(),
+    loadMessages(locale),
+  ]);
 }

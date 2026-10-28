@@ -51,7 +51,10 @@
 /**
  * テキストパートでの部品の扱い（省略すると自動）
  * @typedef {Object} BlockText
- * @property {'hidden' | 'only'} mode hidden: テキストパートに出さない / only: HTML に出さず、テキストパートだけに出す
+ * @property {'hidden' | 'only' | 'custom'} mode hidden: テキストパートに出さない /
+ *   only: HTML に出さず、テキストパートだけに出す / custom: 指定の文（content）を出す
+ * @property {string} [content] custom の文。`{@名前}` でその部品の今の値、`{@text}` で自動生成のテキストを参照できる
+ * @property {string} [sourceHash] custom にしたときの、その部品の自動生成のハッシュ（参照を含まない文の古さの判定に使う）
  */
 
 /**

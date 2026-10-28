@@ -445,10 +445,25 @@ export type BuiltinBlockType = keyof BlockValuesMap;
 export type CustomBlockType = `${string}-${string}`;
 
 /** テキストパートでのブロックの扱い（省略すると自動） */
-export interface BlockText {
-  /** 'hidden' でテキストパートに出さない。'only' で HTML に出さず、テキストパートだけに出す */
-  mode: 'hidden' | 'only';
-}
+export type BlockText =
+  | {
+      /** 'hidden' でテキストパートに出さない。'only' で HTML に出さず、テキストパートだけに出す */
+      mode: 'hidden' | 'only';
+    }
+  | {
+      /** 指定の文を出す */
+      mode: 'custom';
+      /**
+       * 指定の文。`{@名前}` でそのブロックの今の値（ボタンの `{@label}`・`{@href}`、画像の `{@alt}`・`{@href}`・`{@src}` など）、
+       * `{@text}` で自動生成のテキストを参照できる。差し込み変数（`{{キー}}`）も使える
+       */
+      content: string;
+      /**
+       * 指定の文にしたときの、そのブロックの自動生成のハッシュ。参照を含まない文は、これと今の自動生成が違うと
+       * 「古い」と判定する（無ければ判定しない）
+       */
+      sourceHash?: string;
+    };
 
 /** テキストパートでの行の扱い（省略すると自動） */
 export interface RowText {
@@ -1209,16 +1224,32 @@ export interface RenderTextOptions extends BlocksOption {
    * 'desktop' はスマホだけに出すものを除く、'mobile' は PC だけに出すものを除く
    */
   textVariant?: TextVariant;
+  /**
+   * 種類ごとの既定の書き方（例: `{ button: '{@label}：{@href}' }`）。テキストパートの扱いが自動のブロックに使う。
+   * `{@名前}` でそのブロックの今の値、`{@text}` で自動生成のテキストを参照できる。中身の無いブロックは出さない
+   */
+  textTemplates?: Record<string, string>;
 }
 
 /** 自動生成のテキストパート（手編集は使わない。配信には resolveTextPart を使う） */
 export declare function renderText(input: unknown, options?: RenderTextOptions): string;
 
+/** 指定の文・種類ごとの書き方で、そのブロックに無い名前を参照したところ */
+export interface TextRefIssue {
+  blockId: string;
+  /** `{@名前}` の名前 */
+  name: string;
+}
+
 export interface ResolvedTextPart {
   text: string;
   mode: 'auto' | 'manual';
-  /** 手編集したテキストが本文より古い */
+  /** 本文より古い。manual なら全文の手編集、auto なら参照を含まない指定の文のブロック（staleBlockIds） */
   stale: boolean;
+  /** 参照を含まない指定の文を持ち、指定したあとに本文が変わったブロック（auto のとき） */
+  staleBlockIds: string[];
+  /** そのブロックに無い名前の参照（auto のとき）。出力には `{@名前}` のまま残る */
+  unknownRefs: TextRefIssue[];
 }
 
 /** 配信に使うテキストパート（手編集があればそれ、無ければ自動生成） */
@@ -1258,7 +1289,7 @@ export interface MergeTagUsage {
   key: string;
   /** ブロックの中なら ID（ボディ設定なら null） */
   blockId: string | null;
-  /** 使っている項目（例: 'html'、'body.settings.preheader'） */
+  /** 使っている項目（例: 'html'、'body.settings.preheader'、テキストパートの指定の文は 'text.content'） */
   field: string;
 }
 

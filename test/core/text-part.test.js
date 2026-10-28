@@ -22,6 +22,8 @@ describe('テキストパート', () => {
       text: renderText(template),
       mode: 'auto',
       stale: false,
+      staleBlockIds: [],
+      unknownRefs: [],
     });
   });
 
@@ -33,7 +35,13 @@ describe('テキストパート', () => {
       sourceHash: textSourceHash(template),
     });
     const part = resolveTextPart(template, { mergeValues: { name: '山田' } });
-    expect(part).toEqual({ text: '手編集したテキスト 山田', mode: 'manual', stale: false });
+    expect(part).toEqual({
+      text: '手編集したテキスト 山田',
+      mode: 'manual',
+      stale: false,
+      staleBlockIds: [],
+      unknownRefs: [],
+    });
   });
 
   it('手編集の後に HTML 側を変えると stale になる', () => {

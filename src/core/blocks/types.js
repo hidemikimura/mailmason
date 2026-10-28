@@ -35,6 +35,7 @@
  * @property {MergeTagDelimiters} mergeTagDelimiters
  * @property {readonly CoreBlockDef[] | null} blocks カスタムブロックの定義
  * @property {import('../text-override.js').TextVariant} textVariant
+ * @property {Record<string, string>} textTemplates 種類ごとの既定の書き方
  */
 
 /**

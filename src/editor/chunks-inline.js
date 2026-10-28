@@ -2,9 +2,11 @@
 import * as qr from './qr.js';
 import * as preview from './components/mm-preview.js';
 import * as tableEditor from './components/mm-table-editor.js';
+import * as textPartSettings from './components/mm-text-part-settings.js';
 import * as english from './i18n-en.js';
 
 export const importQr = () => Promise.resolve(qr);
 export const importPreview = () => Promise.resolve(preview);
 export const importTableEditor = () => Promise.resolve(tableEditor);
+export const importTextPartSettings = () => Promise.resolve(textPartSettings);
 export const importEnglish = () => Promise.resolve(english);
