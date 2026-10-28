@@ -12,6 +12,7 @@ import { replaceMergeTags } from '../../core/merge-tags.js';
 import { mergeTagValues } from '../util.js';
 import { controls } from '../styles.js';
 import { define } from '../context.js';
+import './mm-text-input.js';
 
 /** @import { Template } from '../../core/model/types.js' */
 /** @import { EditorContext } from '../context.js' */
@@ -374,9 +375,9 @@ export class MmPreview extends LitElement {
     });
   }
 
-  /** @param {Event} event */
+  /** @param {CustomEvent<{ value: string }>} event */
   _onTextInput(event) {
-    const { value } = /** @type {HTMLTextAreaElement} */ (event.target);
+    const { value } = event.detail;
     this.ctx.store.dispatch({ type: 'setTextPart', content: value, mergeKey: 'text-part' });
   }
 
@@ -458,12 +459,18 @@ export class MmPreview extends LitElement {
         }
         ${
           manual
-            ? html`<textarea
-                aria-label=${t('preview.textLabel')}
+            ? html`<mm-text-input
+                multiline
+                display-labels
                 spellcheck="false"
+                aria-label=${t('preview.textLabel')}
                 .value=${text.content ?? ''}
-                @input=${this._onTextInput}
-              ></textarea>`
+                .tags=${this.ctx.mergeTags}
+                .delimiters=${this.ctx.delimiters}
+                .mergeTagTrigger=${this.ctx.mergeTagTrigger}
+                .t=${t}
+                @mm-value-input=${this._onTextInput}
+              ></mm-text-input>`
             : html`<pre aria-label=${t('preview.textLabel')}>
 ${output.text || t('preview.empty')}</pre>`
         }

@@ -13,6 +13,15 @@ const MERGE_TAGS = [
   { key: 'unsubscribe_url', label: '配信停止 URL', fallback: 'https://example.com/u' },
 ];
 
+/**
+ * 欄の中の見え方（差し込み変数を表示名で見せる）
+ * @param {string | null} text
+ */
+const shown = (text) =>
+  (text ?? '')
+    .replaceAll('{{name}}', '{{氏名}}')
+    .replaceAll('{{unsubscribe_url}}', '{{配信停止 URL}}');
+
 /** @param {number} ms */
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -191,7 +200,8 @@ describe('プレビュー', () => {
     expect(text.sourceHash).toMatch(/^[0-9a-f]{8}$/);
 
     const textarea = /** @type {HTMLTextAreaElement} */ (inPreview(el, 'textarea'));
-    expect(textarea.value).toBe(text.content);
+    // 欄の中は表示名で見せる（保存はキー）
+    expect(textarea.value).toBe(shown(text.content));
     textarea.value = 'テキスト版です';
     textarea.dispatchEvent(new Event('input'));
     textarea.value = 'テキスト版です。';
@@ -210,6 +220,40 @@ describe('プレビュー', () => {
     await frame();
     expect(el.getJson().text).toEqual({ mode: 'auto', content: null, sourceHash: null });
     expect(inPreview(el, 'pre')).not.toBeNull();
+  });
+
+  it('手編集の欄でも {{ から差し込み変数の候補を出し、元に戻す・やり直すが効く', async () => {
+    const el = await setup();
+    await openTextTab(el);
+    inPreview(el, '[data-action="edit-text"]').click();
+    await frame();
+    const before = /** @type {string} */ (el.getJson().text.content);
+    const field = /** @type {any} */ (inPreview(el, 'mm-text-input'));
+    const textarea = /** @type {HTMLTextAreaElement} */ (field.querySelector('textarea'));
+    expect(textarea.getAttribute('aria-label')).toBe('テキストパート');
+    expect(field.querySelector('mm-merge-tag-picker')).not.toBeNull();
+
+    textarea.focus();
+    textarea.value = `${textarea.value}\n{{配信`;
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    await field.updateComplete;
+    const list = field.querySelector('.mm-text-input-suggest mm-merge-tag-list');
+    expect(list).not.toBeNull();
+    await list.updateComplete;
+    press(textarea, 'Enter');
+    await frame();
+    expect(textarea.value.endsWith('\n{{配信停止 URL}}')).toBe(true);
+    expect(el.getJson().text.content).toBe(`${before}\n{{unsubscribe_url}}`);
+
+    el.undo();
+    await frame();
+    expect(el.getJson().text.content).toBe(before);
+    expect(textarea.value).toBe(shown(before));
+    el.redo();
+    await frame();
+    expect(el.getJson().text.content).toBe(`${before}\n{{unsubscribe_url}}`);
+    expect(textarea.value.endsWith('\n{{配信停止 URL}}')).toBe(true);
   });
 
   it('手編集の後に本文が変わったら警告を出し、確認済みにすると消える', async () => {

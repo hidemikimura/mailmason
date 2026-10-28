@@ -99,6 +99,7 @@ export class MmTextInput extends LitElement {
     required: { type: Boolean, reflect: true },
     maxLength: { type: Number, attribute: 'maxlength' },
     autocomplete: { type: String },
+    accessibleName: { type: String, attribute: 'aria-label' },
     describedBy: { type: String, attribute: 'aria-describedby' },
     invalid: { type: String, attribute: 'aria-invalid' },
     locale: { type: String },
@@ -133,6 +134,8 @@ export class MmTextInput extends LitElement {
     this.maxLength = -1;
     /** 中の欄の autocomplete */
     this.autocomplete = '';
+    /** 中の欄に写す aria-label（属性 aria-label。<label for> で名前を付けられないとき） */
+    this.accessibleName = '';
     /** 中の欄に写す aria-describedby（属性 aria-describedby） */
     this.describedBy = '';
     /** 中の欄に写す aria-invalid（属性 aria-invalid） */
@@ -420,6 +423,7 @@ export class MmTextInput extends LitElement {
       role: combobox ? 'combobox' : nothing,
       autocomplete: combobox ? 'list' : nothing,
       expanded: combobox ? String(Boolean(this._suggest)) : nothing,
+      label: this.accessibleName || nothing,
       describedBy: this.describedBy || nothing,
       invalid: this.invalid || nothing,
       required: this.required ? 'true' : nothing,
@@ -433,6 +437,7 @@ export class MmTextInput extends LitElement {
           role=${aria.role}
           aria-autocomplete=${aria.autocomplete}
           aria-expanded=${aria.expanded}
+          aria-label=${aria.label}
           aria-describedby=${aria.describedBy}
           aria-invalid=${aria.invalid}
           aria-required=${aria.required}
@@ -454,6 +459,7 @@ export class MmTextInput extends LitElement {
           role=${aria.role}
           aria-autocomplete=${aria.autocomplete}
           aria-expanded=${aria.expanded}
+          aria-label=${aria.label}
           aria-describedby=${aria.describedBy}
           aria-invalid=${aria.invalid}
           aria-required=${aria.required}

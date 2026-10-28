@@ -321,6 +321,8 @@ export declare class MmTextInput extends LitElement {
   maxLength: number;
   /** 中の欄の autocomplete（属性 autocomplete） */
   autocomplete: string;
+  /** 中の欄に写す aria-label（属性 aria-label。`<label for>` で名前を付けられないとき） */
+  accessibleName: string;
   /** 中の欄に写す aria-describedby（属性 aria-describedby） */
   describedBy: string;
   /** 中の欄に写す aria-invalid（属性 aria-invalid） */
