@@ -247,8 +247,87 @@ export declare class MailmasonEditor extends LitElement {
   ): void;
 }
 
+// ---------------------------------------------------------------------------
+// 差し込み変数の入力欄
+// ---------------------------------------------------------------------------
+
+/** `<mm-text-input>` のイベントの detail */
+export interface MmValueDetail {
+  /** 今の値。差し込み変数はキー（`{{name}}`）で書く（displayLabels でも同じ） */
+  value: string;
+}
+
+/** `<mm-text-input>` が発火するイベント（bubbles の CustomEvent。composed ではない） */
+export interface MmTextInputEventMap extends HTMLElementEventMap {
+  /** 入力のたび（候補を選んで入れたときも） */
+  'mm-value-input': CustomEvent<MmValueDetail>;
+  /** 値を確定したとき（中の欄の change と同じ時機。候補を選んで入れたときも） */
+  'mm-value-change': CustomEvent<MmValueDetail>;
+}
+
+/**
+ * 差し込み変数を入れられる入力欄 `<mm-text-input>`（件名など、エディタの外の欄に置ける）。
+ * Shadow DOM を使わないので、外の `<label for>` で中の欄（`input-id`）を指せる。
+ *
+ * @fires mm-value-input / mm-value-change
+ * @cssprop --mm-suggest-width 入力中に出す候補の一覧の幅（既定 260px）
+ */
+export declare class MmTextInput extends LitElement {
+  /** 今の値（属性 value）。差し込み変数はキーで書く。入力のたびに更新する */
+  value: string;
+  /** 中の欄の id（属性 input-id） */
+  inputId: string;
+  /** 中の欄の placeholder（属性 placeholder） */
+  placeholder: string;
+  /** 中の欄の inputmode（属性 inputmode、既定 'text'。複数行では使わない） */
+  inputmode: string;
+  /** 複数行（textarea）にする（属性 multiline） */
+  multiline: boolean;
+  /** 複数行の行数（属性 rows、既定 4） */
+  rows: number;
+  /** 入力と「差し込み…」ボタンを使えなくする（属性 disabled） */
+  disabled: boolean;
+  /** 差し込み変数の候補。空なら「差し込み…」ボタンも候補も出さない */
+  tags: readonly MergeTag[];
+  /** 区切り（既定 `{{` `}}`） */
+  delimiters: MergeTagDelimiters;
+  /** 区切り開始文字の入力で候補を出す（属性 merge-tag-trigger="false" でオフ。既定 true） */
+  mergeTagTrigger: boolean;
+  /**
+   * 欄の中を候補の label で見せる（属性 display-labels）。value とイベントはキーのまま。
+   * label が他の候補と重なる・他の候補の key と同じ・区切り文字や改行を含む候補は、キーのまま見せる
+   */
+  displayLabels: boolean;
+  /** 文言の言語（属性 locale、既定 'ja'） */
+  locale: 'ja' | 'en' | (string & {});
+  /** 文言の部分上書き（例: `{ 'mergeTag.insert': '変数を入れる' }`） */
+  messages: Record<string, string>;
+
+  addEventListener<K extends keyof MmTextInputEventMap>(
+    type: K,
+    listener: (this: MmTextInput, event: MmTextInputEventMap[K]) => unknown,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  removeEventListener<K extends keyof MmTextInputEventMap>(
+    type: K,
+    listener: (this: MmTextInput, event: MmTextInputEventMap[K]) => unknown,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ): void;
+}
+
 declare global {
   interface HTMLElementTagNameMap {
     'mailmason-editor': MailmasonEditor;
+    'mm-text-input': MmTextInput;
   }
 }

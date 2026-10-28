@@ -765,7 +765,6 @@ export class MmSettingsPanel extends LitElement {
       values,
       mergeTags: ctx.mergeTags,
       delimiters: ctx.delimiters,
-      mergeTagDisplay: ctx.mergeTagDisplay,
       mergeTagTrigger: ctx.mergeTagTrigger,
       onImageSelect: ctx.onImageSelect,
       webFonts: ctx.store.getState().template.body.settings.webFonts,

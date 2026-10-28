@@ -1,22 +1,49 @@
 // エディタ UI の共通スタイル。色や寸法は CSS カスタムプロパティで上書きできる
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+
+/** デザイントークンの既定値（ライト）。エディタの外で部品だけを使うときの初期値にもする */
+export const LIGHT_TOKENS = Object.freeze({
+  '--mm-color-bg': '#eef0f3',
+  '--mm-color-surface': '#ffffff',
+  '--mm-color-surface-2': '#f6f7f9',
+  '--mm-color-text': '#1f2328',
+  '--mm-color-muted': '#656d76',
+  '--mm-color-border': '#d8dce1',
+  '--mm-color-accent': '#2f6fed',
+  '--mm-color-accent-text': '#ffffff',
+  '--mm-color-accent-soft': 'rgba(47, 111, 237, 0.12)',
+  '--mm-color-danger': '#cf222e',
+  '--mm-radius': '6px',
+  '--mm-font-family': "system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif",
+  '--mm-font-size': '13px',
+});
+
+let tokenDefaultsRegistered = false;
+
+/**
+ * デザイントークンの初期値を登録する（どこにも指定が無いときに使われる）。
+ * エディタはルート要素で指定するので、この初期値はエディタの外に置いた部品だけに効く
+ */
+export function registerTokenDefaults() {
+  if (tokenDefaultsRegistered || typeof CSS === 'undefined' || !CSS.registerProperty) return;
+  tokenDefaultsRegistered = true;
+  for (const [name, initialValue] of Object.entries(LIGHT_TOKENS)) {
+    try {
+      CSS.registerProperty({ name, syntax: '*', inherits: true, initialValue });
+    } catch {
+      // 登録済み（同じページに別の版の mailmason があるなど）なら、そちらの初期値を使う
+    }
+  }
+}
+
+const lightDeclarations = Object.entries(LIGHT_TOKENS)
+  .map(([name, value]) => `${name}: ${value};`)
+  .join('\n');
 
 /** ルート要素に置くデザイントークン（ライト / ダーク） */
 export const tokens = css`
   :host {
-    --mm-color-bg: #eef0f3;
-    --mm-color-surface: #ffffff;
-    --mm-color-surface-2: #f6f7f9;
-    --mm-color-text: #1f2328;
-    --mm-color-muted: #656d76;
-    --mm-color-border: #d8dce1;
-    --mm-color-accent: #2f6fed;
-    --mm-color-accent-text: #ffffff;
-    --mm-color-accent-soft: rgba(47, 111, 237, 0.12);
-    --mm-color-danger: #cf222e;
-    --mm-radius: 6px;
-    --mm-font-family: system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-    --mm-font-size: 13px;
+    ${unsafeCSS(lightDeclarations)}
     --mm-palette-width: 232px;
     --mm-panel-width: 300px;
     color-scheme: light;

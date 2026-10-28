@@ -161,6 +161,55 @@ mailmason-editor::part(toolbar) {
 </mailmason-editor>
 ```
 
+## `<mm-text-input>`（差し込み変数の入力欄）
+
+エディタの設定欄と同じ入力欄を、件名などエディタの外の欄に置けます。`@hidemikimura/mailmason` を import すると登録されます。Shadow DOM を使わないので、外の `<label for>` で中の欄（`input-id`）を指せます。
+
+| プロパティ        | 属性                | 型                       | 既定値                        | 内容                                                                                         |
+| ----------------- | ------------------- | ------------------------ | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `value`           | `value`             | `string`                 | `''`                          | 今の値。差し込み変数はキー（`{{order.id}}`）で書く。入力のたびに更新する                     |
+| `tags`            | —                   | `MergeTag[]`             | `[]`                          | 差し込み変数の候補。空なら「差し込み…」ボタンも候補も出さない                                |
+| `displayLabels`   | `display-labels`    | `boolean`                | `false`                       | 欄の中を `label` で見せる（`{{注文番号}}`）。`value` とイベントはキーのまま                  |
+| `delimiters`      | —                   | `{ open, close }`        | `{ open: '{{', close: '}}' }` | 差し込み変数の区切り                                                                         |
+| `mergeTagTrigger` | `merge-tag-trigger` | `boolean`                | `true`                        | `{{` の入力で候補を出す。属性で消すときは `merge-tag-trigger="false"`                        |
+| `inputId`         | `input-id`          | `string`                 | `''`                          | 中の欄の id                                                                                  |
+| `placeholder`     | `placeholder`       | `string`                 | `''`                          |                                                                                              |
+| `inputmode`       | `inputmode`         | `string`                 | `'text'`                      |                                                                                              |
+| `multiline`       | `multiline`         | `boolean`                | `false`                       | 複数行（textarea）にする                                                                     |
+| `rows`            | `rows`              | `number`                 | `4`                           | 複数行の行数                                                                                 |
+| `disabled`        | `disabled`          | `boolean`                | `false`                       | 欄と「差し込み…」ボタンを使えなくする                                                        |
+| `locale`          | `locale`            | `'ja' \| 'en'`           | `'ja'`                        | 文言の言語                                                                                   |
+| `messages`        | —                   | `Record<string, string>` | `{}`                          | 文言の部分上書き（`mergeTag.insert`・`mergeTag.search`・`mergeTag.empty`・`mergeTag.other`） |
+
+イベントは `bubbles: true` の `CustomEvent` です（`composed` ではないので、エディタの設定欄の入力欄のイベントはエディタの外に出ません）。
+
+| イベント          | `detail`    | いつ                                                         |
+| ----------------- | ----------- | ------------------------------------------------------------ |
+| `mm-value-input`  | `{ value }` | 入力のたび（候補を選んで入れたときも）。`value` はキーで書く |
+| `mm-value-change` | `{ value }` | 値を確定したとき（中の欄の `change` と同じ時機）             |
+
+表示名とキーの行き来の決まり（`display-labels`。エディタの中と同じ）:
+
+- 表示名で手で打っても、表示名と一致すれば `value` ではキーに戻す
+- どの表示名・キーにも一致しない `{{…}}` は、打ったまま `value` に入れる
+- 次の候補は表示名で見せず、キーのまま見せる（キーに戻せなくなるため）: `label` が他の候補と同じ、他の候補の `key` と同じ、区切り文字や改行を含む、空
+
+見た目は `--mm-color-*` `--mm-radius` `--mm-font-family` `--mm-font-size` で変えられます（エディタの外でも初期値があります）。入力中に出す候補の一覧の幅は `--mm-suggest-width`（既定 260px）。中の要素は次の class で指せます: `.mm-text-input-row`（欄とボタンの並び）、`.mm-text-input-field`（中の `input` / `textarea`）、`.mm-text-input-suggest`（入力中の候補）。
+
+```html
+<label for="subject">件名</label>
+<mm-text-input id="subject-field" input-id="subject" display-labels></mm-text-input>
+
+<script type="module">
+  import '@hidemikimura/mailmason';
+
+  const field = document.getElementById('subject-field');
+  field.tags = mergeTags; // MergeTag[]
+  field.value = 'ご注文ありがとうございます（{{order.id}}）'; // 欄には {{注文番号}} と見える
+  field.addEventListener('mm-value-change', (e) => save(e.detail.value)); // キーで受け取る
+</script>
+```
+
 ## `@hidemikimura/mailmason/core`（Node でも動く）
 
 | 関数                                                                                       | 内容                                                                        |
@@ -216,4 +265,4 @@ renderHtml(template, { blocks: [couponBlock] }); // サーバー
 - 入力値のエスケープは定義側で行う。出力はテーブル＋インライン CSS で書き、縦積みしたいセルには `class="mm-col"` を付ける
 - 定義が不正なら `MailmasonError`（`invalid-block-definition`）
 
-型（`Template`・`Block`・`RenderHtmlOptions` など）も同じパスから import できます。TypeScript の型定義を同梱しており、`Block` は `block.type` で絞り込むと `values` の型（`TableValues` など。`BlockValuesMap` / `BlockOf<'table'>`）が決まり、`<mailmason-editor>` のイベントの `detail` にも型が付きます（`MailmasonEditorEventMap`）。
+型（`Template`・`Block`・`RenderHtmlOptions` など）も同じパスから import できます。TypeScript の型定義を同梱しており、`Block` は `block.type` で絞り込むと `values` の型（`TableValues` など。`BlockValuesMap` / `BlockOf<'table'>`）が決まり、`<mailmason-editor>` のイベントの `detail` にも型が付きます（`MailmasonEditorEventMap`・`MmTextInputEventMap`）。

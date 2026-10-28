@@ -26,14 +26,31 @@ describe('型定義', () => {
     expect(declaredValues(read('types/core/index.d.ts'))).toEqual(Object.keys(core).sort());
   });
 
-  it('エディタの型定義は core をそのまま再 export し、MailmasonEditor を宣言している', () => {
+  it('エディタの型定義は core をそのまま再 export し、MailmasonEditor・MmTextInput を宣言している', () => {
     const types = read('types/index.d.ts');
     const entry = read('src/index.js');
     expect(types).toContain("export * from './core/index.js';");
     expect(entry).toContain("export * from './core/index.js';");
-    expect(declaredValues(types)).toEqual(['MailmasonEditor']);
-    expect(entry).toMatch(/export \{ MailmasonEditor \}/);
+    expect(declaredValues(types)).toEqual(['MailmasonEditor', 'MmTextInput']);
+    expect(entry).toMatch(/export \{ MailmasonEditor, MmTextInput \}/);
     expect(types).toContain("'mailmason-editor': MailmasonEditor;");
+    expect(types).toContain("'mm-text-input': MmTextInput;");
+  });
+
+  it('<mm-text-input> の公開プロパティとイベントを型定義に書いている', () => {
+    const types = read('types/index.d.ts');
+    const source = read('src/editor/components/mm-text-input.js');
+    const properties = /static properties = \{([\s\S]*?)\n {2}\};/.exec(source)?.[1] ?? '';
+    // t はエディタの中で文言を渡すためのもの（公開しない）
+    const publicProps = [...properties.matchAll(/^ {4}(\w+):/gm)]
+      .map((m) => m[1])
+      .filter((name) => !name.startsWith('_') && name !== 't');
+    expect(publicProps).toContain('displayLabels');
+    for (const name of publicProps) expect(types, name).toMatch(new RegExp(`^  ${name}: `, 'm'));
+    for (const name of ['mm-value-input', 'mm-value-change']) {
+      expect(source).toContain(`'${name}'`);
+      expect(types, name).toContain(`'${name}': CustomEvent<`);
+    }
   });
 
   it('エディタの公開プロパティとイベントを型定義に書いている', () => {

@@ -73,6 +73,24 @@ editor.mergeTagTrigger = false;
 
 サーバーで書き出すときは `@hidemikimura/mailmason/core` の `renderHtml(template, { mergeValues })` を使います（こちらは `fallback` を補わないので、必要なら値に含めてください）。
 
+## エディタの外の入力欄
+
+件名など、エディタの外に置く欄でも同じ候補と表示名を使えます。`<mm-text-input>` を置き、`tags` に同じ候補を渡します。
+
+```html
+<label for="subject">件名</label>
+<mm-text-input id="subject-field" input-id="subject" display-labels></mm-text-input>
+```
+
+```js
+const field = document.getElementById('subject-field');
+field.tags = editor.mergeTags;
+field.value = 'ご注文ありがとうございます（{{order.id}}）'; // 欄には {{注文番号}} と見える
+field.addEventListener('mm-value-change', (e) => save(e.detail.value)); // キーで受け取る
+```
+
+`value` とイベント（`mm-value-input`・`mm-value-change`）は、表示名で見せていてもキーで返します。詳しくは [API リファレンス](/reference/editor) の「`<mm-text-input>`」を見てください。
+
 ## 区切りを変える
 
 配信システムの書式に合わせて区切りを変えられます。エディタと書き出しの両方に同じ値を指定してください。

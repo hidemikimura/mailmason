@@ -118,7 +118,7 @@ describe('差し込み変数のコンボボックス（設定パネル）', () =
     };
     await type('ボタン {{');
     const suggest = () =>
-      /** @type {any} */ (field.querySelector('.mm-merge-tag-suggest mm-merge-tag-list'));
+      /** @type {any} */ (field.querySelector('.mm-text-input-suggest mm-merge-tag-list'));
     expect(suggest()).not.toBeNull();
     await suggest().updateComplete;
     expect(optionKeys(suggest())).toHaveLength(5);
@@ -145,7 +145,7 @@ describe('差し込み変数のコンボボックス（設定パネル）', () =
     input.setSelectionRange(2, 2);
     input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     await frame();
-    expect(field.querySelector('.mm-merge-tag-suggest')).toBeNull();
+    expect(field.querySelector('.mm-text-input-suggest')).toBeNull();
     expect(field.querySelector('mm-merge-tag-picker')).not.toBeNull();
   });
 
@@ -212,11 +212,11 @@ describe('日本語入力（IME）の変換中の Enter', () => {
     input.setSelectionRange(input.value.length, input.value.length);
     input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     await frame();
-    expect(field.querySelector('.mm-merge-tag-suggest')).not.toBeNull();
+    expect(field.querySelector('.mm-text-input-suggest')).not.toBeNull();
     for (const init of IME_ENTERS) press(input, 'Enter', init);
     await frame();
     expect(label()).toBe('ボタン {{クー');
-    expect(field.querySelector('.mm-merge-tag-suggest')).not.toBeNull();
+    expect(field.querySelector('.mm-text-input-suggest')).not.toBeNull();
 
     const picker = /** @type {any} */ (field.querySelector('mm-merge-tag-picker'));
     picker.shadowRoot.querySelector('.toggle').click();

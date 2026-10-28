@@ -139,3 +139,27 @@ export function createMergeTagDisplay(tags, delimiters = DEFAULT_DELIMITERS) {
     },
   };
 }
+
+/** @type {WeakMap<readonly MergeTag[], Map<string, MergeTagDisplay>>} */
+const cache = new WeakMap();
+
+/**
+ * createMergeTagDisplay の結果を、候補の配列と区切りごとに使い回す（入力欄ごとに正規表現を作らない）
+ * @param {readonly MergeTag[]} tags
+ * @param {MergeTagDelimiters} [delimiters]
+ * @returns {MergeTagDisplay}
+ */
+export function getMergeTagDisplay(tags, delimiters = DEFAULT_DELIMITERS) {
+  let byDelimiters = cache.get(tags);
+  if (!byDelimiters) {
+    byDelimiters = new Map();
+    cache.set(tags, byDelimiters);
+  }
+  const key = `${delimiters.open}\n${delimiters.close}`;
+  let display = byDelimiters.get(key);
+  if (!display) {
+    display = createMergeTagDisplay(tags, delimiters);
+    byDelimiters.set(key, display);
+  }
+  return display;
+}

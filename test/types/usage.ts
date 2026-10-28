@@ -2,6 +2,7 @@
 // 利用者と同じくパッケージ名で import し、通るべき書き方と、エラーになるべき書き方（@ts-expect-error）を並べる
 import {
   MailmasonEditor,
+  MmTextInput,
   MailmasonError,
   createBlock,
   createRow,
@@ -191,6 +192,22 @@ if (editor) {
   // @ts-expect-error 内部の状態は公開しない
   editor._store;
   void [same, warningsOnLoad, current, exported, inserted];
+}
+
+// 差し込み変数の入力欄
+{
+  const field = document.createElement('mm-text-input');
+  const typed: MmTextInput = field;
+  field.tags = [{ key: 'order.id', label: '注文番号' }];
+  field.displayLabels = true;
+  field.value = 'ご注文（{{order.id}}）';
+  field.addEventListener('mm-value-change', (event) => {
+    const value: string = event.detail.value;
+    void value;
+  });
+  // @ts-expect-error 区切りはオブジェクト
+  field.delimiters = '{{';
+  void typed;
 }
 
 // core だけでも同じ型を使える（DOM・Lit なし）
