@@ -2,7 +2,9 @@
 
 このプロジェクトは [Semantic Versioning](https://semver.org/lang/ja/) に従います。1.0.0 までは、マイナーバージョンで互換性の無い変更を含むことがあります。
 
-## 未公開
+## 0.9.0 - 2026-10-28
+
+差し込み変数の入力欄 `<mm-text-input>` を公開し、テキストパートをブロック・行ごとに調整できるようにしました（出さない・テキストだけ・指定の文）。全文を手で直したテキストパートには、本文の変更の差分と取り込みを足しました。テンプレート JSON の版は 2 になります。
 
 ### 互換性
 
@@ -12,6 +14,12 @@
 
 ### 追加
 
+- 差し込み変数の入力欄 `<mm-text-input>` を公開した（`MmTextInput`）。件名など、エディタの外の欄に置ける。`display-labels` で欄の中を表示名で見せ、`value` とイベント（`mm-value-input`・`mm-value-change`、`detail: { value }`）はキーで返す。`locale`・`messages` で文言を変えられ、エディタの外でも見た目の初期値を持つ。入力中の候補の一覧の幅は `--mm-suggest-width` で変えられる
+- `<mm-text-input>` がフォームの部品として振る舞う（form-associated custom element）。`name` の値（キー）を送り、`required`・`maxlength`（キーで書いた値の文字数）で検査する。フォームのリセットと `<fieldset disabled>` も効く。`autocomplete`・`aria-describedby`・`aria-invalid` は中の欄に写す
+- `<mm-text-input>` の入力中の候補を画面読み上げで選べるようにした（中の欄を `role="combobox"` にし、`aria-expanded`・`aria-controls`・`aria-activedescendant` で候補を指す）
+- `<mm-text-input>` は、確定した値に `tags` に無い差し込み変数があると `mm-unknown-merge-tag`（`detail: { keys }`）を出す。キーに使えない文字を含む `{{未知の変数}}` も拾う
+- 差し込み変数の候補に `groupDescription`（グループの説明）を足した。候補の一覧のグループ名の下に出す（エディタの中の一覧も同じ）
+- `<mm-text-input>` に `insertText(text)` を足した
 - テキストパートで、ブロック・行ごとに扱いを変えられるようにした。設定パネルの「テキストパート」で、ブロックは「自動」「出さない」「テキストだけ」（HTML に出さない）、行は「自動」「行ごと出さない」から選ぶ。行の設定はブロックの設定より先に効く。選ばなかったブロックは本文と連動したまま。キャンバスに印を出し、「自動」の下にそのブロックから作られるテキストを見せる。テンプレート JSON ではブロック・行の `text`（省略すると自動）、コマンドは `setElementText`
 - `RenderTextOptions` に `textVariant`（`'both'` / `'desktop'` / `'mobile'`）を足した。PC 用・スマホ用で分けた部品・行のどちらをテキストパートに出すか選べる（既定は両方で今と同じ）
 - エディタに `textOptions` を足した。プレビュー・手直しの古さの判定・`exportText()` に同じテキストパートの作り方を使う
@@ -20,15 +28,8 @@
 - 参照を含まない指定の文は、指定したあとにブロックの内容が変わると「古い」とする（`text.sourceHash`）。キャンバスに印を出し、設定欄で確認済みにできる。`stale-text` の `detail.blockIds` と、`resolveTextPart()` の `staleBlockIds` に入る。判定は折り返しなどの設定に左右されない
 - `RenderTextOptions` に `textTemplates`（種類ごとの既定の書き方。例: `{ button: '{@label}：{@href}' }`）を足した
 - `resolveTextPart()` の返り値に `staleBlockIds`・`unknownRefs` を足した
-- `<mm-text-input>` に `insertText(text)` を足した
 - 全文を手で直したテキストパートが古くなったとき、手直しを始めてからの本文の変更を行ごとに見せ（変わった行は行の中の違いに印を付ける）、変更ごとに「取り込む」で手直しの文に入れられるようにした。テンプレート JSON の `text.sourceText`（手直しを始めた時点の自動生成。manual のときだけ）を使い、無い古いテンプレートでは今と同じく警告だけを出す
 - `resolveTextPart()` の返り値に `diff`（`{ hunks, added, removed }`）、`stale-text` の `detail` に `added`・`removed` を足した。`setTextPart` コマンドに `sourceText` を足した
-
-- 差し込み変数の入力欄 `<mm-text-input>` を公開した（`MmTextInput`）。件名など、エディタの外の欄に置ける。`display-labels` で欄の中を表示名で見せ、`value` とイベント（`mm-value-input`・`mm-value-change`、`detail: { value }`）はキーで返す。`locale`・`messages` で文言を変えられ、エディタの外でも見た目の初期値を持つ。入力中の候補の一覧の幅は `--mm-suggest-width` で変えられる
-- `<mm-text-input>` がフォームの部品として振る舞う（form-associated custom element）。`name` の値（キー）を送り、`required`・`maxlength`（キーで書いた値の文字数）で検査する。フォームのリセットと `<fieldset disabled>` も効く。`autocomplete`・`aria-describedby`・`aria-invalid` は中の欄に写す
-- `<mm-text-input>` の入力中の候補を画面読み上げで選べるようにした（中の欄を `role="combobox"` にし、`aria-expanded`・`aria-controls`・`aria-activedescendant` で候補を指す）
-- `<mm-text-input>` は、確定した値に `tags` に無い差し込み変数があると `mm-unknown-merge-tag`（`detail: { keys }`）を出す。キーに使えない文字を含む `{{未知の変数}}` も拾う
-- 差し込み変数の候補に `groupDescription`（グループの説明）を足した。候補の一覧のグループ名の下に出す（エディタの中の一覧も同じ）
 
 ### 変更
 
