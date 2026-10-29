@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createBlock, createRow, createTemplate } from '../../src/index.js';
-import { filterMergeTags, findMergeTagTrigger } from '../../src/editor/merge-tag-search.js';
+import {
+  filterMergeTags,
+  findMergeTagTrigger,
+  findUnknownMergeTags,
+} from '../../src/editor/merge-tag-search.js';
 import { createMergeTagDisplay } from '../../src/editor/merge-tag-display.js';
 import { canvasBlocks, deep, fixtures, frame, mount, press } from './helpers.js';
 
@@ -61,6 +65,34 @@ describe('差し込み変数の絞り込み', () => {
       start: 2,
       query: 'na',
     });
+  });
+
+  it('候補に無いキーを、前後の空白を除いて出現順に重ならないように返す', () => {
+    const unknown = (/** @type {string} */ value, delimiters = DELIMITERS) =>
+      findUnknownMergeTags(value, TAGS, delimiters);
+    expect(unknown('{{name}} {{未知の変数}} {{ shop_url }} {{未知の変数}}')).toEqual([
+      '未知の変数',
+      'shop_url',
+    ]);
+    expect(unknown('{{ name }} {{coupon}} 様')).toEqual([]);
+    expect(unknown('%% shop %% と %%name%%', { open: '%%', close: '%%' })).toEqual(['shop']);
+    // 改行はまたがない。中が空・空白だけの区切りは拾わない
+    expect(unknown('{{\n注.}} {{a\nb}} {{}}} {{ }}')).toEqual([]);
+    expect(unknown('{{ x\n{{ y }}')).toEqual(['y']);
+  });
+
+  it('閉じていない区切りのあとに空白が長く続いても、すぐ終わる', () => {
+    const values = [
+      `{{${' '.repeat(10000)}x`,
+      `{{${' '.repeat(10000)}x}`,
+      '{{'.repeat(10000),
+      `{{ a${' '.repeat(10000)}\n}}`.repeat(10),
+    ];
+    for (const value of values) {
+      const start = performance.now();
+      expect(findUnknownMergeTags(value, TAGS, DELIMITERS)).toEqual([]);
+      expect(performance.now() - start).toBeLessThan(50);
+    }
   });
 });
 

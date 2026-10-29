@@ -83,13 +83,10 @@ export function mergeTagText(key, delimiters) {
   return `${delimiters.open}${key}${delimiters.close}`;
 }
 
-/** @param {string} value */
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 /**
- * 候補に無い差し込み変数（出現順、重複なし）。キーに使えない文字（日本語など）を含むものも拾う
+ * 候補に無い差し込み変数（出現順、重複なし）。キーに使えない文字（日本語など）を含むものも拾う。
+ * 区切りの中は前後の空白を除く。改行をまたぐもの・中が空白だけのものは拾わない。
+ * 正規表現は使わない（閉じていない区切りのあとに長い空白があるとバックトラックで固まるため）
  * @param {string} value
  * @param {readonly MergeTag[]} tags
  * @param {MergeTagDelimiters} delimiters
@@ -97,13 +94,25 @@ function escapeRegExp(value) {
  */
 export function findUnknownMergeTags(value, tags, delimiters) {
   const known = new Set(tags.map((tag) => tag.key));
-  const pattern = new RegExp(
-    `${escapeRegExp(delimiters.open)}\\s*([^\\r\\n]+?)\\s*${escapeRegExp(delimiters.close)}`,
-    'g',
-  );
+  const { open, close } = delimiters;
   const unknown = new Set();
-  for (const match of value.matchAll(pattern)) {
-    if (!known.has(match[1])) unknown.add(match[1]);
+  let from = 0;
+  for (;;) {
+    const start = value.indexOf(open, from);
+    if (start < 0) break;
+    const inner = start + open.length;
+    const end = value.indexOf(close, inner);
+    if (end < 0) break;
+    const content = value.slice(inner, end);
+    const lineBreak = Math.max(content.lastIndexOf('\n'), content.lastIndexOf('\r'));
+    if (lineBreak >= 0) {
+      // 改行より前で始まる区切りは、どれも改行をまたぐ
+      from = inner + lineBreak + 1;
+      continue;
+    }
+    const key = content.trim();
+    if (key && !known.has(key)) unknown.add(key);
+    from = end + close.length;
   }
   return [...unknown];
 }
