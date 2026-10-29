@@ -512,6 +512,30 @@ QR コード。画像（PNG）はエディタが作って `onImageUpload` でア
 
 `type` にハイフンを含むブロック（例: `acme-coupon`）は、アプリが `defineBlock()` で定義したカスタムブロックです。`values` の形は定義の設定項目（`fields`）で決まります。定義を渡さずに読み込むと未知の種類として扱い（`unknown-block-type`）、データは残したまま出力しません。
 
+## テキストパートの参照（`{@名前}`）
+
+ブロックの `text` を `{ "mode": "custom", "content": "…" }` にしたときと、書き出しの `textTemplates`（種類ごとの既定の書き方）では、`{@名前}` でそのブロックの今の値を参照できます。書き出すたびに今の値で置き換えるので、本文を変えるとテキストパートも追いかけます。`{@text}` は、そのブロックを自動で作ったときのテキストです。差し込み変数（`{{キー}}`）も使えます。
+
+| ブロック         | 参照できる名前                                       |
+| ---------------- | ---------------------------------------------------- |
+| `text`           | `{@text}`                                            |
+| `image`          | `{@text}` `{@alt}` `{@href}` `{@src}`                |
+| `button`         | `{@text}` `{@label}` `{@href}`                       |
+| `divider`        | `{@text}`                                            |
+| `spacer`         | `{@text}`                                            |
+| `imageText`      | `{@text}` `{@alt}` `{@href}` `{@src}`                |
+| `gallery`        | `{@text}`                                            |
+| `video`          | `{@text}` `{@url}` `{@alt}`                          |
+| `buttons`        | `{@text}`                                            |
+| `menu`           | `{@text}`                                            |
+| `table`          | `{@text}`                                            |
+| `social`         | `{@text}`                                            |
+| `qr`             | `{@text}` `{@content}` `{@alt}` `{@href}` `{@src}`   |
+| `html`           | `{@text}`                                            |
+| カスタムブロック | `{@text}` と、設定項目のキーのうち文字・数の値のもの |
+
+無い名前は書いたまま出力し、検査（`resolveTextPart()` の `unknownRefs`、エディタの `unknown-text-ref`）で知らせます。参照を 1 つも含まない文は本文と切れるので、`sourceHash`（その文にしたときのブロックの自動生成のハッシュ）があれば、ブロックの内容が変わったときに「古い」と判定します。参照を含む文には `sourceHash` は要りません。
+
 ## リッチテキスト（`text.html` / `imageText.html`）
 
 - 段落: `<p>` `<h1>` `<h2>` `<h3>`、リスト: `<ul>` `<ol>` と `<li>`、改行: `<br>`

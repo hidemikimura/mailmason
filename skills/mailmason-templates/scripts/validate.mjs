@@ -2,11 +2,13 @@
 // Mailmason のテンプレート JSON を検査し、必要なら HTML とテキストパートを書き出す。
 //
 //   node validate.mjs <template.json> [--html out.html] [--text out.txt] [--values values.json]
-//                     [--delimiters "{{,}}"] [--blocks blocks.mjs]
+//                     [--delimiters "{{,}}"] [--blocks blocks.mjs] [--text-options text-options.json]
 //
 // --blocks: カスタムブロックの定義（defineBlock() の戻り値）の配列を `blocks` または default で export するモジュール
+// --text-options: テキストパートの作り方（エディタの textOptions と同じ。textVariant・textTemplates・wrapWidth など）の JSON
 //
-// 警告が無ければ終了コード 0、警告があれば 1、読み込めなければ 2。
+// 警告（スキーマに合わない値など）か、テキストパートの指定の文の知らない参照（{@名前}）があれば終了コード 1、
+// 無ければ 0、読み込めなければ 2。「注意」・「メモ」は終了コードに影響しない。
 // @hidemikimura/mailmason がインストールされたプロジェクトの中で実行する。
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -38,6 +40,10 @@ if (!file) {
 const [open, close] = (option('--delimiters') ?? '{{,}}').split(',');
 const mergeTagDelimiters = { open, close };
 const values = option('--values') ? JSON.parse(readFileSync(option('--values'), 'utf8')) : null;
+/** テキストパートの作り方（エディタの textOptions と同じ値を渡す） */
+const textOptions = option('--text-options')
+  ? JSON.parse(readFileSync(option('--text-options'), 'utf8'))
+  : {};
 /** @type {any[]} */
 let customBlocks = [];
 if (option('--blocks')) {
@@ -99,13 +105,40 @@ for (const b of empty) console.log(`注意: ${b.id}（${b.type}）は中身が�
 const noAlt = blocks.filter(
   (b) => (b.type === 'image' || b.type === 'qr') && b.values.src && !b.values.alt,
 );
-for (const b of noAlt) console.log(`注意: ${b.id} の画像に代替テキスト（alt）がありません`);
+for (const b of noAlt) {
+  console.log(
+    `メモ: ${b.id} の画像は代替テキスト（alt）が空です。ロゴなど飾りの画像ならこのままでよい（テキストパートにも出ません）。内容を伝える画像なら alt を書いてください`,
+  );
+}
 const staleQr = blocks.filter((b) => b.type === 'qr' && core.qrStatus?.(b) === 'stale');
 for (const b of staleQr) {
   console.log(
     `注意: ${b.id}（qr）は画像を作った後に内容や色が変わっています（エディタで作り直すか、generated を qrSignature(values) の値にする）`,
   );
 }
+
+// テキストパート（エディタと同じ作り方で確かめる。差し込み前）
+const textBase = { ...textOptions, mergeTagDelimiters, blocks: customBlocks };
+const part = core.resolveTextPart(template, textBase);
+for (const ref of part.unknownRefs ?? []) {
+  console.log(
+    `エラー: ${ref.blockId} のテキストパートの指定の文（または textTemplates）が、このブロックに無い {@${ref.name}} を参照しています`,
+  );
+}
+for (const id of part.staleBlockIds ?? []) {
+  console.log(
+    `注意: ${id} のテキストパートの指定の文は、指定した後にブロックの内容が変わっています（利用者に確認してもらう）`,
+  );
+}
+if (part.mode === 'manual' && part.stale) {
+  const counts = part.diff
+    ? `（本文の変更: +${part.diff.added} 行 / −${part.diff.removed} 行）`
+    : '';
+  console.log(
+    `注意: テキストパートは全文が手で直されていて、その後に本文が変わっています${counts}。利用者に確認してもらう`,
+  );
+}
+const unknownRefCount = part.unknownRefs?.length ?? 0;
 
 if (option('--html')) {
   writeFileSync(
@@ -117,21 +150,24 @@ if (option('--html')) {
 if (option('--text')) {
   writeFileSync(
     option('--text'),
-    core.resolveTextPart(template, {
-      mergeTagDelimiters,
-      mergeValues: values,
-      blocks: customBlocks,
-    }).text,
+    core.resolveTextPart(template, { ...textBase, mergeValues: values }).text,
   );
   console.log(`テキストを書き出しました: ${option('--text')}`);
 }
 
-if (valid) {
+if (valid && unknownRefCount === 0) {
   console.log('OK: 警告はありません');
 } else {
-  console.log(
-    `警告 ${warnings.length} 件（読み込み時に自動で直されます。直してから保存してください）:`,
-  );
-  for (const w of warnings) console.log(`- [${w.code}] ${w.path}: ${w.message}`);
+  if (!valid) {
+    console.log(
+      `警告 ${warnings.length} 件（読み込み時に自動で直されます。直してから保存してください）:`,
+    );
+    for (const w of warnings) console.log(`- [${w.code}] ${w.path}: ${w.message}`);
+  }
+  if (unknownRefCount > 0) {
+    console.log(
+      `エラー ${unknownRefCount} 件: 参照は書いたまま出力されます。参照できる名前は schema.md の「テキストパートの参照」を見てください`,
+    );
+  }
   process.exit(1);
 }

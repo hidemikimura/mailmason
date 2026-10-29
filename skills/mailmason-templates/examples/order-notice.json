@@ -1,0 +1,123 @@
+{
+  "version": 2,
+  "body": {
+    "settings": {
+      "width": 600,
+      "backgroundColor": "#f4f4f4",
+      "contentBackgroundColor": "#ffffff",
+      "textColor": "#333333",
+      "linkColor": "#0066cc",
+      "title": "ご注文ありがとうございます",
+      "preheader": "ご注文番号 {{order_id}} の内容をお知らせします"
+    },
+    "rows": [
+      {
+        "id": "r_header",
+        "layout": "1",
+        "settings": { "padding": { "top": 24, "right": 32, "bottom": 0, "left": 32 } },
+        "columns": [
+          {
+            "id": "c_header",
+            "blocks": [
+              {
+                "id": "b_logo",
+                "type": "image",
+                "values": {
+                  "src": "https://example.com/images/logo.png",
+                  "alt": "デモショップ",
+                  "href": "https://example.com/",
+                  "width": { "unit": "px", "value": 160 },
+                  "naturalWidth": 320,
+                  "naturalHeight": 80
+                },
+                "text": { "mode": "hidden" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_body",
+        "layout": "1",
+        "settings": { "padding": { "top": 16, "right": 32, "bottom": 16, "left": 32 } },
+        "columns": [
+          {
+            "id": "c_body",
+            "blocks": [
+              {
+                "id": "b_greeting",
+                "type": "text",
+                "values": {
+                  "html": "<p>{{name}} 様</p><p>このたびはご注文いただき、ありがとうございます。ご注文番号は <strong>{{order_id}}</strong> です。</p>"
+                }
+              },
+              {
+                "id": "b_items",
+                "type": "table",
+                "values": {
+                  "cells": [
+                    ["商品", "数量", "金額"],
+                    ["オーガニックコーヒー 200g", "2", "2,400 円"],
+                    ["合計", "", "{{total}} 円"]
+                  ],
+                  "columns": [
+                    { "width": 60, "align": "left" },
+                    { "width": 15, "align": "right" },
+                    { "width": null, "align": "right" }
+                  ],
+                  "merges": [{ "row": 2, "column": 0, "rowSpan": 1, "colSpan": 2 }]
+                },
+                "text": { "mode": "custom", "content": "■ ご注文内容\n{@text}" }
+              },
+              {
+                "id": "b_detail",
+                "type": "button",
+                "values": {
+                  "label": "ご注文の詳細を見る",
+                  "href": "https://example.com/mypage/orders/{{order_id}}",
+                  "backgroundColor": "#e8590c"
+                },
+                "text": {
+                  "mode": "custom",
+                  "content": "ご注文の詳細は、次の URL からご確認ください。\n{@href}"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "r_footer",
+        "layout": "1",
+        "settings": {
+          "backgroundColor": "#f6f8fa",
+          "padding": { "top": 16, "right": 32, "bottom": 24, "left": 32 }
+        },
+        "columns": [
+          {
+            "id": "c_footer",
+            "blocks": [
+              {
+                "id": "b_text_note",
+                "type": "text",
+                "values": {
+                  "html": "<p>このメールは HTML 版もあります。メールソフトの設定で HTML を表示すると、画像入りでご覧いただけます。</p>"
+                },
+                "text": { "mode": "only" }
+              },
+              {
+                "id": "b_footer",
+                "type": "text",
+                "values": {
+                  "html": "<p style=\"text-align:center\">このメールは送信専用です。お問い合わせは <a href=\"https://example.com/contact\">お問い合わせ窓口</a> へ。</p>",
+                  "fontSize": 12
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "text": { "mode": "auto", "content": null, "sourceHash": null }
+}

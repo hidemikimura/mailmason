@@ -4,6 +4,7 @@ import basic from '../../../test/fixtures/templates/basic.json';
 import kitchenSink from '../../../test/fixtures/templates/kitchen-sink.json';
 import newsletter from '../../../skills/mailmason-templates/examples/newsletter.json';
 import announcement from '../../../skills/mailmason-templates/examples/announcement.json';
+import orderNotice from '../../../skills/mailmason-templates/examples/order-notice.json';
 import contentBlocks from '../../../test/fixtures/templates/content-blocks.json';
 import backgrounds from '../../../test/fixtures/templates/backgrounds.json';
 import tables from '../../../test/fixtures/templates/tables.json';
@@ -12,6 +13,7 @@ export const DEMO_TEMPLATES = [
   { id: 'newsletter', label: 'メールマガジン', template: newsletter },
   { id: 'basic', label: '新作のお知らせ', template: basic },
   { id: 'announcement', label: 'メンテナンスのお知らせ', template: announcement },
+  { id: 'order-notice', label: '注文の通知（テキストパートの調整）', template: orderNotice },
   { id: 'content-blocks', label: '表・動画・ギャラリー', template: contentBlocks },
   { id: 'backgrounds', label: '背景画像', template: backgrounds },
   { id: 'tables', label: '料金表（セルの結合）', template: tables },
@@ -38,6 +40,8 @@ export const DEMO_MERGE_TAGS = [
   { key: 'points', label: '保有ポイント', group: '会員', sample: '1,250' },
   { key: 'coupon', label: 'クーポンコード', group: 'クーポン', sample: 'AUTUMN2026' },
   { key: 'coupon_expiry', label: 'クーポンの有効期限', group: 'クーポン', sample: '10 月 31 日' },
+  { key: 'order_id', label: '注文番号', group: '注文', sample: 'A-10234' },
+  { key: 'total', label: '合計金額', group: '注文', sample: '2,400' },
   { key: 'shop_name', label: 'ショップ名', group: 'ショップ', sample: 'Mailmason Store' },
   {
     key: 'unsubscribe_url',
